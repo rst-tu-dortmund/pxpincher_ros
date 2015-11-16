@@ -1219,17 +1219,6 @@ public:
     ///@}
     
     
-    
-     /*
-     * These commands read several registers at once to reduce communication overhead.
-     * In principle it is possible to combine arbitrary commands as long as their registers are in a row.
-     * In this case only a few commands that can benefit from this technique are implemented.
-     *
-     * The servos or the arbotix board seem to have register borders that are not allowed to cross while writing
-     * So it is only possible to write beyond one register when they belong together (conceptualy)
-     */
-
-
 
 private:
 

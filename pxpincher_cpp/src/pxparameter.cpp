@@ -1,5 +1,8 @@
 #include "pxpincher_cpp/pxparameter.h"
 
+#include <XmlRpcValue.h>
+#include <ros/ros.h>
+
 PXParameter::PXParameter()
 {
     update();
@@ -13,45 +16,48 @@ void PXParameter::update()
     nHandle.getParam("/pxpincher/port",port_);
     nHandle.getParam("/pxpincher/rate",rate_);
     nHandle.getParam("/pxpincher/simulation",simulation_);
+    
+    
+    // parse joint parameters
+    
+    names_.clear();
+    ids_.clear();
+    cwlimits_.clear();
+    ccwlimits_.clear();
+    speeds_.clear();
+    
+    XmlRpc::XmlRpcValue joints_yaml;
+    if (ros::param::get("/pxpincher/joints", joints_yaml))
+    {
+        ROS_ASSERT(joints_yaml.getType() == XmlRpc::XmlRpcValue::TypeStruct);
 
-    std::map<std::string,int> map;
+        for (XmlRpc::XmlRpcValue::iterator it=joints_yaml.begin(); it!=joints_yaml.end(); ++it) 
+        {
+            names_.push_back( it->first ); // add joint name
+            
+            // now parse individual values
+            ROS_ASSERT( it->second.getType() == XmlRpc::XmlRpcValue::TypeStruct ); // TODO: maybe exceptions or error case handling
 
-    nHandle.getParam("/pxpincher/joints/J1",map);
-    ids_.push_back((UBYTE)map["id"]);
-    cwlimits_.push_back(map["cwlimit"]);
-    ccwlimits_.push_back(map["ccwlimit"]);
-    speeds_.push_back(map["speed"]);
-
-    map.clear();
-
-    nHandle.getParam("/pxpincher/joints/J2",map);
-    ids_.push_back((UBYTE)map["id"]);
-    cwlimits_.push_back(map["cwlimit"]);
-    ccwlimits_.push_back(map["ccwlimit"]);
-    speeds_.push_back(map["speed"]);
-
-    map.clear();
-
-    nHandle.getParam("/pxpincher/joints/J3",map);
-    ids_.push_back((UBYTE)map["id"]);
-    cwlimits_.push_back(map["cwlimit"]);
-    ccwlimits_.push_back(map["ccwlimit"]);
-    speeds_.push_back(map["speed"]);
-
-    map.clear();
-
-    nHandle.getParam("/pxpincher/joints/J4",map);
-    ids_.push_back((UBYTE)map["id"]);
-    cwlimits_.push_back(map["cwlimit"]);
-    ccwlimits_.push_back(map["ccwlimit"]);
-    speeds_.push_back(map["speed"]);
-
-    map.clear();
-
-    nHandle.getParam("/pxpincher/joints/J5",map);
-    ids_.push_back((UBYTE)map["id"]);
-    cwlimits_.push_back(map["cwlimit"]);
-    ccwlimits_.push_back(map["ccwlimit"]);
-    speeds_.push_back(map["speed"]);
-
+            // id
+            ROS_ASSERT(it->second["id"].getType() == XmlRpc::XmlRpcValue::TypeInt);
+            ids_.push_back( (int) it->second["id"] );
+            
+            // cwlimits
+            ROS_ASSERT(it->second["cwlimit"].getType() == XmlRpc::XmlRpcValue::TypeInt);
+            cwlimits_.push_back( (int) it->second["cwlimit"] );
+            
+            // ccwlimits
+            ROS_ASSERT(it->second["ccwlimit"].getType() == XmlRpc::XmlRpcValue::TypeInt);
+            ccwlimits_.push_back( (int) it->second["ccwlimit"] );
+            
+            // speeds
+            ROS_ASSERT(it->second["speed"].getType() == XmlRpc::XmlRpcValue::TypeInt);
+            speeds_.push_back( (int) it->second["speed"] );               
+           
+        }
+    }
+    else
+    {
+        ROS_ERROR("Cannot read joints form parameter server");
+    }
 }

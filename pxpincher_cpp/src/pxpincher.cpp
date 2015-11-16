@@ -8,36 +8,24 @@ PxPincher::PxPincher():
     last_(ros::Time::now()),
     nHandle_("PXPincher")
 {
+    std::size_t no_joints = paramObject_.names_.size();
+    
+    joint_info_.resize(no_joints);
+    
     initRobot();
-
-    hardware_interface::JointStateHandle stateHandleJoint1("J1",&pos[0], &vel[0],&eff[0]);
-    hardware_interface::JointStateHandle stateHandleJoint2("J2",&pos[1], &vel[1],&eff[1]);
-    hardware_interface::JointStateHandle stateHandleJoint3("J3",&pos[2], &vel[2],&eff[2]);
-    hardware_interface::JointStateHandle stateHandleJoint4("J4",&pos[3], &vel[3],&eff[3]);
-    hardware_interface::JointStateHandle stateHandleJoint5("J5",&pos[4], &vel[4],&eff[4]);
-
-
-    jntStateInterface.registerHandle(stateHandleJoint1);
-    jntStateInterface.registerHandle(stateHandleJoint2);
-    jntStateInterface.registerHandle(stateHandleJoint3);
-    jntStateInterface.registerHandle(stateHandleJoint4);
-    jntStateInterface.registerHandle(stateHandleJoint5);
-
-    registerInterface(&jntStateInterface);
-
-    hardware_interface::JointHandle posHandleJoint1(jntStateInterface.getHandle("J1"),&cmd[0]);
-    hardware_interface::JointHandle posHandleJoint2(jntStateInterface.getHandle("J2"),&cmd[0]);
-    hardware_interface::JointHandle posHandleJoint3(jntStateInterface.getHandle("J3"),&cmd[0]);
-    hardware_interface::JointHandle posHandleJoint4(jntStateInterface.getHandle("J4"),&cmd[0]);
-    hardware_interface::JointHandle posHandleJoint5(jntStateInterface.getHandle("J5"),&cmd[0]);
-
-    jntPositionInterface.registerHandle(posHandleJoint1);
-    jntPositionInterface.registerHandle(posHandleJoint2);
-    jntPositionInterface.registerHandle(posHandleJoint3);
-    jntPositionInterface.registerHandle(posHandleJoint4);
-    jntPositionInterface.registerHandle(posHandleJoint5);
-
-    registerInterface(&jntPositionInterface);
+    
+    
+    // create ros_control handles
+    for (int i = 0; i < no_joints; ++i)
+    {
+         hardware_interface::JointStateHandle state_handle_joint( paramObject_.names_[i] , &joint_info_[i].pos, &joint_info_[i].vel, &joint_info_[i].eff);
+         jnt_state_interface_.registerHandle(state_handle_joint);
+         
+         hardware_interface::JointHandle pos_handle_joint(jnt_state_interface_.getHandle(paramObject_.names_[i]),  &joint_info_[i].cmd); // TODO: maybe use handle from above
+         jnt_position_interface_.registerHandle(pos_handle_joint);
+    }
+    registerInterface(&jnt_state_interface_);
+    registerInterface(&jnt_position_interface_);
 
     statePublisher_ = nHandle_.advertise<sensor_msgs::JointState>("JointStates",1);
     diagnosticPublisher_ = nHandle_.advertise<pxpincher_rst_msgs::pxpincher_rst_diagnostic>("Diagnostics",1);
@@ -73,7 +61,11 @@ void PxPincher::update()
 {
     if(!sim_){
         // Get current servo status
-        std::vector<ServoStatus> stati = {ServoStatus(1), ServoStatus(2), ServoStatus(3), ServoStatus(4), ServoStatus(5)};
+        std::vector<ServoStatus> stati;
+        for (int id : paramObject_.ids_)
+        {
+            stati.emplace_back(id);
+        }
         protocol_.readServoStatus(stati,comm_);
 
         // Fill control variables
@@ -86,7 +78,7 @@ void PxPincher::update()
         performAction();
 
         // Publish current information
-        statePublisher_.publish(getJointState(stati));
+        statePublisher_.publish(getJointState());
         diagnosticPublisher_.publish(getDiagnostics(stati));
     }else{
         // Publish current information
@@ -94,17 +86,20 @@ void PxPincher::update()
     }
 }
 
-void PxPincher::fillControlRegister(std::vector<ServoStatus> stati)
+void PxPincher::fillControlRegister(const std::vector<ServoStatus>& stati)
 {
-    std::vector<int> positions = {stati[0].position_, stati[1].position_, stati[2].position_, stati[3].position_, stati[4].position_};
-    std::vector<int> speeds = {stati[0].speed_, stati[1].speed_, stati[2].speed_, stati[3].speed_, stati[4].speed_};
-
-    std::vector<double> positionDbl = tick2rad(positions);
-    std::vector<double> speedDbl = tick2rads(speeds);
-
-    for(int i = 0; i < positionDbl.size(); ++i){
-        pos[i] = positionDbl[i];
-        vel[i] = speedDbl[i];
+    if (stati.size() != joint_info_.size())
+    {
+        ROS_ERROR("Cannot fill controll register. Number of stati obtained from the hardware communication node does not match number of joints.");
+        return;
+    }
+    
+    int idx = 0;
+    for (const ServoStatus& status : stati)
+    {
+        joint_info_[idx].pos = tick2rad( status.position_ );
+        joint_info_[idx].vel = tick2rads( status.speed_ );
+        ++idx;
     }
 }
 
@@ -119,83 +114,97 @@ void PxPincher::calculateControlStep()
 
 void PxPincher::performAction()
 {
-    std::vector<int> positions = {(int) floor(cmd[1]),(int) floor(cmd[2]),(int) floor(cmd[3]),(int) floor(cmd[4]),(int) floor(cmd[5])};
-    std::vector<UBYTE> ids = paramObject_.ids_;
-
     //protocol_.setGoalPosition(ids,positions,comm_);
-    for(int temp : positions){
-        ROS_INFO("Value: %d",temp);
+    for(const JointInfo& joint : joint_info_){
+        ROS_INFO("Value: %f",joint.cmd);
     }
 }
 
 
-std::vector<double> PxPincher::tick2rad(std::vector<int> positions)
+double PxPincher::tick2rad(int position)
+{
+    return conversionFactor1*position;
+}
+
+
+std::vector<double> PxPincher::tick2rad(const std::vector<int>& positions)
 {
     std::vector<double> rads;
     rads.reserve(positions.size());
 
     for(int elem : positions){
-        rads.push_back(conversionFactor1*elem);
+        rads.push_back(tick2rad(elem));
     }
     return rads;
 }
 
+double PxPincher::tick2rads(int speed)
+{
+    return conversionFactor2*speed;
+}
 
-std::vector<double> PxPincher::tick2rads(std::vector<int> speeds)
+std::vector<double> PxPincher::tick2rads(const std::vector<int>& speeds)
 {
     std::vector<double> rads;
     rads.reserve(speeds.size());
 
     for(int elem : speeds){
-        rads.push_back(conversionFactor2*elem);
+        rads.push_back(tick2rads(elem));
     }
     return rads;
 }
 
 
-std::vector<double> PxPincher::convVoltage(std::vector<int> volt)
+double PxPincher::convVoltage(int volt)
+{
+    return double(volt)/10.0;
+}
+
+std::vector<double> PxPincher::convVoltage(const std::vector<int>& volt)
 {
     std::vector<double> newVolt;
     newVolt.reserve(volt.size());
 
     for(int elem : volt){
-        newVolt.push_back(elem/10);
+        newVolt.push_back(convVoltage(elem));
     }
     return newVolt;
 }
 
 
-sensor_msgs::JointState PxPincher::getJointState(std::vector<ServoStatus> stati)
+sensor_msgs::JointState PxPincher::getJointState()
 {
     sensor_msgs::JointState jointStates;
-    std::vector<std::string> names = {"J1","J2","J3","J4","J5"};
-
-    std::vector<int> positions = {stati[0].position_, stati[1].position_, stati[2].position_, stati[3].position_, stati[4].position_};
-    std::vector<int> speeds = {stati[0].speed_, stati[1].speed_, stati[2].speed_, stati[3].speed_, stati[4].speed_};
 
     jointStates.header.stamp = ros::Time::now();
-    jointStates.name = names;
-    jointStates.position = tick2rad(positions);
-    jointStates.velocity = tick2rads(speeds);
-
+          
+    int idx = 0;
+    for (const JointInfo& joint : joint_info_)
+    {
+        jointStates.name.push_back( paramObject_.names_[idx] );
+        jointStates.position.push_back( joint.pos );
+        jointStates.velocity.push_back( joint.vel );
+        ++idx;
+    }
+    
     return jointStates;
 }
 
 
-pxpincher_rst_msgs::pxpincher_rst_diagnostic PxPincher::getDiagnostics(std::vector<ServoStatus> stati)
+pxpincher_rst_msgs::pxpincher_rst_diagnostic PxPincher::getDiagnostics(const std::vector<ServoStatus>& stati)
 {
     pxpincher_rst_msgs::pxpincher_rst_diagnostic diag;
-    std::vector<std::string> names = {"J1","J2","J3","J4","J5"};
-
+    
     diag.header.stamp = ros::Time::now();
-    diag.name = names;
 
-
-    std::vector<int> voltage = {stati[0].voltage_, stati[1].voltage_, stati[2].voltage_, stati[3].voltage_, stati[4].voltage_};
-    std::vector<double> temperature = {(double)stati[0].temperature_, (double)stati[1].temperature_, (double)stati[2].temperature_, (double)stati[3].temperature_, (double)stati[4].temperature_};
-
-    diag.temperature = temperature;
-    diag.voltage = convVoltage(voltage);
+    int idx = 0;
+    for (const ServoStatus& status : stati)
+    {
+        diag.name.push_back( paramObject_.names_[idx] );
+        diag.temperature.push_back( (double) status.temperature_ );
+        diag.voltage.push_back( convVoltage( status.voltage_ ) );
+        ++idx;
+    }
 
     return diag;
 }

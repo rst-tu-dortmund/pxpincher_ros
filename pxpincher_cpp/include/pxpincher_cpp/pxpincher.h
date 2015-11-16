@@ -22,6 +22,7 @@
 
 #include "simulation.h"
 
+
 class PxPincher : public hardware_interface::RobotHW
 {
 public:
@@ -33,16 +34,22 @@ public:
 private:
 
     void update();
-    void fillControlRegister(std::vector<ServoStatus> stati);
+    void fillControlRegister(const std::vector<ServoStatus>& stati);
     void calculateControlStep();
     void performAction();
     void initRobot();
 
-    std::vector<double> tick2rad(std::vector<int> positions);
-    std::vector<double> tick2rads(std::vector<int> speeds);
-    std::vector<double> convVoltage(std::vector<int> volt);
-    sensor_msgs::JointState getJointState(std::vector<ServoStatus> stati);
-    pxpincher_rst_msgs::pxpincher_rst_diagnostic getDiagnostics(std::vector<ServoStatus> stati);
+    static double tick2rad(int position);
+    static std::vector<double> tick2rad(const std::vector<int>& positions);
+    
+    static double tick2rads(int speed);
+    static std::vector<double> tick2rads(const std::vector<int>& speeds);
+    
+    static double convVoltage(int volt);
+    static std::vector<double> convVoltage(const std::vector<int>& volt);
+
+    sensor_msgs::JointState getJointState();
+    pxpincher_rst_msgs::pxpincher_rst_diagnostic getDiagnostics(const std::vector<ServoStatus>& stati);
 
     void simulationCallback(const sensor_msgs::JointStateConstPtr &state);
 
@@ -50,8 +57,10 @@ private:
     ros::Subscriber simSubscriber_;
     ros::NodeHandle nHandle_;
 
-    hardware_interface::JointStateInterface jntStateInterface;
-    hardware_interface::PositionJointInterface jntPositionInterface;
+    hardware_interface::JointStateInterface jnt_state_interface_;
+    hardware_interface::PositionJointInterface jnt_position_interface_;
+
+    
     controller_manager::ControllerManager controllerManager_;
 
     Simulation simObject_;
@@ -60,14 +69,21 @@ private:
     SerialComm comm_;
     PXProtocol protocol_;
 
-    double cmd[5];
-    double pos[5];
-    double vel[5];
-    double eff[5];
+    
+    struct JointInfo
+    {
+        double cmd = 0;
+        double pos = 0;
+        double vel = 0;
+        double eff = 0;
+    };
+    
+    std::vector<JointInfo> joint_info_;
 
-    const double PI = 3.141592653589793;
-    const double conversionFactor1 = 5*PI/3066;
-    const double conversionFactor2 = 19*PI/5115;
+
+    constexpr static double PI = 3.141592653589793;
+    constexpr static double conversionFactor1 = 5*PI/3066;
+    constexpr static double conversionFactor2 = 19*PI/5115;
 
     ros::Time last_;
 

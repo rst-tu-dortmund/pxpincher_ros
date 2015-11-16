@@ -11,7 +11,7 @@
 
 #include "sensor_msgs/JointState.h"
 #include "std_msgs/String.h"
-#include "pxpincher_rst_msgs/pxpincher_rst_diagnostic.h"
+#include "pxpincher_msgs/pxpincher_diagnostic.h"
 
 #include "ros/ros.h"
 

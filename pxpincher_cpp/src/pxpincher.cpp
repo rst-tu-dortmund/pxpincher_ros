@@ -28,7 +28,7 @@ PxPincher::PxPincher():
     registerInterface(&jnt_position_interface_);
 
     statePublisher_ = nHandle_.advertise<sensor_msgs::JointState>("/joint_states",1); // joint_states topic is always root
-    diagnosticPublisher_ = nHandle_.advertise<pxpincher_rst_msgs::pxpincher_rst_diagnostic>("Diagnostics",1);
+    diagnosticPublisher_ = nHandle_.advertise<pxpincher_msgs::pxpincher_diagnostic>("Diagnostics",1);
     simSubscriber_ = nHandle_.subscribe("JointCMDSimulation",1, &PxPincher::simulationCallback,this);
 
 }
@@ -191,9 +191,9 @@ sensor_msgs::JointState PxPincher::getJointState()
 }
 
 
-pxpincher_rst_msgs::pxpincher_rst_diagnostic PxPincher::getDiagnostics(const std::vector<ServoStatus>& stati)
+pxpincher_msgs::pxpincher_diagnostic PxPincher::getDiagnostics(const std::vector<ServoStatus>& stati)
 {
-    pxpincher_rst_msgs::pxpincher_rst_diagnostic diag;
+    pxpincher_msgs::pxpincher_diagnostic diag;
     
     diag.header.stamp = ros::Time::now();
 

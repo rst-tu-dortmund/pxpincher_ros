@@ -9,6 +9,7 @@ set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
+  pxpincher_msgs
 )
 
 find_package(Boost REQUIRED COMPONENTS
@@ -107,7 +108,7 @@ find_package(Boost REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES pxpincher_comm
-  CATKIN_DEPENDS roscpp std_msgs
+  CATKIN_DEPENDS roscpp std_msgs pxpincher_msgs
 #  DEPENDS system_lib
 )
 
@@ -122,6 +123,7 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
+  ${pxpincher_msgs_INCLUDE_DIRS}
 )
 
 ## Declare a cpp library

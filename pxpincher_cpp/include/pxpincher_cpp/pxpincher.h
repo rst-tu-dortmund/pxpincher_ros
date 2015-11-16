@@ -49,7 +49,7 @@ private:
     static std::vector<double> convVoltage(const std::vector<int>& volt);
 
     sensor_msgs::JointState getJointState();
-    pxpincher_rst_msgs::pxpincher_rst_diagnostic getDiagnostics(const std::vector<ServoStatus>& stati);
+    pxpincher_msgs::pxpincher_diagnostic getDiagnostics(const std::vector<ServoStatus>& stati);
 
     void simulationCallback(const sensor_msgs::JointStateConstPtr &state);
 

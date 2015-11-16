@@ -1,6 +1,21 @@
 <launch>
+
+
+  <!--Here we broadcast our final coordinate system for the gripper, since gripper_finger_base_link from the arbotix package is
+      not centered at the gripper for our PhantomX Pincher arm. We choose the name gripper_link since the turtlebot_arm package depends on it. -->
+  <!--node pkg="tf" type="static_transform_publisher" name="gripper_base_link" args="0 0 -0.01 0.5 -0.5 -0.5 0.5 gripper_finger_base_link gripper_link 50" /-->
+
+  <!-- Unfortunately, we need a virtual helper joint that is part of the URDF -->
+  <node name="fake_joint_pub" pkg="pxpincher_description" type="fake_joint_pub.py" output="screen"/> 
+
+  <!-- Now load robot model -->
+  <param name="robot_description" command="$(find xacro)/xacro.py '$(find pxpincher_description)/urdf/pincher_arm.urdf.xacro'"/>
+  <node name="robot_state_pub" pkg="robot_state_publisher" type="robot_state_publisher"/>
+
+
   <!-- Start Arbotix driver -->
   <node name="pxpincher" pkg="pxpincher_cpp" type="pxpincher_cpp" output="screen">
   <rosparam file="$(find pxpincher_config)/config/pincher_arm.yaml" command="load"/>
   </node>
+
 </launch>

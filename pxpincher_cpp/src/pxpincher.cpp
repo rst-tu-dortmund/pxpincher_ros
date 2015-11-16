@@ -27,7 +27,7 @@ PxPincher::PxPincher():
     registerInterface(&jnt_state_interface_);
     registerInterface(&jnt_position_interface_);
 
-    statePublisher_ = nHandle_.advertise<sensor_msgs::JointState>("JointStates",1);
+    statePublisher_ = nHandle_.advertise<sensor_msgs::JointState>("/joint_states",1); // joint_states topic is always root
     diagnosticPublisher_ = nHandle_.advertise<pxpincher_rst_msgs::pxpincher_rst_diagnostic>("Diagnostics",1);
     simSubscriber_ = nHandle_.subscribe("JointCMDSimulation",1, &PxPincher::simulationCallback,this);
 
@@ -97,7 +97,7 @@ void PxPincher::fillControlRegister(const std::vector<ServoStatus>& stati)
     int idx = 0;
     for (const ServoStatus& status : stati)
     {
-        joint_info_[idx].pos = tick2rad( status.position_ );
+        joint_info_[idx].pos = tick2rad( status.position_ + paramObject_.offsets_[idx]);
         joint_info_[idx].vel = tick2rads( status.speed_ );
         ++idx;
     }
@@ -131,7 +131,7 @@ std::vector<double> PxPincher::tick2rad(const std::vector<int>& positions)
 {
     std::vector<double> rads;
     rads.reserve(positions.size());
-
+    
     for(int elem : positions){
         rads.push_back(tick2rad(elem));
     }

@@ -25,6 +25,7 @@ void PXParameter::update()
     cwlimits_.clear();
     ccwlimits_.clear();
     speeds_.clear();
+    offsets_.clear();
     
     XmlRpc::XmlRpcValue joints_yaml;
     if (ros::param::get("/pxpincher/joints", joints_yaml))
@@ -52,7 +53,11 @@ void PXParameter::update()
             
             // speeds
             ROS_ASSERT(it->second["speed"].getType() == XmlRpc::XmlRpcValue::TypeInt);
-            speeds_.push_back( (int) it->second["speed"] );               
+            speeds_.push_back( (int) it->second["speed"] );      
+            
+            // angle offsets
+            ROS_ASSERT(it->second["offset"].getType() == XmlRpc::XmlRpcValue::TypeInt);
+            offsets_.push_back( (int) it->second["offset"] );
            
         }
     }

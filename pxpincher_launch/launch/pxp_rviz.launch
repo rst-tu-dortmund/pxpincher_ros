@@ -1,0 +1,5 @@
+<launch>
+
+   <node pkg="rviz" type="rviz" name="rviz" args="-d $(find pxpincher_config)/config/pxpincher_rviz.rviz" />
+
+</launch>

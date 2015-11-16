@@ -1,0 +1,16 @@
+<package>
+  <name>pxpincher_description</name>
+  <version>0.0.1</version>
+  <description>
+   This package is adapted form the turtlebot_arm package by Michael Ferguson, Melonee Wise and Jorge Santos.
+  </description>
+ 
+  <maintainer email="christoph.roesmann@tu-dortmund.de">Christoph Rösmann</maintainer>
+  <license>BSD</license>
+  
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>urdf</run_depend>
+  <run_depend>xacro</run_depend>
+</package>

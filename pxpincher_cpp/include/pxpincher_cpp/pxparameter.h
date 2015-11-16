@@ -21,6 +21,7 @@ public:
     std::string port_;
     bool simulation_;
     std::vector<int> cwlimits_,ccwlimits_,speeds_;
+    std::vector<int> offsets_;
     std::vector<UBYTE> ids_;
     std::vector<std::string> names_;
 

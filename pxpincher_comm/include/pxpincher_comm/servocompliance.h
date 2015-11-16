@@ -41,19 +41,45 @@
 
 #include "codes.h"
 
+/**
+ * @class ServoCompliance
+ * @brief Object storing all compliance parameters of a servo
+ * 
+ * Refer to http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_1A for details.
+ * @see PXProtocol
+ */
 class ServoCompliance
 {
 public:
-    ServoCompliance(UBYTE id, UBYTE CWMargin, UBYTE CCWMargin, UBYTE CWSlope, UBYTE CCWSlope, UBYTE punch);
+    
+    /**
+     * @brief Holistic constructor
+     * @param id servo id
+     * @param cw_margin clockwise margin
+     * @param ccw_margin counter-clockwise margin
+     * @param cw_slope clockwise slope
+     * @param ccw_slope counter-clockwise slope
+     * @param punch punch value
+     */
+    ServoCompliance(UBYTE id, UBYTE cw_margin, UBYTE ccw_margin, UBYTE cw_slope, UBYTE ccw_slope, UBYTE punch);
+    
+    /**
+     * @brief Constructor with zero initialization
+     * @param id servo id
+     */
     ServoCompliance(UBYTE id);
 
+    
+    /**
+     * @brief Clear servo status
+     */
     void clear();
 
     UBYTE id_;
-    UBYTE CWMargin_;
-    UBYTE CCWMargin_;
-    UBYTE CWSlope_;
-    UBYTE CCWSlope_;
+    UBYTE cw_margin_;
+    UBYTE ccw_margin_;
+    UBYTE cw_slope_;
+    UBYTE ccw_slope_;
     UBYTE punch_;
 };
 

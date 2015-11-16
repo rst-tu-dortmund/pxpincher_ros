@@ -198,64 +198,635 @@ public:
      * See http://support.robotis.com/en/product/dynamixel/dxl_communication.htm
      * and http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_05
      * @param ids servo id vector
-     * @param delays related return-time-delay
+     * @param delays return-time-delay vector according to the servos \c ids
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
     UBYTE readReturnDelay(std::vector<UBYTE> ids, std::vector<int> &delays, SerialComm &comm);
 
-    ///@}
+    /**
+     * @brief Read status flag, if the eeprom area of a single servo is locked
+     * 
+     * if \c lock == 0, the EEPROM area can be modified, otherwise not.
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_2F
+     * @param id servo id
+     * @param lock[out] lock value [0: unlocked, 1: locked]
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readLock(UBYTE id,int &lock, SerialComm &comm);
     
-    /** @name Angle limits */
-    ///@{
-        
-    UBYTE readCWAngleLimit(UBYTE id,int &limit, SerialComm &comm);
-    UBYTE readCWAngleLimit(std::vector<UBYTE> ids, std::vector<int> &limits, SerialComm &comm);
-    UBYTE readCCWAngleLimit(UBYTE id,int &limit, SerialComm &comm);
-    UBYTE readCCWAngleLimit(std::vector<UBYTE> ids, std::vector<int> &limits, SerialComm &comm);
-
-    UBYTE setCWAngleLimit(UBYTE id,int limit, SerialComm &comm);
-    UBYTE setCWAngleLimit(std::vector<UBYTE> ids, std::vector<int> limits, SerialComm &comm);
-
-    UBYTE setCCWAngleLimit(UBYTE id,int limit, SerialComm &comm);
-    UBYTE setCCWAngleLimit(std::vector<UBYTE> ids, std::vector<int> limits, SerialComm &comm);
-
-    ///@}
+    /**
+     * @brief Read status flag, if the eeprom areas of a bunch of servos are locked
+     * 
+     * if \c lock == 0, the EEPROM area can be modified, otherwise not.
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_2F
+     * @param ids servo id vector
+     * @param locks[out] vector of lock values [0: unlocked, 1: locked]
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readLock(std::vector<UBYTE> ids, std::vector<int> &locks, SerialComm &comm);
     
-    UBYTE readTemperatureLimit(UBYTE id,int &limit, SerialComm &comm);
-    UBYTE readTemperatureLimit(std::vector<UBYTE> ids, std::vector<int> &limits, SerialComm &comm);
-    UBYTE setTemperatureLimit(UBYTE id,UBYTE limit, SerialComm &comm);
+    /**
+     * @brief Lock or unlock the status of an eeprom area
+     * 
+     * if \c lock == 0, the EEPROM area can be modified, otherwise not.
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_2F
+     * @warning If lock is set to 1, the power must be turned off and then turned on again to change into 0.
+     * @param id servo id
+     * @param lock lock value [0: unlocked, 1: locked]
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE setLock(UBYTE id, UBYTE lock, SerialComm &comm);
 
-    UBYTE readLowVoltageLimit(UBYTE id,int &limit, SerialComm &comm);
-    UBYTE readLowVoltageLimit(std::vector<UBYTE> ids, std::vector<int> &limits, SerialComm &comm);
-    UBYTE setLowVoltageLimit(UBYTE id,UBYTE limit, SerialComm &comm);
-
-    UBYTE readHighVoltageLimit(UBYTE id,int &limit, SerialComm &comm);
-    UBYTE readHighVoltageLimit(std::vector<UBYTE> ids, std::vector<int> &limits, SerialComm &comm);
-    UBYTE setHighVoltageLimit(UBYTE id,UBYTE limit, SerialComm &comm);
-
-    UBYTE readTorqueMax(UBYTE id,int &max, SerialComm &comm);
-    UBYTE readTorqueMax(std::vector<UBYTE> ids, std::vector<int> &maxs, SerialComm &comm);
-    UBYTE setTorqueMax(UBYTE id, int limit, SerialComm &comm);
-
+    /**
+     * @brief Read punch (current to drive motor is at minimum) of a single servo
+     * 
+     * Value range [0x20, 0x3FF]
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_30
+     * @param id servo id
+     * @param punch[out] punch value
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readPunch(UBYTE id, int &punch, SerialComm &comm);
+    
+    /**
+     * @brief Read punch (current to drive motor is at minimum) for a bunch of servos
+     * 
+     * Value range [0x20, 0x3FF]
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_30
+     * @param ids servo id vector
+     * @param punchs[out] punch value according to the servos in \c ids
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readPunch(std::vector<UBYTE> ids, std::vector<int> &punchs, SerialComm &comm);
+    
+    /**
+     * @brief Set punch (current to drive motor is at minimum) of a single servo
+     * 
+     * Value range [0x20, 0x3FF]
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_30
+     * @param id servo id
+     * @param punch punch value
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE setPunch(UBYTE id, int punch, SerialComm &comm);
+    
+    
+    /**
+     * @brief Set status return level
+     * 
+     * Specify how to return a Status Packet:
+     * Value 0: No return against all commands (Except PING)
+     * Value 1: Return only for the READ command
+     * Value 2: Return for all commands
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_10
+     * @remarks In case of an instruction packet sent via the broadcast id,
+     *          a status packet is not returned regardless of the status return level.
+     * @param id servo id
+     * @param level status return level [0,1,2]
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
     UBYTE setReturnLevel(UBYTE id, UBYTE level, SerialComm &comm);
 
+    /**
+     * @brief Set alarm led level of a single servo
+     * 
+     * See description of setAlarmShutdown() for details about the \c level
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_11
+     * @param id servo id
+     * @param level alarm level
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
     UBYTE setAlarmLED(UBYTE id, UBYTE level, SerialComm &comm);
+    
+    /**
+     * @brief Read alarm led level of a single servo
+     * 
+     * See description of readAlarmShutdown() for details about the \c level
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_11
+     * @param id servo id
+     * @param[out] level alarm level
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
     UBYTE readAlarmLED(UBYTE id, int &level, SerialComm &comm);
+    
+    /**
+     * @brief Read alarm led level for a bunch of servos
+     * 
+     * See description of readAlarmShutdown() for details about the \c level
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_11
+     * @param ids servo id vector
+     * @param[out] levels vector containins alarm levels for each servo provided in \c ids
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
     UBYTE readAlarmLED(std::vector<UBYTE> ids, std::vector<int> &levels, SerialComm &comm);
 
+    /**
+     * @brief Set alarm shutdown mode for a single servo
+     * 
+     * The dynamixel servos can protect themselves by detecting errors.
+     * The errors can be set according to:
+     * Bit 7: 0
+     * Bit 6: Instruction Error - If undefined Instruction is transmitted or the Action command is delivered without the reg_write command
+     * Bit 5: Overload Error - If the current load cannot be controller with the set maximum torque
+     * Bit 4: Checksum Error - If the checksum of the transmitted instruction packet is invalid
+     * Bit 3: Range Error - If the command is given beyond the range of usage
+     * Bit 2: OverHeating Error - If the internal temperature is out of the range of operating temperature
+     * Bit 1: Angle Limit Error - If Goal Position is outsite the interval specified by CW Angle Limit and CCW Angle Limit.
+     * Bit 0: Input Voltage Error - If the applied voltage is out of range of the specified operating voltage.
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_11
+     * @param id servo id
+     * @param level alarm levels
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
     UBYTE setAlarmShutdown(UBYTE id, UBYTE level, SerialComm &comm);
+    
+    /**
+     * @brief Read alarm shutdown mode of a single servo
+     * 
+     * The dynamixel servos can protect themselves by detecting errors.
+     * Refer to readAlarmShutdown() for possible modes/levels.
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_11
+     * @param id servo id
+     * @param[out] level alarm levels
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
     UBYTE readAlarmShutdown(UBYTE id, int &level, SerialComm &comm);
+    
+    /**
+     * @brief Read alarm shutdown mode for a bunch of servos
+     * 
+     * The dynamixel servos can protect themselves by detecting errors.
+     * Refer to readAlarmShutdown() for possible modes/levels.
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_11
+     * @param ids servo id vector
+     * @param[out] levels alarm levels for each servo specified in \c ids
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
     UBYTE readAlarmShutdown(std::vector<UBYTE> ids, std::vector<int> &levels, SerialComm &comm);
 
+    /**
+     * @brief Read torque state of a single servo (check if torque is enabled)
+     * 
+     * Two different states are possible:
+     * State 0: Keeps toque from generating by interrupting the power of motor
+     * State 1: Generates Torque by impressing the power to the motor.
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_11
+     * @param id servo id
+     * @param[out] state torque state
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
     UBYTE readTorqueState(UBYTE id, int &state, SerialComm &comm);
+    
+    /**
+     * @brief Read torque state for a bunch of servos (check if torque is enabled)
+     * 
+     * Two different states are possible:
+     * State 0: Keeps toque from generating by interrupting the power of motor
+     * State 1: Generates Torque by impressing the power to the motor.
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_11
+     * @param ids servo id vector
+     * @param[out] states torque states according to the specified servos in \c ids
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
     UBYTE readTorqueState(std::vector<UBYTE> ids, std::vector<int> &states, SerialComm &comm);
+    
+    /**
+     * @brief Set torque state of a single servo
+     * 
+     * Two different states are possible:
+     * State 0: Keeps toque from generating by interrupting the power of motor
+     * State 1: Generates Torque by impressing the power to the motor.
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_11
+     * @param id servo id
+     * @param state torque state
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
     UBYTE setTorqueState(UBYTE id, UBYTE state, SerialComm &comm);
 
+    
+    /**
+     * @brief Read led state of a single servo
+     * 
+     * The state is either 0 (off) or 1 (on).
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_11
+     * @param id servo id
+     * @param[out] state led state (0,1) corresponding to (off, on)
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
     UBYTE readLEDState(UBYTE id, int &state, SerialComm &comm);
+    
+    /**
+     * @brief Read led state for a bunch of servos
+     * 
+     * The state is either 0 (off) or 1 (on).
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_11
+     * @param ids servo id vector
+     * @param[out] states led states (0,1) corresponding to (off, on)
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
     UBYTE readLEDState(std::vector<UBYTE> ids, std::vector<int> &states, SerialComm &comm);
+    
+    /**
+     * @brief Set led state of a single servo
+     * 
+     * The state is either 0 (off) or 1 (on).
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_11
+     * @param id servo id
+     * @param state led state (0,1) corresponding to (off, on)
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
     UBYTE setLEDState(UBYTE id, UBYTE state, SerialComm &comm);
+    
+    /**
+     * @brief Ping a single servo
+     * 
+     * @param id servo id
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE ping(UBYTE id, SerialComm &comm);
 
+    /**
+     * @brief Print a vector of bytes using the ros info console output.
+     * @param data vector of bytes
+     */
+    static void printBytes(const std::vector<UBYTE> &data);
+    
+    /**
+     * @brief Analyze an error byte and print related error messages (if occured)
+     * @param error error byte
+     */
+    static void checkError(UBYTE error);
+    
+    ///@}
+    
+    
+    /** @name Limits */
+    ///@{
+        
+    /**
+     * @brief Read angle limits both clockwise and counter-clockwise of a single servo
+     * 
+     * The goal position is encoded in the range [0, 1023] (corresponding to [0°, 300°]).
+     * The unit is 0.29 degree. The center point is at 512 (150°).
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_06
+     * @remarks This method is faster than reading the angles separately, since registers are read with a single read-call.
+     * @param id servo id
+     * @param[out] cw clockwise angle limit
+     * @param[out] ccw counter-clockwise angle limit
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readAngleLimit(UBYTE id, int &cw, int &ccw, SerialComm &comm);
+    
+     /**
+     * @brief Read angle limits both clockwise and counter-clockwise for a bunch of servos
+     * 
+     * The goal position is encoded in the range [0, 1023] (corresponding to [0°, 300°]).
+     * The unit is 0.29 degree. The center point is at 512 (150°).
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_06
+     * @remarks This method is faster than reading the angles separately, since registers are read with a single read-call.
+     * @param ids servo id vector
+     * @param[out] cw clockwise angle limits according to servos specified in \c ids
+     * @param[out] ccw counter-clockwise angle limits according to servos specified in \c ids
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readAngleLimit(std::vector<UBYTE> ids, std::vector<int> &cws, std::vector<int> &ccws, SerialComm &comm);
+        
+    
+    /**
+     * @brief Read clockwise angle limit of a single servo
+     * 
+     * The goal position is encoded in the range [0, 1023] (corresponding to [0°, 300°]).
+     * The unit is 0.29 degree. The center point is at 512 (150°).
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_06
+     * @param id servo id
+     * @param[out] limit clockwise angle limit
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readCWAngleLimit(UBYTE id,int &limit, SerialComm &comm);
+    
+    /**
+     * @brief Read clockwise angle limits for a bunch of servos
+     * 
+     * The goal position is encoded in the range [0, 1023] (corresponding to [0°, 300°]).
+     * The unit is 0.29 degree. The center point is at 512 (150°).
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_06
+     * @param ids servo id vector
+     * @param[out] limits clockwise angle limits according to servos specified in \c ids
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readCWAngleLimit(std::vector<UBYTE> ids, std::vector<int> &limits, SerialComm &comm);
+    
+    /**
+     * @brief Read counter-clockwise angle limit of a single servo
+     * 
+     * The goal position is encoded in the range [0, 1023] (corresponding to [0°, 300°]).
+     * The unit is 0.29 degree. The center point is at 512 (150°).
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_06
+     * @param id servo id
+     * @param[out] limit counter-clockwise angle limit
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readCCWAngleLimit(UBYTE id,int &limit, SerialComm &comm);
+    
+    /**
+     * @brief Read counter-clockwise angle limits for a bunch of servos
+     * 
+     * The goal position is encoded in the range [0, 1023] (corresponding to [0°, 300°]).
+     * The unit is 0.29 degree. The center point is at 512 (150°).
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_06
+     * @param ids servo id vector
+     * @param[out] limits counter-clockwise angle limits according to servos specified in \c ids
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readCCWAngleLimit(std::vector<UBYTE> ids, std::vector<int> &limits, SerialComm &comm);
+
+    
+    /**
+     * @brief Set clockwise angle limit of a single servo
+     * 
+     * The goal position is encoded in the range [0, 1023] (corresponding to [0°, 300°]).
+     * The unit is 0.29 degree. The center point is at 512 (150°).
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_06
+     * @param id servo id
+     * @param limit clockwise angle limit
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE setCWAngleLimit(UBYTE id, int limit, SerialComm &comm);
+    
+    /**
+     * @brief Set clockwise angle limits for a bunch of servos
+     * 
+     * The goal position is encoded in the range [0, 1023] (corresponding to [0°, 300°]).
+     * The unit is 0.29 degree. The center point is at 512 (150°).
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_06
+     * @param ids servo id vector
+     * @param limits clockwise angle limits according to servos specified in \c ids
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE setCWAngleLimit(std::vector<UBYTE> ids, std::vector<int> limits, SerialComm &comm);
+
+    
+    /**
+     * @brief Set counter-clockwise angle limit of a single servo
+     * 
+     * The goal position is encoded in the range [0, 1023] (corresponding to [0°, 300°]).
+     * The unit is 0.29 degree. The center point is at 512 (150°).
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_06
+     * @param id servo id
+     * @param limit counter-clockwise angle limit
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE setCCWAngleLimit(UBYTE id, int limit, SerialComm &comm);
+    
+    /**
+     * @brief Set counter-clockwise angle limits for a bunch of servos
+     * 
+     * The goal position is encoded in the range [0, 1023] (corresponding to [0°, 300°]).
+     * The unit is 0.29 degree. The center point is at 512 (150°).
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_06
+     * @param ids servo id vector
+     * @param limits counter-clockwise angle limits according to servos specified in \c ids
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE setCCWAngleLimit(std::vector<UBYTE> ids, std::vector<int> limits, SerialComm &comm);
+   
+    /**
+     * @brief Read the maximum temperature limit of a single servo
+     * 
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_0B
+     * @param id servo id
+     * @param[out] limit maximum temperature limit [°C]
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readTemperatureLimit(UBYTE id, int &limit, SerialComm &comm);
+    
+    /**
+     * @brief Read the maximum temperature limits for a bunch of servos
+     * 
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_0B
+     * @param ids servo id vector
+     * @param[out] limits maximum temperature limits according to servos specified in \c ids  [°C]
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readTemperatureLimit(std::vector<UBYTE> ids, std::vector<int> &limits, SerialComm &comm);
+    
+    /**
+     * @brief Set the maximum temperature limit of a single servo
+     * 
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_0B
+     * @warning Do not set the temperature other than the default value!
+     *          If the temperature alarm shutdown occurs, wait 20min to cool the temperature before re-use!
+     * @param id servo id
+     * @param limit maximum temperature limit  [°C]
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE setTemperatureLimit(UBYTE id, UBYTE limit, SerialComm &comm);
+
+    /**
+     * @brief Read low voltage limit of a single servo
+     * The operation range is [50, 250] (0x32 ~ 0x96). The unit is 0.1V.
+     * E.g. a value of 80 corresponds to 8V.
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_0C
+     * @param id servo id
+     * @param[out] limit lower voltage limit
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readLowVoltageLimit(UBYTE id, int &limit, SerialComm &comm);
+    
+    /**
+     * @brief Read low voltage limit for a bunch of servos
+     * The operation range is [50, 250] (0x32 ~ 0x96). The unit is 0.1V.
+     * E.g. a value of 80 corresponds to 8V.
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_0C
+     * @param ids servo id vector
+     * @param[out] limits lower voltage limits according to servos specified in \c ids
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readLowVoltageLimit(std::vector<UBYTE> ids, std::vector<int> &limits, SerialComm &comm);
+    
+    /**
+     * @brief Set low voltage limit of a single servo
+     * The operation range is [50, 250] (0x32 ~ 0x96). The unit is 0.1V.
+     * E.g. a value of 80 corresponds to 8V.
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_0C
+     * @param ids servo id vector
+     * @param limit lower voltage limit
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE setLowVoltageLimit(UBYTE id, UBYTE limit, SerialComm &comm);
+
+    /**
+     * @brief Read upper/higher voltage limit of a single servo
+     * The operation range is [50, 250] (0x32 ~ 0x96). The unit is 0.1V.
+     * E.g. a value of 80 corresponds to 8V.
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_0C
+     * @param id servo id
+     * @param[out] limit higher voltage limit
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readHighVoltageLimit(UBYTE id, int &limit, SerialComm &comm);
+    
+    /**
+     * @brief Read upper/higher voltage limit for a bunch of servos
+     * The operation range is [50, 250] (0x32 ~ 0x96). The unit is 0.1V.
+     * E.g. a value of 80 corresponds to 8V.
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_0C
+     * @param ids servo id vector
+     * @param[out] limits higher voltage limits according to servos specified in \c ids
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readHighVoltageLimit(std::vector<UBYTE> ids, std::vector<int> &limits, SerialComm &comm);
+    
+    /**
+     * @brief Set higher/upper voltage limit of a single servo
+     * The operation range is [50, 250] (0x32 ~ 0x96). The unit is 0.1V.
+     * E.g. a value of 80 corresponds to 8V.
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_0C
+     * @param ids servo id vector
+     * @param limit higher voltage limit
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE setHighVoltageLimit(UBYTE id, UBYTE limit, SerialComm &comm);
+
+    /**
+     * @brief Read torque value of maximum output of a single servo
+     * The valid range is [0, 1023] (0x3FF). The unit is 0.1%.
+     * E.g. data 1023 (0x3FF) means that Dynamixel will use 100% of the maximum torque it can produce, 512 corresponds to 50% etc.
+     * When the power is turned on, Torque Limit (see readTorqueLimit()) uses this value as initial value. 
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_0E
+     * @param id servo id
+     * @param[out] max max torque limit [0, 1023]
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readTorqueMax(UBYTE id, int &max, SerialComm &comm);
+    
+    /**
+     * @brief Read torque value of maximum output for a bunch of servos
+     * The valid range is [0, 1023] (0x3FF). The unit is 0.1%.
+     * E.g. data 1023 (0x3FF) means that Dynamixel will use 100% of the maximum torque it can produce, 512 corresponds to 50% etc.
+     * When the power is turned on, Torque Limit (see readTorqueLimit()) uses this value as initial value. 
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_0E
+     * @param ids servo id vector
+     * @param[out] maxs max torque limits [0, 1023] according to servos specified in \c ids
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readTorqueMax(std::vector<UBYTE> ids, std::vector<int> &maxs, SerialComm &comm);
+    
+    /**
+     * @brief Set torque value of maximum output of a single servo
+     * The valid range is [0, 1023] (0x3FF). The unit is 0.1%.
+     * E.g. data 1023 (0x3FF) means that Dynamixel will use 100% of the maximum torque it can produce, 512 corresponds to 50% etc.
+     * When the power is turned on, Torque Limit (see readTorqueLimit()) uses this value as initial value. 
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_0E
+     * @param id servo id
+     * @param limit max torque limit [0, 1023]
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE setTorqueMax(UBYTE id, int limit, SerialComm &comm);
+    
+    /**
+     * @brief Read maximum torque limit of a single servo
+     * 
+     * The allowed range is [0, 1023]. The unit is about 0.1%.
+     * E.g. a value of 512 corresponds to 50%.
+     * If the power is turned on, the value of TorqueMax will be used as initial value.
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_22
+     * @remarks If an alarm shutdown is triggered, the motor loses its torque. At this moment, if the value is changed to
+     *          the value other than 0, the motor can be used again.
+     * @param id servo id
+     * @param[out] limit current torque limit
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readTorqueLimit(UBYTE id, int &limit, SerialComm &comm);
+    
+    /**
+     * @brief Read maximum torque limit for a bunch of servos
+     * 
+     * The allowed range is [0, 1023]. The unit is about 0.1%.
+     * E.g. a value of 512 corresponds to 50%.
+     * If the power is turned on, the value of TorqueMax will be used as initial value.
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_22
+     * @remarks If an alarm shutdown is triggered, the motor loses its torque. At this moment, if the value is changed to
+     *          the value other than 0, the motor can be used again.
+     * @param ids servo id vector
+     * @param[out] limits current torque limits according to the servos specified in \c ids
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readTorqueLimit(std::vector<UBYTE> ids, std::vector<int> &limits, SerialComm &comm);
+    
+    /**
+     * @brief Set maximum torque limit of a single servo
+     * 
+     * The allowed range is [0, 1023]. The unit is about 0.1%.
+     * E.g. a value of 512 corresponds to 50%.
+     * If the power is turned on, the value of TorqueMax will be used as initial value.
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_22
+     * @remarks If an alarm shutdown is triggered, the motor loses its torque. At this moment, if the value is changed to
+     *          the value other than 0, the motor can be used again.
+     * @param id servo id
+     * @param limit current torque limit
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE setTorqueLimit(UBYTE id, int limit, SerialComm &comm);
+    
+    ///@}    
+    
+    
+    
+    /** @name Compliance margin and slope 
+      * @details For more information on compliance margins and slopes refer to
+      *          http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_1A
+      */
+    //@{
+  
+    UBYTE readServoCompliance(ServoCompliance &comp, SerialComm &comm);
+    UBYTE readServoCompliance(std::vector<ServoCompliance> &comps, SerialComm &comm);
     UBYTE readCWComplianceMargin(UBYTE id, int &margin, SerialComm &comm);
     UBYTE readCWComplianceMargin(std::vector<UBYTE> ids, std::vector<int> &margins, SerialComm &comm);
     UBYTE setCWComplianceMargin(UBYTE id, UBYTE margin, SerialComm &comm);
@@ -271,10 +842,11 @@ public:
     UBYTE setComplianceMargin(UBYTE id, UBYTE cw, UBYTE ccw, SerialComm &comm);
     UBYTE setComplianceSlope(UBYTE id, UBYTE cw, UBYTE ccw, SerialComm &comm);
 
+    //@}
     
     
-    /** @name Goal position and speed */
-    //@{
+    /** @name Goal position, speed and torque */
+    ///@{
     
     /**
      * @brief Read current goal position of a single servo
@@ -329,52 +901,326 @@ public:
      */
     UBYTE setGoalPosition(std::vector<UBYTE> ids, std::vector<int> positions, SerialComm &comm);
 
+    /**
+     * @brief Read current goal speed of a single servo
+     * 
+     * The goal speed is encoded in the range [0, 2047].
+     * If the value is in [0, 1023], the motor rotates to the CCW direction.
+     * If the value is in [1024, 2047], the motor rotates to the CW direction.
+     * That is, the 10th bit becomes the direction bit to control the direction. 0 and 1024 are equal.
+     * The unit of this value varies depending on operating mode:
+     *  - Joint mode: Unit is about 0.111rpm
+     *  - Wheel mode: Unit is about 0.1% (wheel mode is not suited for robot arms).
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_1E
+     * @param id servo id
+     * @param[out] speed current goal speed [0, 2047]
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
     UBYTE readGoalSpeed(UBYTE id, int &speed, SerialComm &comm);
+    
+    /**
+     * @brief Read current goal speed for a bunch of servos
+     * 
+     * The goal speed is encoded in the range [0, 2047].
+     * If the value is in [0, 1023], the motor rotates to the CCW direction.
+     * If the value is in [1024, 2047], the motor rotates to the CW direction.
+     * That is, the 10th bit becomes the direction bit to control the direction. 0 and 1024 are equal.
+     * The unit of this value varies depending on operating mode:
+     *  - Joint mode: Unit is about 0.111rpm
+     *  - Wheel mode: Unit is about 0.1% (wheel mode is not suited for robot arms).
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_1E
+     * @param ids servo id vector
+     * @param[out] speeds current goal speeds [0, 2047] according to the servos specified in \c ids
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
     UBYTE readGoalSpeed(std::vector<UBYTE> ids, std::vector<int> &speeds, SerialComm &comm);
+    
+    /**
+     * @brief Set goal speed of a single servo
+     * 
+     * The goal speed is encoded in the range [0, 2047].
+     * If the value is in [0, 1023], the motor rotates to the CCW direction.
+     * If the value is in [1024, 2047], the motor rotates to the CW direction.
+     * That is, the 10th bit becomes the direction bit to control the direction. 0 and 1024 are equal.
+     * The unit of this value varies depending on operating mode:
+     *  - Joint mode: Unit is about 0.111rpm
+     *  - Wheel mode: Unit is about 0.1% (wheel mode is not suited for robot arms).
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_1E
+     * @param id servo id
+     * @param speed current goal speed [0, 2047]
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
     UBYTE setGoalSpeed(UBYTE id, int speed, SerialComm &comm);
+    
+    /**
+     * @brief Set goal speed for a bunch of servos
+     * 
+     * The goal speed is encoded in the range [0, 2047].
+     * If the value is in [0, 1023], the motor rotates to the CCW direction.
+     * If the value is in [1024, 2047], the motor rotates to the CW direction.
+     * That is, the 10th bit becomes the direction bit to control the direction. 0 and 1024 are equal.
+     * The unit of this value varies depending on operating mode:
+     *  - Joint mode: Unit is about 0.111rpm
+     *  - Wheel mode: Unit is about 0.1% (wheel mode is not suited for robot arms).
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_1E
+     * @param ids servo id vector
+     * @param[out] speed current goal speeds [0, 2047] according to servos specified in \c ids
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
     UBYTE setGoalSpeed(std::vector<UBYTE> ids, std::vector<int> speeds, SerialComm &comm);
+    
+    ///@}
+    
+    
+    
+    /** @name present states */
+    ///@{
+    
+    /**
+     * @brief Read current target/goal of a single servo
+     * 
+     * @see ServoTarget
+     * @param target ServoTarget object
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readServoTarget(ServoTarget &target, SerialComm &comm);
+    
+    /**
+     * @brief Read current target/goal for a bunch of servos
+     * 
+     * @see ServoTarget
+     * @param targets vector of ServoTarget objects (a single target for each servo)
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readServoTarget(std::vector<ServoTarget> &targets, SerialComm &comm);
+
+    /**
+     * @brief Read current status of a single servo
+     * 
+     * @see ServoStatus
+     * @param status ServoStatus object
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readServoStatus(ServoStatus &status, SerialComm &comm);
+    
+    /**
+     * @brief Read current status for a bunch of servos
+     * 
+     * @see ServoStatus
+     * @param status vector of ServoStatus objects (a single status for each servo)
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readServoStatus(std::vector<ServoStatus> &status, SerialComm &comm);
+    
+    /**
+     * @brief Read current position of a single servo
+     * 
+     * The position is encoded in the range [0, 1023].
+     * The unit is 0.29 degree. The center point is at 512 (150°).
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_24
+     * @param id servo id
+     * @param[out] position current servo position [0, 1023]
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readPresentPosition(UBYTE id,int &position, SerialComm &comm);
+    
+    /**
+     * @brief Read current positions for a bunch of servos
+     * 
+     * The position is encoded in the range [0, 1023].
+     * The unit is 0.29 degree. The center point is at 512 (150°).
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_24
+     * @param ids servo id vector
+     * @param[out] positions current servo positions [0, 1023] according to the servos specified in \c ids
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readPresentPosition(std::vector<UBYTE> ids, std::vector<int> &positions, SerialComm &comm);
+
+     /**
+     * @brief Read current speed of a single servo
+     * 
+     * The speed is encoded in the range [0, 2047].
+     * If the value is in [0, 1023], the motor rotates to the CCW direction.
+     * If the value is in [1024, 2047], the motor rotates to the CW direction.
+     * That is, the 10th bit becomes the direction bit to control the direction. 0 and 1024 are equal.
+     * The unit of this value varies depending on operating mode:
+     *  - Joint mode: Unit is about 0.111rpm
+     *  - Wheel mode: Unit is about 0.1% (wheel mode is not suited for robot arms).
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_26
+     * @param id servo id
+     * @param[out] speed current servo speed [0, 2047]
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readPresentSpeed(UBYTE id, int &speed, SerialComm &comm);
+    
+    /**
+     * @brief Read current speeds for a bunch of servos
+     * 
+     * The speed is encoded in the range [0, 2047].
+     * If the value is in [0, 1023], the motor rotates to the CCW direction.
+     * If the value is in [1024, 2047], the motor rotates to the CW direction.
+     * That is, the 10th bit becomes the direction bit to control the direction. 0 and 1024 are equal.
+     * The unit of this value varies depending on operating mode:
+     *  - Joint mode: Unit is about 0.111rpm
+     *  - Wheel mode: Unit is about 0.1% (wheel mode is not suited for robot arms).
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_26
+     * @param ids servo id vector
+     * @param[out] speeds current servo speeds [0, 2047] according to servos specified in \c ids
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readPresentSpeed(std::vector<UBYTE> ids, std::vector<int> &speeds, SerialComm &comm);
+
+    /**
+     * @brief Read currently applied load of a single servo
+     * 
+     * The load is encoded in the range [0, 2047]. The unit is about 0.1%.
+     * If the value is in [0, 1023], the load works to the CCW direction.
+     * If the value is in [1024, 2047], the load works to the CW direction.
+     * That is, the 10th bit becomes the direction bit to control the direction. 0 and 1024 are equal.
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_28
+     * @param id servo id
+     * @param[out] load current servo load [0, 2047]
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readPresentLoad(UBYTE id, int &load, SerialComm &comm);
+    
+    /**
+     * @brief Read currently applied load for a bunch of servos
+     * 
+     * The load is encoded in the range [0, 2047]. The unit is about 0.1%.
+     * If the value is in [0, 1023], the load works to the CCW direction.
+     * If the value is in [1024, 2047], the load works to the CW direction.
+     * That is, the 10th bit becomes the direction bit to control the direction. 0 and 1024 are equal.
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_28
+     * @param ids servo id vector
+     * @param[out] loads current servo loads [0, 2047] according to the servos specified in \c ids
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readPresentLoad(std::vector<UBYTE> ids, std::vector<int> &loads, SerialComm &comm);
+
+    /**
+     * @brief Read current voltage of a single servo
+     * 
+     * The value is 10 times larger than the actual voltage. E.g. 10V corresponds to a value of 100.
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_2A
+     * @param id servo id
+     * @param[out] voltage current servo voltage
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readPresentVoltage(UBYTE id,int &voltage, SerialComm &comm);
+    
+    /**
+     * @brief Read current voltages for a bunch of servos
+     * 
+     * The value is 10 times larger than the actual voltage. E.g. 10V corresponds to a value of 100.
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_2A
+     * @param ids servo id vector
+     * @param[out] voltages current servo voltages according to the servos specified in \c ids
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readPresentVoltage(std::vector<UBYTE> ids, std::vector<int> &voltages, SerialComm &comm);
+    
+    /**
+     * @brief Read current temperature of a single servo
+     * 
+     * The value is identical to the actual temperature in Celsius. E.g. 85°C corresponds to a value of 85.
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_2B
+     * @param id servo id
+     * @param[out] temperature current servo temperature [°C]
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readPresentTemperature(UBYTE id, int &temperature, SerialComm &comm);
+    
+    /**
+     * @brief Read current temperature for a bunch of servos
+     * 
+     * The value is identical to the actual temperature in Celsius. E.g. 85°C corresponds to a value of 85.
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_2B
+     * @param ids servo id vector
+     * @param[out] temperatures current servo temperature according to the servos specified in \c ids [°C]
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readPresentTemperature(std::vector<UBYTE> ids, std::vector<int> &temperatures, SerialComm &comm);
+    
+    /**
+     * @brief Check if there is any registered instruction for a single servo
+     * 
+     * Two possible states:
+     *  - Value 0: There are not commands transmitted by REG_WRITE
+     *  - Value 1: There are commands transmitted by REG_WRITE
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_2C
+     * @param id servo id
+     * @param[out] registered current registered state (0,1)
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readRegistered(UBYTE id, int &registered, SerialComm &comm);
+    
+    /**
+     * @brief Check if there is any registered instruction for a bunch of servos
+     * 
+     * Two possible states for each servo:
+     *  - Value 0: There are not commands transmitted by REG_WRITE
+     *  - Value 1: There are commands transmitted by REG_WRITE
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_2C
+     * @param ids servo ids
+     * @param[out] registereds current registered states (0,1) according to servos specified in \c ids
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readRegistered(std::vector<UBYTE> ids, std::vector<int> &registereds, SerialComm &comm);
+
+    /**
+     * @brief Check if there is any movement of a single servo
+     * 
+     * Two possible states:
+     *  - Value 0: Goal position command execution is completed
+     *  - Value 1: Goal position command execution is in progress
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_2E
+     * @param id servo id
+     * @param[out] moving current moving state (0,1)
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readMoving(UBYTE id,int &moving, SerialComm &comm);
+    
+    /**
+     * @brief Check if there is any movement for a bunch of servos
+     * 
+     * Two possible states for each servo:
+     *  - Value 0: Goal position command execution is completed
+     *  - Value 1: Goal position command execution is in progress
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_2E
+     * @param ids servo id vector
+     * @param[out] moving current moving state (0,1) according to servos specified in \c ids
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE readMoving(std::vector<UBYTE> ids, std::vector<int> &movings, SerialComm &comm);
 
     ///@}
     
     
     
-    UBYTE readTorqueLimit(UBYTE id, int &limit, SerialComm &comm);
-    UBYTE readTorqueLimit(std::vector<UBYTE> ids, std::vector<int> &limits, SerialComm &comm);
-    UBYTE setTorqueLimit(UBYTE id, int limit, SerialComm &comm);
-
-    UBYTE readPresentPosition(UBYTE id,int &position, SerialComm &comm);
-    UBYTE readPresentPosition(std::vector<UBYTE> ids, std::vector<int> &positions, SerialComm &comm);
-
-    UBYTE readPresentSpeed(UBYTE id, int &speed, SerialComm &comm);
-    UBYTE readPresentSpeed(std::vector<UBYTE> ids, std::vector<int> &speeds, SerialComm &comm);
-
-    UBYTE readPresentLoad(UBYTE id, int &load, SerialComm &comm);
-    UBYTE readPresentLoad(std::vector<UBYTE> ids, std::vector<int> &loads, SerialComm &comm);
-
-    UBYTE readPresentVoltage(UBYTE id,int &voltage, SerialComm &comm);
-    UBYTE readPresentVoltage(std::vector<UBYTE> ids, std::vector<int> &voltage, SerialComm &comm);
-    UBYTE readPresentTemperature(UBYTE id,int &temperature, SerialComm &comm);
-    UBYTE readPresentTemperature(std::vector<UBYTE> ids, std::vector<int> &temperature, SerialComm &comm);
-
-    UBYTE readRegistered(UBYTE id,int &registered, SerialComm &comm);
-    UBYTE readRegistered(std::vector<UBYTE> ids, std::vector<int> &registereds, SerialComm &comm);
-
-    UBYTE readMoving(UBYTE id,int &moving, SerialComm &comm);
-    UBYTE readMoving(std::vector<UBYTE> ids, std::vector<int> &movings, SerialComm &comm);
-
-    UBYTE readLock(UBYTE id,int &lock, SerialComm &comm);
-    UBYTE readLock(std::vector<UBYTE> ids, std::vector<int> &locks, SerialComm &comm);
-    UBYTE setLock(UBYTE id,UBYTE lock, SerialComm &comm);
-
-    UBYTE readPunch(UBYTE id, int &punch, SerialComm &comm);
-    UBYTE readPunch(std::vector<UBYTE> ids, std::vector<int> &punchs, SerialComm &comm);
-    UBYTE setPunch(UBYTE id,int punch, SerialComm &comm);
-
-    UBYTE ping(UBYTE id, SerialComm &comm);
-
-    void printBytes(std::vector<UBYTE> &data);
-
-    /*
+     /*
      * These commands read several registers at once to reduce communication overhead.
      * In principle it is possible to combine arbitrary commands as long as their registers are in a row.
      * In this case only a few commands that can benefit from this technique are implemented.
@@ -383,32 +1229,91 @@ public:
      * So it is only possible to write beyond one register when they belong together (conceptualy)
      */
 
-    UBYTE readAngleLimit(UBYTE id, int &cw, int &ccw, SerialComm &comm);
-    UBYTE readAngleLimit(std::vector<UBYTE> ids, std::vector<int> &cws, std::vector<int> &ccws, SerialComm &comm);
 
-    UBYTE readServoCompliance(ServoCompliance &comp, SerialComm &comm);
-    UBYTE readServoCompliance(std::vector<ServoCompliance> &comps, SerialComm &comm);
-
-    UBYTE readServoTarget(ServoTarget &target, SerialComm &comm);
-    UBYTE readServoTarget(std::vector<ServoTarget> &targets, SerialComm &comm);
-
-    UBYTE readServoStatus(ServoStatus &status, SerialComm &comm);
-    UBYTE readServoStatus(std::vector<ServoStatus> &status, SerialComm &comm);
 
 private:
 
-    bool checkChecksum(std::vector<UBYTE> &data);
-    void checkError(UBYTE error);
-    bool checkParameterRange(int &param, int low, int high, bool exception = true);
-    bool checkParameterRange(UBYTE &param, int low, int high, bool exception = true);
-    int calculateSpeed(UBYTE hiByte, UBYTE loByte);
-    int calculateLoad(UBYTE hiByte, UBYTE loByte);
+    /**
+     * @brief Check the checksum of a given byte array
+     * @param data vector of bytes
+     */
+    bool checkChecksum(const std::vector<UBYTE> &data) const;
+    
+    /**
+     * @brief Check parameter range and bound param to the range (int version)
+     * @todo exception implementation
+     * @param param parameter to be checked and modified
+     * @param low lower bound
+     * @param high upper bound
+     * @param exception if \c true, throw an exception
+     * @return \c true, if parameter was in the range, \c false otherwise.
+     */
+    bool checkParameterRange(int &param, int low, int high, bool exception = true) const;
+    
+    /**
+     * @brief Check parameter range and bound param to the range (ubyte version)
+     * @todo exception implementation
+     * @param param parameter to be checked and modified
+     * @param low lower bound
+     * @param high upper bound
+     * @param exception if \c true, throw an exception
+     * @return \c true, if parameter was in the range, \c false otherwise.
+     */
+    bool checkParameterRange(UBYTE &param, int low, int high, bool exception = true) const;
+    
+    /**
+     * @brief Calculate speed value from 2 bytes
+     * @param param parameter to be checked and modified
+     * @param hi_byte higher byte
+     * @param lo_byte lower byte
+     * @return speed value
+     */
+    int calculateSpeed(UBYTE hi_byte, UBYTE lo_byte) const;
+    
+    /**
+     * @brief Calculate load value from 2 bytes
+     * @param param parameter to be checked and modified
+     * @param hi_byte higher byte
+     * @param lo_byte lower byte
+     * @return load value
+     */
+    int calculateLoad(UBYTE hi_byte, UBYTE lo_byte) const;
 
-    void appendData(std::vector<UBYTE> &data, std::vector<int> rawData, bool isLowHigh);
+    /**
+     * @brief Append vector raw_data to data vector containing only bytes
+     * @param[in,out] data data vector of bytes which is extended
+     * @param raw_data new data vector that should be added to \c data.
+     * @param is_low_high set to \c true, if the data is a 16bit value and therefore must be splitted into two bytes.
+     */
+    void appendData(std::vector<UBYTE> &data, const std::vector<int>& raw_data, bool is_low_high) const;
 
-    std::vector<UBYTE> makeSinglePackage(UBYTE id, UBYTE inst, std::vector<UBYTE> data);
-    std::vector<UBYTE> makeMultiReadPackage(std::vector<UBYTE> ids, UBYTE addr, UBYTE len);
-    std::vector<UBYTE> makeMultiWritePackage(std::vector<UBYTE> ids, UBYTE addr, std::vector<UBYTE> data, UBYTE nBytes);
+    /**
+     * @brief Construct a message/package for a single servo
+     * @param id servo id
+     * @param inst byte representing the desired instruction
+     * @param data actual data vector
+     * @return byte vector of the complete package
+     */
+    std::vector<UBYTE> makeSinglePackage(UBYTE id, UBYTE inst, const std::vector<UBYTE>& data) const;
+    
+    /**
+     * @brief Construct a message/package for reading from multiple servos
+     * @param ids servo id vector
+     * @param addr addresses of the registers to read from
+     * @param len length in bytes starting from \c addr.
+     * @return byte vector of the complete package
+     */
+    std::vector<UBYTE> makeMultiReadPackage(std::vector<UBYTE> ids, UBYTE addr, UBYTE len) const;
+    
+    /**
+     * @brief Construct a message/package for writing to multiple servos
+     * @param ids servo id vector
+     * @param addr addresses of the registers to write to
+     * @param data data vector (bytes)
+     * @param n_bytes number of bytes
+     * @return byte vector of the complete package
+     */
+    std::vector<UBYTE> makeMultiWritePackage(std::vector<UBYTE> ids, UBYTE addr, const std::vector<UBYTE>& data, UBYTE n_bytes) const;
 };
 
 #endif // PXPROTOCOL_H

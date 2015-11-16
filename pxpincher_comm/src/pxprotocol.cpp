@@ -389,6 +389,226 @@ UBYTE PXProtocol::readReturnDelay(std::vector<UBYTE> ids, std::vector<int> &dela
     return response[4];
 }
 
+
+UBYTE PXProtocol::readLock(UBYTE id, int &lock, SerialComm &comm)
+{
+    std::vector<UBYTE> ids = {id};
+    std::vector<int> locks = {0};
+
+    // Wrap to multi servo command
+    UBYTE error = readLock(ids,locks,comm);
+
+    // Remap data
+    lock = locks.at(0);
+
+    return error;
+}
+
+UBYTE PXProtocol::readLock(std::vector<UBYTE> ids, std::vector<int> &locks, SerialComm &comm)
+{
+    std::vector<UBYTE> package, data, response;
+
+    UBYTE nServos = ids.size();
+    UBYTE reg = DYNAMIXEL_LOCK_EEPROM;
+    UBYTE nBytes = 0x01;
+
+    if(nServos > 1){
+        // Multi Servo Mode
+        package = makeMultiReadPackage(ids,reg,nBytes);
+
+    }else{
+        // Single Servo Mode
+        data.push_back(reg);
+        data.push_back(nBytes);
+
+        package = makeSinglePackage(ids.at(0),DYNAMIXEL_READ_DATA,data);
+    }
+
+    // Send package and recieve response
+    comm.sendData(package, &response, DYNAMIXEL_NO_DATA_RESPONSE + nBytes * nServos);
+
+#ifdef PRINT_BYTES
+    // Print out Bytes to the Console
+    printBytes(package);
+    printBytes(response);
+#endif
+
+    // Check Checksum
+    if(!checkChecksum(response)){
+        /// @todo TODO Throw Exception
+        ROS_INFO("Checksum mismatch");
+    }
+
+    // Extract Data
+    locks.clear();
+    for(int i = 0; i < nBytes * nServos; i+=nBytes){
+        locks.push_back((int) response.at(i+5));
+    }
+
+    // Return Error Byte
+    /// @todo TODO check error byte and throw exception if nescecary
+    return response[4];
+}
+
+UBYTE PXProtocol::setLock(UBYTE id, UBYTE lock, SerialComm &comm)
+{
+    if (!checkParameterRange(lock,0,1)){
+        //return 0xFF;
+    }
+
+    std::vector<UBYTE> package, data, response;
+
+    UBYTE reg = DYNAMIXEL_LOCK_EEPROM;
+
+    data.push_back(reg);
+    data.push_back(lock);
+
+    package = makeSinglePackage(id,DYNAMIXEL_WRITE_DATA,data);
+
+    // Send package and recieve response
+    comm.sendData(package, &response, DYNAMIXEL_NO_DATA_RESPONSE);
+
+#ifdef PRINT_BYTES
+    // Print out Bytes to the Console
+    printBytes(package);
+    printBytes(response);
+#endif
+
+    //Check Checksum
+    if(!checkChecksum(response)){
+        /// @todo TODO Throw Exception
+        ROS_INFO("Checksum mismatch");
+    }
+
+    // Return Error Byte
+    checkError(response[4]);
+    return response[4];
+}
+
+UBYTE PXProtocol::readPunch(UBYTE id, int &punch, SerialComm &comm)
+{
+    std::vector<UBYTE> ids = {id};
+    std::vector<int> punchs = {0};
+
+    // Wrap to multi servo command
+    UBYTE error = readPunch(ids,punchs,comm);
+
+    // Remap data
+    punch = punchs.at(0);
+
+    return error;
+}
+
+UBYTE PXProtocol::readPunch(std::vector<UBYTE> ids, std::vector<int> &punchs, SerialComm &comm)
+{
+    std::vector<UBYTE> package, data, response;
+
+    UBYTE nServos = ids.size();
+    UBYTE reg = DYNAMIXEL_PUNCH_L;
+    UBYTE nBytes = 0x02;
+
+    if(nServos > 1){
+        // Multi Servo Mode
+        package = makeMultiReadPackage(ids,reg,nBytes);
+
+    }else{
+        // Single Servo Mode
+        data.push_back(reg);
+        data.push_back(nBytes);
+
+        package = makeSinglePackage(ids.at(0),DYNAMIXEL_READ_DATA,data);
+    }
+
+    // Send package and recieve response
+    comm.sendData(package, &response, DYNAMIXEL_NO_DATA_RESPONSE + nBytes * nServos);
+
+#ifdef PRINT_BYTES
+    // Print out Bytes to the Console
+    printBytes(package);
+    printBytes(response);
+#endif
+
+    // Check Checksum
+    if(!checkChecksum(response)){
+        /// @todo TODO Throw Exception
+        ROS_INFO("Checksum mismatch");
+    }
+
+    // Extract Data
+    punchs.clear();
+    for(int i = 0; i < nBytes * nServos; i+=nBytes){
+        punchs.push_back((int) (response.at(i+6) << 8) | response.at(i+5));
+    }
+
+    // Return Error Byte
+    /// @todo TODO check error byte and throw exception if nescecary
+    return response[4];
+}
+
+UBYTE PXProtocol::setPunch(UBYTE id, int punch, SerialComm &comm)
+{
+    if (!checkParameterRange(punch,32,1023)){
+        //return 0xFF;
+    }
+
+    std::vector<UBYTE> package, data, response;
+
+    UBYTE reg = DYNAMIXEL_PUNCH_L;
+    UBYTE punch_low = (UBYTE) (punch % 256);
+    UBYTE punch_high = (UBYTE) (punch >> 8);
+
+    data.push_back(reg);
+    data.push_back(punch_low);
+    data.push_back(punch_high);
+
+    package = makeSinglePackage(id,DYNAMIXEL_WRITE_DATA,data);
+
+    // Send package and recieve response
+    comm.sendData(package, &response, DYNAMIXEL_NO_DATA_RESPONSE);
+
+#ifdef PRINT_BYTES
+    // Print out Bytes to the Console
+    printBytes(package);
+    printBytes(response);
+#endif
+
+    //Check Checksum
+    if(!checkChecksum(response)){
+        /// @todo TODO Throw Exception
+        ROS_INFO("Checksum mismatch");
+    }
+
+    // Return Error Byte
+    checkError(response[4]);
+    return response[4];
+}
+
+UBYTE PXProtocol::ping(UBYTE id, SerialComm &comm)
+{
+    std::vector<UBYTE> package, data, response;
+
+    package = makeSinglePackage(id,DYNAMIXEL_PING,data);
+
+    // Send package and recieve response
+    comm.sendData(package, &response, DYNAMIXEL_NO_DATA_RESPONSE);
+
+#ifdef PRINT_BYTES
+    // Print out Bytes to the Console
+    printBytes(package);
+    printBytes(response);
+#endif
+
+    //Check Checksum
+    if(!checkChecksum(response)){
+        /// @todo TODO Throw Exception
+        ROS_INFO("Checksum mismatch");
+    }
+
+    // Return Error Byte
+    return response[4];
+}
+
+
 UBYTE PXProtocol::readCWAngleLimit(UBYTE id, int &limit, SerialComm &comm)
 {
     std::vector<UBYTE> ids = {id};
@@ -1032,7 +1252,7 @@ UBYTE PXProtocol::readPresentTemperature(UBYTE id, int &temperature, SerialComm 
     return error;
 }
 
-UBYTE PXProtocol::readPresentTemperature(std::vector<UBYTE> ids, std::vector<int> &temperature, SerialComm &comm)
+UBYTE PXProtocol::readPresentTemperature(std::vector<UBYTE> ids, std::vector<int> &temperatures, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -1068,9 +1288,9 @@ UBYTE PXProtocol::readPresentTemperature(std::vector<UBYTE> ids, std::vector<int
     }
 
     // Extract Data
-    temperature.clear();
+    temperatures.clear();
     for(int i = 0; i < nBytes * nServos; i+=nBytes){
-        temperature.push_back((int) response.at(i+5));
+        temperatures.push_back((int) response.at(i+5));
     }
 
     // Return Error Byte
@@ -1199,223 +1419,7 @@ UBYTE PXProtocol::readMoving(std::vector<UBYTE> ids, std::vector<int> &movings, 
     return response[4];
 }
 
-UBYTE PXProtocol::readLock(UBYTE id, int &lock, SerialComm &comm)
-{
-    std::vector<UBYTE> ids = {id};
-    std::vector<int> locks = {0};
 
-    // Wrap to multi servo command
-    UBYTE error = readLock(ids,locks,comm);
-
-    // Remap data
-    lock = locks.at(0);
-
-    return error;
-}
-
-UBYTE PXProtocol::readLock(std::vector<UBYTE> ids, std::vector<int> &locks, SerialComm &comm)
-{
-    std::vector<UBYTE> package, data, response;
-
-    UBYTE nServos = ids.size();
-    UBYTE reg = DYNAMIXEL_LOCK_EEPROM;
-    UBYTE nBytes = 0x01;
-
-    if(nServos > 1){
-        // Multi Servo Mode
-        package = makeMultiReadPackage(ids,reg,nBytes);
-
-    }else{
-        // Single Servo Mode
-        data.push_back(reg);
-        data.push_back(nBytes);
-
-        package = makeSinglePackage(ids.at(0),DYNAMIXEL_READ_DATA,data);
-    }
-
-    // Send package and recieve response
-    comm.sendData(package, &response, DYNAMIXEL_NO_DATA_RESPONSE + nBytes * nServos);
-
-#ifdef PRINT_BYTES
-    // Print out Bytes to the Console
-    printBytes(package);
-    printBytes(response);
-#endif
-
-    // Check Checksum
-    if(!checkChecksum(response)){
-        /// @todo TODO Throw Exception
-        ROS_INFO("Checksum mismatch");
-    }
-
-    // Extract Data
-    locks.clear();
-    for(int i = 0; i < nBytes * nServos; i+=nBytes){
-        locks.push_back((int) response.at(i+5));
-    }
-
-    // Return Error Byte
-    /// @todo TODO check error byte and throw exception if nescecary
-    return response[4];
-}
-
-UBYTE PXProtocol::setLock(UBYTE id, UBYTE lock, SerialComm &comm)
-{
-    if (!checkParameterRange(lock,0,1)){
-        //return 0xFF;
-    }
-
-    std::vector<UBYTE> package, data, response;
-
-    UBYTE reg = DYNAMIXEL_LOCK_EEPROM;
-
-    data.push_back(reg);
-    data.push_back(lock);
-
-    package = makeSinglePackage(id,DYNAMIXEL_WRITE_DATA,data);
-
-    // Send package and recieve response
-    comm.sendData(package, &response, DYNAMIXEL_NO_DATA_RESPONSE);
-
-#ifdef PRINT_BYTES
-    // Print out Bytes to the Console
-    printBytes(package);
-    printBytes(response);
-#endif
-
-    //Check Checksum
-    if(!checkChecksum(response)){
-        /// @todo TODO Throw Exception
-        ROS_INFO("Checksum mismatch");
-    }
-
-    // Return Error Byte
-    checkError(response[4]);
-    return response[4];
-}
-
-UBYTE PXProtocol::readPunch(UBYTE id, int &punch, SerialComm &comm)
-{
-    std::vector<UBYTE> ids = {id};
-    std::vector<int> punchs = {0};
-
-    // Wrap to multi servo command
-    UBYTE error = readPunch(ids,punchs,comm);
-
-    // Remap data
-    punch = punchs.at(0);
-
-    return error;
-}
-
-UBYTE PXProtocol::readPunch(std::vector<UBYTE> ids, std::vector<int> &punchs, SerialComm &comm)
-{
-    std::vector<UBYTE> package, data, response;
-
-    UBYTE nServos = ids.size();
-    UBYTE reg = DYNAMIXEL_PUNCH_L;
-    UBYTE nBytes = 0x02;
-
-    if(nServos > 1){
-        // Multi Servo Mode
-        package = makeMultiReadPackage(ids,reg,nBytes);
-
-    }else{
-        // Single Servo Mode
-        data.push_back(reg);
-        data.push_back(nBytes);
-
-        package = makeSinglePackage(ids.at(0),DYNAMIXEL_READ_DATA,data);
-    }
-
-    // Send package and recieve response
-    comm.sendData(package, &response, DYNAMIXEL_NO_DATA_RESPONSE + nBytes * nServos);
-
-#ifdef PRINT_BYTES
-    // Print out Bytes to the Console
-    printBytes(package);
-    printBytes(response);
-#endif
-
-    // Check Checksum
-    if(!checkChecksum(response)){
-        /// @todo TODO Throw Exception
-        ROS_INFO("Checksum mismatch");
-    }
-
-    // Extract Data
-    punchs.clear();
-    for(int i = 0; i < nBytes * nServos; i+=nBytes){
-        punchs.push_back((int) (response.at(i+6) << 8) | response.at(i+5));
-    }
-
-    // Return Error Byte
-    /// @todo TODO check error byte and throw exception if nescecary
-    return response[4];
-}
-
-UBYTE PXProtocol::setPunch(UBYTE id, int punch, SerialComm &comm)
-{
-    if (!checkParameterRange(punch,32,1023)){
-        //return 0xFF;
-    }
-
-    std::vector<UBYTE> package, data, response;
-
-    UBYTE reg = DYNAMIXEL_PUNCH_L;
-    UBYTE punch_low = (UBYTE) (punch % 256);
-    UBYTE punch_high = (UBYTE) (punch >> 8);
-
-    data.push_back(reg);
-    data.push_back(punch_low);
-    data.push_back(punch_high);
-
-    package = makeSinglePackage(id,DYNAMIXEL_WRITE_DATA,data);
-
-    // Send package and recieve response
-    comm.sendData(package, &response, DYNAMIXEL_NO_DATA_RESPONSE);
-
-#ifdef PRINT_BYTES
-    // Print out Bytes to the Console
-    printBytes(package);
-    printBytes(response);
-#endif
-
-    //Check Checksum
-    if(!checkChecksum(response)){
-        /// @todo TODO Throw Exception
-        ROS_INFO("Checksum mismatch");
-    }
-
-    // Return Error Byte
-    checkError(response[4]);
-    return response[4];
-}
-
-UBYTE PXProtocol::ping(UBYTE id, SerialComm &comm)
-{
-    std::vector<UBYTE> package, data, response;
-
-    package = makeSinglePackage(id,DYNAMIXEL_PING,data);
-
-    // Send package and recieve response
-    comm.sendData(package, &response, DYNAMIXEL_NO_DATA_RESPONSE);
-
-#ifdef PRINT_BYTES
-    // Print out Bytes to the Console
-    printBytes(package);
-    printBytes(response);
-#endif
-
-    //Check Checksum
-    if(!checkChecksum(response)){
-        /// @todo TODO Throw Exception
-        ROS_INFO("Checksum mismatch");
-    }
-
-    // Return Error Byte
-    return response[4];
-}
 
 UBYTE PXProtocol::readPresentPosition(UBYTE id, int &position, SerialComm &comm)
 {
@@ -1611,7 +1615,7 @@ UBYTE PXProtocol::readPresentVoltage(UBYTE id, int &voltage, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::readPresentVoltage(std::vector<UBYTE> ids, std::vector<int> &voltage, SerialComm &comm)
+UBYTE PXProtocol::readPresentVoltage(std::vector<UBYTE> ids, std::vector<int> &voltages, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -1647,9 +1651,9 @@ UBYTE PXProtocol::readPresentVoltage(std::vector<UBYTE> ids, std::vector<int> &v
     }
 
     // Extract Data
-    voltage.clear();
+    voltages.clear();
     for(int i = 0; i < nBytes * nServos; i+=nBytes){
-        voltage.push_back((int) response.at(i+5));
+        voltages.push_back((int) response.at(i+5));
     }
 
     // Return Error Byte
@@ -2870,7 +2874,7 @@ UBYTE PXProtocol::readGoalPosition(std::vector<UBYTE> ids, std::vector<int> &pos
     return response[4];
 }
 
-void PXProtocol::printBytes(std::vector<UBYTE> &data)
+void PXProtocol::printBytes(const std::vector<UBYTE> &data)
 {
     int n = data.size();
 
@@ -2955,10 +2959,10 @@ UBYTE PXProtocol::readServoCompliance(ServoCompliance &comp, SerialComm &comm)
     UBYTE error = readServoCompliance(comps,comm);
 
     // Remap data
-    comp.CWMargin_ = (comps.at(0)).CWMargin_;
-    comp.CCWMargin_ = (comps.at(0)).CCWMargin_;
-    comp.CWSlope_ = (comps.at(0)).CWSlope_;
-    comp.CCWSlope_ = (comps.at(0)).CCWSlope_;
+    comp.cw_margin_ = (comps.at(0)).cw_margin_;
+    comp.ccw_margin_ = (comps.at(0)).ccw_margin_;
+    comp.cw_slope_ = (comps.at(0)).cw_slope_;
+    comp.ccw_slope_ = (comps.at(0)).ccw_slope_;
     comp.punch_ = (comps.at(0)).punch_;
 
     return error;
@@ -3011,10 +3015,10 @@ UBYTE PXProtocol::readServoCompliance(std::vector<ServoCompliance> &comps, Seria
 
     // Extract Data
     for(int i = 0; i < comps.size(); ++i){
-        (comps.at(i)).CWMargin_ =     (int)  response.at(nBytes*i + 5);
-        (comps.at(i)).CCWMargin_ =    (int)  response.at(nBytes*i + 6);
-        (comps.at(i)).CWSlope_ =      (int)  response.at(nBytes*i + 7);
-        (comps.at(i)).CCWSlope_ =     (int)  response.at(nBytes*i + 8);
+        (comps.at(i)).cw_margin_ =     (int)  response.at(nBytes*i + 5);
+        (comps.at(i)).ccw_margin_ =    (int)  response.at(nBytes*i + 6);
+        (comps.at(i)).cw_slope_ =      (int)  response.at(nBytes*i + 7);
+        (comps.at(i)).ccw_slope_ =     (int)  response.at(nBytes*i + 8);
         (comps.at(i)).punch_ =        (int)  punchs.at(i);
     }
 
@@ -3032,9 +3036,9 @@ UBYTE PXProtocol::readServoTarget(ServoTarget &target, SerialComm &comm)
     UBYTE error = readServoTarget(targets,comm);
 
     // Remap data
-    target.targetPosition_ = (targets.at(0)).targetPosition_;
-    target.targetSpeed_ = (targets.at(0)).targetSpeed_;
-    target.maxTorque_ = (targets.at(0)).maxTorque_;
+    target.target_position_ = (targets.at(0)).target_position_;
+    target.target_speed_ = (targets.at(0)).target_speed_;
+    target.max_torque_ = (targets.at(0)).max_torque_;
 
     return error;
 }
@@ -3082,9 +3086,9 @@ UBYTE PXProtocol::readServoTarget(std::vector<ServoTarget> &targets, SerialComm 
 
     // Extract Data
     for(int i = 0; i < targets.size(); ++i){
-        (targets.at(i)).targetPosition_ =   (int) (response.at(nBytes*i + 6) << 8) | response.at(nBytes*i + 5);
-        (targets.at(i)).targetSpeed_ =      (int) (response.at(nBytes*i + 8) << 8) | response.at(nBytes*i + 7);
-        (targets.at(i)).maxTorque_ =        (int) (response.at(nBytes*i + 10) << 8) | response.at(nBytes*i + 9);
+        (targets.at(i)).target_position_ =   (int) (response.at(nBytes*i + 6) << 8) | response.at(nBytes*i + 5);
+        (targets.at(i)).target_speed_ =      (int) (response.at(nBytes*i + 8) << 8) | response.at(nBytes*i + 7);
+        (targets.at(i)).max_torque_ =        (int) (response.at(nBytes*i + 10) << 8) | response.at(nBytes*i + 9);
     }
 
     // Return Error Byte
@@ -3165,7 +3169,7 @@ UBYTE PXProtocol::readServoStatus(std::vector<ServoStatus> &status, SerialComm &
     return response[4];
 }
 
-bool PXProtocol::checkChecksum(std::vector<UBYTE> &data)
+bool PXProtocol::checkChecksum(const std::vector<UBYTE> &data) const
 {
     if (data.size() < 5){
         return true;
@@ -3248,7 +3252,7 @@ void PXProtocol::checkError(UBYTE error)
     }
 }
 
-bool PXProtocol::checkParameterRange(int &param, int low, int high, bool exception)
+bool PXProtocol::checkParameterRange(int &param, int low, int high, bool exception) const
 {
     bool retval = true;
     if (param > high || param < low){
@@ -3264,7 +3268,7 @@ bool PXProtocol::checkParameterRange(int &param, int low, int high, bool excepti
     return retval;
 }
 
-bool PXProtocol::checkParameterRange(UBYTE &param, int low, int high, bool exception)
+bool PXProtocol::checkParameterRange(UBYTE &param, int low, int high, bool exception) const
 {
     bool retval = true;
     if (param > high || param < low){
@@ -3280,30 +3284,30 @@ bool PXProtocol::checkParameterRange(UBYTE &param, int low, int high, bool excep
     return retval;
 }
 
-int PXProtocol::calculateSpeed(UBYTE hiByte, UBYTE loByte)
+int PXProtocol::calculateSpeed(UBYTE hi_byte, UBYTE lo_byte) const
 {
-    int speed = hiByte | loByte;
+    int speed = hi_byte | lo_byte;
     speed = speed & 1023;
 
-    if( (hiByte >> 2) > 0 ){
+    if( (hi_byte >> 2) > 0 ){
         return -1*speed;
     }else{
         return speed;
     }
 }
 
-int PXProtocol::calculateLoad(UBYTE hiByte, UBYTE loByte)
+int PXProtocol::calculateLoad(UBYTE hi_byte, UBYTE lo_byte) const
 {
-    return calculateSpeed(hiByte,loByte);
+    return calculateSpeed(hi_byte,lo_byte);
 }
 
-void PXProtocol::appendData(std::vector<UBYTE> &data, std::vector<int> rawData, bool isLowHigh)
+void PXProtocol::appendData(std::vector<UBYTE> &data, const std::vector<int>& raw_data, bool is_low_high) const
 {
-    for(int i = 0; i < rawData.size(); ++i){
+    for(int i = 0; i < raw_data.size(); ++i){
 
-        int elem = rawData.at(i);
+        int elem = raw_data.at(i);
 
-        if(isLowHigh){
+        if(is_low_high){
             UBYTE low = (UBYTE) (elem % 256);
             UBYTE high = (UBYTE) (elem >> 8);
 
@@ -3315,7 +3319,7 @@ void PXProtocol::appendData(std::vector<UBYTE> &data, std::vector<int> rawData, 
     }
 }
 
-std::vector<UBYTE> PXProtocol::makeSinglePackage(UBYTE id, UBYTE inst, std::vector<UBYTE> data)
+std::vector<UBYTE> PXProtocol::makeSinglePackage(UBYTE id, UBYTE inst, const std::vector<UBYTE>& data) const
 {
     std::vector<UBYTE> package;
 
@@ -3345,7 +3349,7 @@ std::vector<UBYTE> PXProtocol::makeSinglePackage(UBYTE id, UBYTE inst, std::vect
     return package;
 }
 
-std::vector<UBYTE> PXProtocol::makeMultiReadPackage(std::vector<UBYTE> ids, UBYTE addr, UBYTE len)
+std::vector<UBYTE> PXProtocol::makeMultiReadPackage(std::vector<UBYTE> ids, UBYTE addr, UBYTE len) const
 {
     std::vector<UBYTE> data;
     data.push_back(addr);
@@ -3355,7 +3359,7 @@ std::vector<UBYTE> PXProtocol::makeMultiReadPackage(std::vector<UBYTE> ids, UBYT
     return makeSinglePackage(DYNAMIXEL_BROADCAST,DYNAMIXEL_SYNC_READ,data);
 }
 
-std::vector<UBYTE> PXProtocol::makeMultiWritePackage(std::vector<UBYTE> ids, UBYTE addr, std::vector<UBYTE> data, UBYTE nBytes)
+std::vector<UBYTE> PXProtocol::makeMultiWritePackage(std::vector<UBYTE> ids, UBYTE addr, const std::vector<UBYTE>& data, UBYTE n_bytes) const
 {
     std::vector<UBYTE> dataBytes, package;
     UBYTE id = DYNAMIXEL_BROADCAST;
@@ -3363,12 +3367,12 @@ std::vector<UBYTE> PXProtocol::makeMultiWritePackage(std::vector<UBYTE> ids, UBY
 
     int N = ids.size();
 
-    UBYTE len = (nBytes+1) * N + 4;
-    dataBytes.reserve((nBytes+1)*N);
+    UBYTE len = (n_bytes+1) * N + 4;
+    dataBytes.reserve((n_bytes+1)*N);
 
     for(int i = 0; i < N; ++i){
         dataBytes.push_back(ids.at(i));
-        dataBytes.insert(dataBytes.end(),data.begin() + i*nBytes, data.begin() + (i+1)*nBytes);
+        dataBytes.insert(dataBytes.end(),data.begin() + i*n_bytes, data.begin() + (i+1)*n_bytes);
     }
 
     // Get the sum of the data elements
@@ -3383,14 +3387,14 @@ std::vector<UBYTE> PXProtocol::makeMultiWritePackage(std::vector<UBYTE> ids, UBY
     package.push_back(len);
     package.push_back(inst);
     package.push_back(addr);
-    package.push_back(nBytes);
+    package.push_back(n_bytes);
 
     // Append Data
     package.insert(package.end(),dataBytes.begin(),dataBytes.end());
 
 
     // Calculate and add checksum
-    UBYTE checksum = 255 - ((id + len + inst + addr + nBytes + sum) % 256);
+    UBYTE checksum = 255 - ((id + len + inst + addr + n_bytes + sum) % 256);
     package.push_back(checksum);
 
     return package;

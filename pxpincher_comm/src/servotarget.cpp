@@ -38,25 +38,25 @@
 
 #include "pxpincher_comm/servotarget.h"
 
-ServoTarget::ServoTarget(UBYTE id, int targetPosition, int targetSpeed, int maxTorque):
+ServoTarget::ServoTarget(UBYTE id, int target_position, int target_speed, int max_torque):
     id_(id),
-    targetPosition_(targetPosition),
-    targetSpeed_(targetSpeed),
-    maxTorque_(maxTorque)
+    target_position_(target_position),
+    target_speed_(target_speed),
+    max_torque_(max_torque)
 {
 }
 
 ServoTarget::ServoTarget(UBYTE id):
     id_(id),
-    targetPosition_(0),
-    targetSpeed_(0),
-    maxTorque_(0)
+    target_position_(0),
+    target_speed_(0),
+    max_torque_(0)
 {
 }
 
 void ServoTarget::clear()
 {
-    targetPosition_ = 0;
-    targetSpeed_ = 0;
-    maxTorque_ = 0;
+    target_position_ = 0;
+    target_speed_ = 0;
+    max_torque_ = 0;
 }

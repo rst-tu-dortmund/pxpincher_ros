@@ -41,18 +41,39 @@
 
 #include "codes.h"
 
+/**
+ * @class ServoTarget
+ * @brief Define a servo target containing a target/goal position, speed and maximum torque.
+ * @see PXProtocol, ServoStatus
+ */
 class ServoTarget
 {
 public:
-    ServoTarget(UBYTE id, int targetPosition, int targetSpeed, int maxTorque);
+    
+    /**
+     * @brief Holistic constructor
+     * @param id servo id
+     * @param target_position target/goal position [0, 1023], unit: 0.29 degree, center point = 512.
+     * @param target_speed target speed [0, 2047], ccw: [0, 1023] cw: [1024, 2047], unit in joint mode: 0.111rpm 
+     * @param max_torque max torque [0, 1023], unit: 0.1%.
+     */
+    ServoTarget(UBYTE id, int target_position, int target_speed, int max_torque);
+    
+    /**
+     * @brief Constructor with zero initialization
+     * @param id servo id
+     */
     ServoTarget(UBYTE id);
 
+     /**
+     * @brief Clear servo target
+     */
     void clear();
 
-    UBYTE id_;
-    int targetPosition_;
-    int targetSpeed_;
-    int maxTorque_;
+    UBYTE id_; //!< servo id
+    int target_position_; //!< target/goal position [0, 1023], unit: 0.29 degree, center point = 512.
+    int target_speed_; //!< target speed [0, 2047], ccw: [0, 1023] cw: [1024, 2047], unit in joint mode: 0.111rpm 
+    int max_torque_; //!< max torque [0, 1023], unit: 0.1%.
 };
 
 #endif // SERVOTARGET_H

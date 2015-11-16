@@ -41,20 +41,44 @@
 
 #include "codes.h"
 
+
+/**
+ * @class ServoStatus
+ * @brief Servo status object containing the present position, speed, load and further data of a specific servo
+ * @see PXProtocol, ServoTarget
+ */
 class ServoStatus
 {
 public:
+    
+    /**
+     * @brief Holistic constructor
+     * @param id servo id
+     * @param position position [0, 1023], unit: 0.29 degree, center point = 512.
+     * @param speed speed [0, 2047], ccw: [0, 1023] cw: [1024, 2047], unit in joint mode: 0.111rpm 
+     * @param load max torque [0, 1023], unit: 0.1%.
+     * @param voltage current voltage, unit 10V
+     * @param temperature current temperature, unit 1°C
+     */
     ServoStatus(UBYTE id, int position, int speed, int load, UBYTE voltage, UBYTE temperature);
+    
+    /**
+     * @brief Constructor with zero initialization
+     * @param id servo id
+     */
     ServoStatus(UBYTE id);
 
+    /**
+     * @brief Clear servo status
+     */
     void clear();
 
-    UBYTE id_;
-    int position_;
-    int speed_;
-    int load_;
-    UBYTE voltage_;
-    UBYTE temperature_;
+    UBYTE id_; //!< servo id
+    int position_; //!< position [0, 1023], unit: 0.29 degree, center point = 512.
+    int speed_; //!< speed [0, 2047], ccw: [0, 1023] cw: [1024, 2047], unit in joint mode: 0.111rpm 
+    int load_; //!< max torque [0, 1023], unit: 0.1%.
+    UBYTE voltage_; //!< current voltage, unit 10V
+    UBYTE temperature_; //!< current temperature, unit 1°C
 };
 
 #endif // SERVOSTATUS_H

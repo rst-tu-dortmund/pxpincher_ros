@@ -38,12 +38,12 @@
 
 #include "pxpincher_comm/servocompliance.h"
 
-ServoCompliance::ServoCompliance(UBYTE id, UBYTE CWMargin, UBYTE CCWMargin, UBYTE CWSlope, UBYTE CCWSlope, UBYTE punch):
+ServoCompliance::ServoCompliance(UBYTE id, UBYTE cw_margin, UBYTE ccw_margin, UBYTE cw_slope, UBYTE ccw_slope, UBYTE punch):
     id_(id),
-    CWMargin_(CWMargin),
-    CCWMargin_(CCWMargin),
-    CWSlope_(CWSlope),
-    CCWSlope_(CCWSlope),
+    cw_margin_(cw_margin),
+    ccw_margin_(ccw_margin),
+    cw_slope_(cw_slope),
+    ccw_slope_(ccw_slope),
     punch_(punch)
 {
 
@@ -51,19 +51,19 @@ ServoCompliance::ServoCompliance(UBYTE id, UBYTE CWMargin, UBYTE CCWMargin, UBYT
 
 ServoCompliance::ServoCompliance(UBYTE id):
     id_(id),
-    CWMargin_(0),
-    CCWMargin_(0),
-    CWSlope_(0),
-    CCWSlope_(0),
+    cw_margin_(0),
+    ccw_margin_(0),
+    cw_slope_(0),
+    ccw_slope_(0),
     punch_(0)
 {
 }
 
 void ServoCompliance::clear()
 {
-    CWMargin_ = 0;
-    CCWMargin_ = 0;
-    CWSlope_ = 0;
-    CCWSlope_ = 0;
+    cw_margin_ = 0;
+    ccw_margin_ = 0;
+    cw_slope_ = 0;
+    ccw_slope_ = 0;
     punch_ = 0;
 }

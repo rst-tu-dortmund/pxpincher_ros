@@ -56,7 +56,7 @@ UBYTE PXProtocol::readModelNumber(UBYTE id, int &number, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::readModelNumber(std::vector<UBYTE> ids, std::vector<int> &numbers, SerialComm &comm)
+UBYTE PXProtocol::readModelNumber(const std::vector<UBYTE>& ids, std::vector<int> &numbers, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -116,7 +116,7 @@ UBYTE PXProtocol::readFirmwareVersion(UBYTE id, int &version, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::readFirmwareVersion(std::vector<UBYTE> ids, std::vector<int> &versions, SerialComm &comm)
+UBYTE PXProtocol::readFirmwareVersion(const std::vector<UBYTE>& ids, std::vector<int> &versions, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -212,7 +212,7 @@ UBYTE PXProtocol::readBaudrate(UBYTE id, int &baudrate, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::readBaudrate(std::vector<UBYTE> ids, std::vector<int> &baudrates, SerialComm &comm)
+UBYTE PXProtocol::readBaudrate(const std::vector<UBYTE>& ids, std::vector<int> &baudrates, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -343,7 +343,7 @@ UBYTE PXProtocol::readReturnDelay(UBYTE id, int &delay, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::readReturnDelay(std::vector<UBYTE> ids, std::vector<int> &delays, SerialComm &comm)
+UBYTE PXProtocol::readReturnDelay(const std::vector<UBYTE>& ids, std::vector<int> &delays, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -404,7 +404,7 @@ UBYTE PXProtocol::readLock(UBYTE id, int &lock, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::readLock(std::vector<UBYTE> ids, std::vector<int> &locks, SerialComm &comm)
+UBYTE PXProtocol::readLock(const std::vector<UBYTE>& ids, std::vector<int> &locks, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -499,7 +499,7 @@ UBYTE PXProtocol::readPunch(UBYTE id, int &punch, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::readPunch(std::vector<UBYTE> ids, std::vector<int> &punchs, SerialComm &comm)
+UBYTE PXProtocol::readPunch(const std::vector<UBYTE>& ids, std::vector<int> &punchs, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -623,7 +623,7 @@ UBYTE PXProtocol::readCWAngleLimit(UBYTE id, int &limit, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::readCWAngleLimit(std::vector<UBYTE> ids, std::vector<int> &limits, SerialComm &comm)
+UBYTE PXProtocol::readCWAngleLimit(const std::vector<UBYTE>& ids, std::vector<int> &limits, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -683,7 +683,7 @@ UBYTE PXProtocol::readCCWAngleLimit(UBYTE id, int &limit, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::readCCWAngleLimit(std::vector<UBYTE> ids, std::vector<int> &limits, SerialComm &comm)
+UBYTE PXProtocol::readCCWAngleLimit(const std::vector<UBYTE>& ids, std::vector<int> &limits, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -740,7 +740,7 @@ UBYTE PXProtocol::setCWAngleLimit(UBYTE id, int limit, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::setCWAngleLimit(std::vector<UBYTE> ids, std::vector<int> limits, SerialComm &comm)
+UBYTE PXProtocol::setCWAngleLimit(const std::vector<UBYTE>& ids, std::vector<int> limits, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -804,7 +804,7 @@ UBYTE PXProtocol::setCCWAngleLimit(UBYTE id, int limit, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::setCCWAngleLimit(std::vector<UBYTE> ids, std::vector<int> limits, SerialComm &comm)
+UBYTE PXProtocol::setCCWAngleLimit(const std::vector<UBYTE>& ids, std::vector<int> limits, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -871,7 +871,7 @@ UBYTE PXProtocol::readTemperatureLimit(UBYTE id, int &limit, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::readTemperatureLimit(std::vector<UBYTE> ids, std::vector<int> &limits, SerialComm &comm)
+UBYTE PXProtocol::readTemperatureLimit(const std::vector<UBYTE>& ids, std::vector<int> &limits, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -962,7 +962,7 @@ UBYTE PXProtocol::readLowVoltageLimit(UBYTE id, int &limit, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::readLowVoltageLimit(std::vector<UBYTE> ids, std::vector<int> &limits, SerialComm &comm)
+UBYTE PXProtocol::readLowVoltageLimit(const std::vector<UBYTE>& ids, std::vector<int> &limits, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -1058,7 +1058,7 @@ UBYTE PXProtocol::readHighVoltageLimit(UBYTE id, int &limit, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::readHighVoltageLimit(std::vector<UBYTE> ids, std::vector<int> &limits, SerialComm &comm)
+UBYTE PXProtocol::readHighVoltageLimit(const std::vector<UBYTE>& ids, std::vector<int> &limits, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -1154,7 +1154,7 @@ UBYTE PXProtocol::readTorqueMax(UBYTE id, int &max, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::readTorqueMax(std::vector<UBYTE> ids, std::vector<int> &maxs, SerialComm &comm)
+UBYTE PXProtocol::readTorqueMax(const std::vector<UBYTE>& ids, std::vector<int> &maxs, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -1252,7 +1252,7 @@ UBYTE PXProtocol::readPresentTemperature(UBYTE id, int &temperature, SerialComm 
     return error;
 }
 
-UBYTE PXProtocol::readPresentTemperature(std::vector<UBYTE> ids, std::vector<int> &temperatures, SerialComm &comm)
+UBYTE PXProtocol::readPresentTemperature(const std::vector<UBYTE>& ids, std::vector<int> &temperatures, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -1313,7 +1313,7 @@ UBYTE PXProtocol::readRegistered(UBYTE id, int &registered, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::readRegistered(std::vector<UBYTE> ids, std::vector<int> &registereds, SerialComm &comm)
+UBYTE PXProtocol::readRegistered(const std::vector<UBYTE>& ids, std::vector<int> &registereds, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -1373,7 +1373,7 @@ UBYTE PXProtocol::readMoving(UBYTE id, int &moving, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::readMoving(std::vector<UBYTE> ids, std::vector<int> &movings, SerialComm &comm)
+UBYTE PXProtocol::readMoving(const std::vector<UBYTE>& ids, std::vector<int> &movings, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -1435,7 +1435,7 @@ UBYTE PXProtocol::readPresentPosition(UBYTE id, int &position, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::readPresentPosition(std::vector<UBYTE> ids, std::vector<int> &positions, SerialComm &comm)
+UBYTE PXProtocol::readPresentPosition(const std::vector<UBYTE>& ids, std::vector<int> &positions, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -1495,7 +1495,7 @@ UBYTE PXProtocol::readPresentSpeed(UBYTE id, int &speed, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::readPresentSpeed(std::vector<UBYTE> ids, std::vector<int> &speeds, SerialComm &comm)
+UBYTE PXProtocol::readPresentSpeed(const std::vector<UBYTE>& ids, std::vector<int> &speeds, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -1555,7 +1555,7 @@ UBYTE PXProtocol::readPresentLoad(UBYTE id, int &load, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::readPresentLoad(std::vector<UBYTE> ids, std::vector<int> &loads, SerialComm &comm)
+UBYTE PXProtocol::readPresentLoad(const std::vector<UBYTE>& ids, std::vector<int> &loads, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -1615,7 +1615,7 @@ UBYTE PXProtocol::readPresentVoltage(UBYTE id, int &voltage, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::readPresentVoltage(std::vector<UBYTE> ids, std::vector<int> &voltages, SerialComm &comm)
+UBYTE PXProtocol::readPresentVoltage(const std::vector<UBYTE>& ids, std::vector<int> &voltages, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -1672,7 +1672,7 @@ UBYTE PXProtocol::setGoalPosition(UBYTE id, int position, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::setGoalPosition(std::vector<UBYTE> ids, std::vector<int> positions, SerialComm &comm)
+UBYTE PXProtocol::setGoalPosition(const std::vector<UBYTE>& ids, std::vector<int> positions, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -1739,7 +1739,7 @@ UBYTE PXProtocol::readGoalSpeed(UBYTE id, int &speed, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::readGoalSpeed(std::vector<UBYTE> ids, std::vector<int> &speeds, SerialComm &comm)
+UBYTE PXProtocol::readGoalSpeed(const std::vector<UBYTE>& ids, std::vector<int> &speeds, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -1796,7 +1796,7 @@ UBYTE PXProtocol::setGoalSpeed(UBYTE id, int speed, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::setGoalSpeed(std::vector<UBYTE> ids, std::vector<int> speeds, SerialComm &comm)
+UBYTE PXProtocol::setGoalSpeed(const std::vector<UBYTE>& ids, std::vector<int> speeds, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -1863,7 +1863,7 @@ UBYTE PXProtocol::readTorqueLimit(UBYTE id, int &limit, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::readTorqueLimit(std::vector<UBYTE> ids, std::vector<int> &limits, SerialComm &comm)
+UBYTE PXProtocol::readTorqueLimit(const std::vector<UBYTE>& ids, std::vector<int> &limits, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -2030,7 +2030,7 @@ UBYTE PXProtocol::readAlarmLED(UBYTE id, int &level, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::readAlarmLED(std::vector<UBYTE> ids, std::vector<int> &levels, SerialComm &comm)
+UBYTE PXProtocol::readAlarmLED(const std::vector<UBYTE>& ids, std::vector<int> &levels, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -2126,7 +2126,7 @@ UBYTE PXProtocol::readAlarmShutdown(UBYTE id, int &level, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::readAlarmShutdown(std::vector<UBYTE> ids, std::vector<int> &levels, SerialComm &comm)
+UBYTE PXProtocol::readAlarmShutdown(const std::vector<UBYTE>& ids, std::vector<int> &levels, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -2186,7 +2186,7 @@ UBYTE PXProtocol::readTorqueState(UBYTE id, int &state, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::readTorqueState(std::vector<UBYTE> ids, std::vector<int> &states, SerialComm &comm)
+UBYTE PXProtocol::readTorqueState(const std::vector<UBYTE>& ids, std::vector<int> &states, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -2281,7 +2281,7 @@ UBYTE PXProtocol::readLEDState(UBYTE id, int &state, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::readLEDState(std::vector<UBYTE> ids, std::vector<int> &states, SerialComm &comm)
+UBYTE PXProtocol::readLEDState(const std::vector<UBYTE>& ids, std::vector<int> &states, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -2376,7 +2376,7 @@ UBYTE PXProtocol::readCWComplianceMargin(UBYTE id, int &margin, SerialComm &comm
     return error;
 }
 
-UBYTE PXProtocol::readCWComplianceMargin(std::vector<UBYTE> ids, std::vector<int> &margins, SerialComm &comm)
+UBYTE PXProtocol::readCWComplianceMargin(const std::vector<UBYTE>& ids, std::vector<int> &margins, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -2471,7 +2471,7 @@ UBYTE PXProtocol::readCCWComplianceMargin(UBYTE id, int &margin, SerialComm &com
     return error;
 }
 
-UBYTE PXProtocol::readCCWComplianceMargin(std::vector<UBYTE> ids, std::vector<int> &margins, SerialComm &comm)
+UBYTE PXProtocol::readCCWComplianceMargin(const std::vector<UBYTE>& ids, std::vector<int> &margins, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -2566,7 +2566,7 @@ UBYTE PXProtocol::readCWComplianceSlope(UBYTE id, int &slope, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::readCWComplianceSlope(std::vector<UBYTE> ids, std::vector<int> &slopes, SerialComm &comm)
+UBYTE PXProtocol::readCWComplianceSlope(const std::vector<UBYTE>& ids, std::vector<int> &slopes, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -2661,7 +2661,7 @@ UBYTE PXProtocol::readCCWComplianceSlope(UBYTE id, int &slope, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::readCCWComplianceSlope(std::vector<UBYTE> ids, std::vector<int> &slopes, SerialComm &comm)
+UBYTE PXProtocol::readCCWComplianceSlope(const std::vector<UBYTE>& ids, std::vector<int> &slopes, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -2828,7 +2828,7 @@ UBYTE PXProtocol::readGoalPosition(UBYTE id, int &position, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::readGoalPosition(std::vector<UBYTE> ids, std::vector<int> &positions, SerialComm &comm)
+UBYTE PXProtocol::readGoalPosition(const std::vector<UBYTE>& ids, std::vector<int> &positions, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -2902,7 +2902,7 @@ UBYTE PXProtocol::readAngleLimit(UBYTE id, int &cw, int &ccw, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::readAngleLimit(std::vector<UBYTE> ids, std::vector<int> &cws, std::vector<int> &ccws, SerialComm &comm)
+UBYTE PXProtocol::readAngleLimit(const std::vector<UBYTE>& ids, std::vector<int> &cws, std::vector<int> &ccws, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -3349,7 +3349,7 @@ std::vector<UBYTE> PXProtocol::makeSinglePackage(UBYTE id, UBYTE inst, const std
     return package;
 }
 
-std::vector<UBYTE> PXProtocol::makeMultiReadPackage(std::vector<UBYTE> ids, UBYTE addr, UBYTE len) const
+std::vector<UBYTE> PXProtocol::makeMultiReadPackage(const std::vector<UBYTE>& ids, UBYTE addr, UBYTE len) const
 {
     std::vector<UBYTE> data;
     data.push_back(addr);
@@ -3359,7 +3359,7 @@ std::vector<UBYTE> PXProtocol::makeMultiReadPackage(std::vector<UBYTE> ids, UBYT
     return makeSinglePackage(DYNAMIXEL_BROADCAST,DYNAMIXEL_SYNC_READ,data);
 }
 
-std::vector<UBYTE> PXProtocol::makeMultiWritePackage(std::vector<UBYTE> ids, UBYTE addr, const std::vector<UBYTE>& data, UBYTE n_bytes) const
+std::vector<UBYTE> PXProtocol::makeMultiWritePackage(const std::vector<UBYTE>& ids, UBYTE addr, const std::vector<UBYTE>& data, UBYTE n_bytes) const
 {
     std::vector<UBYTE> dataBytes, package;
     UBYTE id = DYNAMIXEL_BROADCAST;

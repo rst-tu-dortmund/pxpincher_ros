@@ -96,7 +96,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE readModelNumber(std::vector<UBYTE> ids, std::vector<int> &numbers, SerialComm &comm);
+    UBYTE readModelNumber(const std::vector<UBYTE>& ids, std::vector<int> &numbers, SerialComm &comm);
 
     
     /**
@@ -115,7 +115,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE readFirmwareVersion(std::vector<UBYTE> ids, std::vector<int> &versions, SerialComm &comm);
+    UBYTE readFirmwareVersion(const std::vector<UBYTE>& ids, std::vector<int> &versions, SerialComm &comm);
 
     
     /**
@@ -149,7 +149,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE readBaudrate(std::vector<UBYTE> ids, std::vector<int> &baudrates, SerialComm &comm);
+    UBYTE readBaudrate(const std::vector<UBYTE>& ids, std::vector<int> &baudrates, SerialComm &comm);
     
     /**
      * @brief Set baudrate (serial connection) of a single servo
@@ -202,7 +202,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE readReturnDelay(std::vector<UBYTE> ids, std::vector<int> &delays, SerialComm &comm);
+    UBYTE readReturnDelay(const std::vector<UBYTE>& ids, std::vector<int> &delays, SerialComm &comm);
 
     /**
      * @brief Read status flag, if the eeprom area of a single servo is locked
@@ -226,7 +226,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE readLock(std::vector<UBYTE> ids, std::vector<int> &locks, SerialComm &comm);
+    UBYTE readLock(const std::vector<UBYTE>& ids, std::vector<int> &locks, SerialComm &comm);
     
     /**
      * @brief Lock or unlock the status of an eeprom area
@@ -263,7 +263,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE readPunch(std::vector<UBYTE> ids, std::vector<int> &punchs, SerialComm &comm);
+    UBYTE readPunch(const std::vector<UBYTE>& ids, std::vector<int> &punchs, SerialComm &comm);
     
     /**
      * @brief Set punch (current to drive motor is at minimum) of a single servo
@@ -329,7 +329,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE readAlarmLED(std::vector<UBYTE> ids, std::vector<int> &levels, SerialComm &comm);
+    UBYTE readAlarmLED(const std::vector<UBYTE>& ids, std::vector<int> &levels, SerialComm &comm);
 
     /**
      * @brief Set alarm shutdown mode for a single servo
@@ -376,7 +376,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE readAlarmShutdown(std::vector<UBYTE> ids, std::vector<int> &levels, SerialComm &comm);
+    UBYTE readAlarmShutdown(const std::vector<UBYTE>& ids, std::vector<int> &levels, SerialComm &comm);
 
     /**
      * @brief Read torque state of a single servo (check if torque is enabled)
@@ -404,7 +404,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE readTorqueState(std::vector<UBYTE> ids, std::vector<int> &states, SerialComm &comm);
+    UBYTE readTorqueState(const std::vector<UBYTE>& ids, std::vector<int> &states, SerialComm &comm);
     
     /**
      * @brief Set torque state of a single servo
@@ -443,7 +443,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE readLEDState(std::vector<UBYTE> ids, std::vector<int> &states, SerialComm &comm);
+    UBYTE readLEDState(const std::vector<UBYTE>& ids, std::vector<int> &states, SerialComm &comm);
     
     /**
      * @brief Set led state of a single servo
@@ -512,7 +512,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE readAngleLimit(std::vector<UBYTE> ids, std::vector<int> &cws, std::vector<int> &ccws, SerialComm &comm);
+    UBYTE readAngleLimit(const std::vector<UBYTE>& ids, std::vector<int> &cws, std::vector<int> &ccws, SerialComm &comm);
         
     
     /**
@@ -539,7 +539,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE readCWAngleLimit(std::vector<UBYTE> ids, std::vector<int> &limits, SerialComm &comm);
+    UBYTE readCWAngleLimit(const std::vector<UBYTE>& ids, std::vector<int> &limits, SerialComm &comm);
     
     /**
      * @brief Read counter-clockwise angle limit of a single servo
@@ -565,7 +565,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE readCCWAngleLimit(std::vector<UBYTE> ids, std::vector<int> &limits, SerialComm &comm);
+    UBYTE readCCWAngleLimit(const std::vector<UBYTE>& ids, std::vector<int> &limits, SerialComm &comm);
 
     
     /**
@@ -592,7 +592,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE setCWAngleLimit(std::vector<UBYTE> ids, std::vector<int> limits, SerialComm &comm);
+    UBYTE setCWAngleLimit(const std::vector<UBYTE>& ids, std::vector<int> limits, SerialComm &comm);
 
     
     /**
@@ -619,7 +619,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE setCCWAngleLimit(std::vector<UBYTE> ids, std::vector<int> limits, SerialComm &comm);
+    UBYTE setCCWAngleLimit(const std::vector<UBYTE>& ids, std::vector<int> limits, SerialComm &comm);
    
     /**
      * @brief Read the maximum temperature limit of a single servo
@@ -641,7 +641,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE readTemperatureLimit(std::vector<UBYTE> ids, std::vector<int> &limits, SerialComm &comm);
+    UBYTE readTemperatureLimit(const std::vector<UBYTE>& ids, std::vector<int> &limits, SerialComm &comm);
     
     /**
      * @brief Set the maximum temperature limit of a single servo
@@ -678,7 +678,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE readLowVoltageLimit(std::vector<UBYTE> ids, std::vector<int> &limits, SerialComm &comm);
+    UBYTE readLowVoltageLimit(const std::vector<UBYTE>& ids, std::vector<int> &limits, SerialComm &comm);
     
     /**
      * @brief Set low voltage limit of a single servo
@@ -714,7 +714,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE readHighVoltageLimit(std::vector<UBYTE> ids, std::vector<int> &limits, SerialComm &comm);
+    UBYTE readHighVoltageLimit(const std::vector<UBYTE>& ids, std::vector<int> &limits, SerialComm &comm);
     
     /**
      * @brief Set higher/upper voltage limit of a single servo
@@ -752,7 +752,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE readTorqueMax(std::vector<UBYTE> ids, std::vector<int> &maxs, SerialComm &comm);
+    UBYTE readTorqueMax(const std::vector<UBYTE>& ids, std::vector<int> &maxs, SerialComm &comm);
     
     /**
      * @brief Set torque value of maximum output of a single servo
@@ -797,7 +797,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE readTorqueLimit(std::vector<UBYTE> ids, std::vector<int> &limits, SerialComm &comm);
+    UBYTE readTorqueLimit(const std::vector<UBYTE>& ids, std::vector<int> &limits, SerialComm &comm);
     
     /**
      * @brief Set maximum torque limit of a single servo
@@ -828,16 +828,16 @@ public:
     UBYTE readServoCompliance(ServoCompliance &comp, SerialComm &comm);
     UBYTE readServoCompliance(std::vector<ServoCompliance> &comps, SerialComm &comm);
     UBYTE readCWComplianceMargin(UBYTE id, int &margin, SerialComm &comm);
-    UBYTE readCWComplianceMargin(std::vector<UBYTE> ids, std::vector<int> &margins, SerialComm &comm);
+    UBYTE readCWComplianceMargin(const std::vector<UBYTE>& ids, std::vector<int> &margins, SerialComm &comm);
     UBYTE setCWComplianceMargin(UBYTE id, UBYTE margin, SerialComm &comm);
     UBYTE readCCWComplianceMargin(UBYTE id, int &margin, SerialComm &comm);
-    UBYTE readCCWComplianceMargin(std::vector<UBYTE> ids, std::vector<int> &margins, SerialComm &comm);
+    UBYTE readCCWComplianceMargin(const std::vector<UBYTE>& ids, std::vector<int> &margins, SerialComm &comm);
     UBYTE setCCWComplianceMargin(UBYTE id, UBYTE margin, SerialComm &comm);
     UBYTE readCWComplianceSlope(UBYTE id, int &slope, SerialComm &comm);
-    UBYTE readCWComplianceSlope(std::vector<UBYTE> ids, std::vector<int> &slopes, SerialComm &comm);
+    UBYTE readCWComplianceSlope(const std::vector<UBYTE>& ids, std::vector<int> &slopes, SerialComm &comm);
     UBYTE setCWComplianceSlope(UBYTE id, UBYTE slope, SerialComm &comm);
     UBYTE readCCWComplianceSlope(UBYTE id, int &slope, SerialComm &comm);
-    UBYTE readCCWComplianceSlope(std::vector<UBYTE> ids, std::vector<int> &slopes, SerialComm &comm);
+    UBYTE readCCWComplianceSlope(const std::vector<UBYTE>& ids, std::vector<int> &slopes, SerialComm &comm);
     UBYTE setCCWComplianceSlope(UBYTE id, UBYTE slope, SerialComm &comm);
     UBYTE setComplianceMargin(UBYTE id, UBYTE cw, UBYTE ccw, SerialComm &comm);
     UBYTE setComplianceSlope(UBYTE id, UBYTE cw, UBYTE ccw, SerialComm &comm);
@@ -873,7 +873,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE readGoalPosition(std::vector<UBYTE> ids, std::vector<int> &positions, SerialComm &comm);
+    UBYTE readGoalPosition(const std::vector<UBYTE>& ids, std::vector<int> &positions, SerialComm &comm);
     
     /**
      * @brief Set goal position of a single servo
@@ -899,7 +899,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE setGoalPosition(std::vector<UBYTE> ids, std::vector<int> positions, SerialComm &comm);
+    UBYTE setGoalPosition(const std::vector<UBYTE>& ids, std::vector<int> positions, SerialComm &comm);
 
     /**
      * @brief Read current goal speed of a single servo
@@ -935,7 +935,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE readGoalSpeed(std::vector<UBYTE> ids, std::vector<int> &speeds, SerialComm &comm);
+    UBYTE readGoalSpeed(const std::vector<UBYTE>& ids, std::vector<int> &speeds, SerialComm &comm);
     
     /**
      * @brief Set goal speed of a single servo
@@ -971,7 +971,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE setGoalSpeed(std::vector<UBYTE> ids, std::vector<int> speeds, SerialComm &comm);
+    UBYTE setGoalSpeed(const std::vector<UBYTE>& ids, std::vector<int> speeds, SerialComm &comm);
     
     ///@}
     
@@ -1044,7 +1044,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE readPresentPosition(std::vector<UBYTE> ids, std::vector<int> &positions, SerialComm &comm);
+    UBYTE readPresentPosition(const std::vector<UBYTE>& ids, std::vector<int> &positions, SerialComm &comm);
 
      /**
      * @brief Read current speed of a single servo
@@ -1080,7 +1080,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE readPresentSpeed(std::vector<UBYTE> ids, std::vector<int> &speeds, SerialComm &comm);
+    UBYTE readPresentSpeed(const std::vector<UBYTE>& ids, std::vector<int> &speeds, SerialComm &comm);
 
     /**
      * @brief Read currently applied load of a single servo
@@ -1110,7 +1110,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE readPresentLoad(std::vector<UBYTE> ids, std::vector<int> &loads, SerialComm &comm);
+    UBYTE readPresentLoad(const std::vector<UBYTE>& ids, std::vector<int> &loads, SerialComm &comm);
 
     /**
      * @brief Read current voltage of a single servo
@@ -1134,7 +1134,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE readPresentVoltage(std::vector<UBYTE> ids, std::vector<int> &voltages, SerialComm &comm);
+    UBYTE readPresentVoltage(const std::vector<UBYTE>& ids, std::vector<int> &voltages, SerialComm &comm);
     
     /**
      * @brief Read current temperature of a single servo
@@ -1158,7 +1158,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE readPresentTemperature(std::vector<UBYTE> ids, std::vector<int> &temperatures, SerialComm &comm);
+    UBYTE readPresentTemperature(const std::vector<UBYTE>& ids, std::vector<int> &temperatures, SerialComm &comm);
     
     /**
      * @brief Check if there is any registered instruction for a single servo
@@ -1186,7 +1186,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE readRegistered(std::vector<UBYTE> ids, std::vector<int> &registereds, SerialComm &comm);
+    UBYTE readRegistered(const std::vector<UBYTE>& ids, std::vector<int> &registereds, SerialComm &comm);
 
     /**
      * @brief Check if there is any movement of a single servo
@@ -1214,7 +1214,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE readMoving(std::vector<UBYTE> ids, std::vector<int> &movings, SerialComm &comm);
+    UBYTE readMoving(const std::vector<UBYTE>& ids, std::vector<int> &movings, SerialComm &comm);
 
     ///@}
     
@@ -1303,7 +1303,7 @@ private:
      * @param len length in bytes starting from \c addr.
      * @return byte vector of the complete package
      */
-    std::vector<UBYTE> makeMultiReadPackage(std::vector<UBYTE> ids, UBYTE addr, UBYTE len) const;
+    std::vector<UBYTE> makeMultiReadPackage(const std::vector<UBYTE>& ids, UBYTE addr, UBYTE len) const;
     
     /**
      * @brief Construct a message/package for writing to multiple servos
@@ -1313,7 +1313,7 @@ private:
      * @param n_bytes number of bytes
      * @return byte vector of the complete package
      */
-    std::vector<UBYTE> makeMultiWritePackage(std::vector<UBYTE> ids, UBYTE addr, const std::vector<UBYTE>& data, UBYTE n_bytes) const;
+    std::vector<UBYTE> makeMultiWritePackage(const std::vector<UBYTE>& ids, UBYTE addr, const std::vector<UBYTE>& data, UBYTE n_bytes) const;
 };
 
 #endif // PXPROTOCOL_H

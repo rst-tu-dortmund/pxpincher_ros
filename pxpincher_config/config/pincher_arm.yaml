@@ -1,0 +1,12 @@
+source: pincher_arm.yaml
+port: /dev/ttyUSB0
+rate: 10
+baud: 115200
+simulation: false
+joints: {
+    J1: {id: 1, cwlimit: 35,  ccwlimit: 511, speed: 60},
+    J2: {id: 2, cwlimit: 100, ccwlimit: 900, speed: 60},
+    J3: {id: 3, cwlimit: 100, ccwlimit: 900, speed: 60},
+    J4: {id: 4, cwlimit: 100, ccwlimit: 900, speed: 60},
+    J5: {id: 5, cwlimit: 17,  ccwlimit: 414, speed: 60}
+}

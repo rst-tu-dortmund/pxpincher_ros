@@ -1,0 +1,6 @@
+<launch>
+  <!-- Start Arbotix driver -->
+  <node name="pxpincher" pkg="pxpincher_cpp" type="pxpincher_cpp" output="screen">
+  <rosparam file="$(find pxpincher_config)/config/pincher_arm.yaml" command="load"/>
+  </node>
+</launch>

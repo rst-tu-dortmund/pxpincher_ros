@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!-- Arm description for Turtlebot Arm and PhantomX Pincher arm -->
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
-  <xacro:include filename="$(find turtlebot_arm_description)/urdf/arm_hardware.xacro"/>
+  <xacro:include filename="$(find pxpincher_description)/urdf/arm_hardware.xacro"/>
 
   <material name="White">
     <color rgba="0.87 0.90 0.87 1.0"/>
@@ -98,10 +98,10 @@
 
   <!-- gripper - Load either Turtlebot gripper or Pincher Gripper -->
   <xacro:if value="${pincher_gripper}">
-  <xacro:include filename="$(find turtlebot_arm_description)/urdf/pincher_gripper.xacro"/>
+  <xacro:include filename="$(find pxpincher_description)/urdf/pincher_gripper.xacro"/>
   </xacro:if>
   <xacro:if value="${turtlebot_gripper}">
-  <xacro:include filename="$(find turtlebot_arm_description)/urdf/turtlebot_gripper.xacro"/>
+  <xacro:include filename="$(find pxpincher_description)/urdf/turtlebot_gripper.xacro"/>
   </xacro:if>
 
   </xacro:macro>

@@ -17,7 +17,7 @@
     <!-- Included URDF Files -->
     
      <!-- Pincher arm is same as Turtlebot -->
-    <xacro:include filename="$(find turtlebot_arm_description)/urdf/turtlebot_arm.xacro"/>
+    <xacro:include filename="$(find pxpincher_description)/urdf/turtlebot_arm.xacro"/>
     
     <!-- As we don't have here a turtlebot base, add a base_link link as its location reference -->
     <link name="base_link"/>

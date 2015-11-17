@@ -166,14 +166,14 @@ void PxPincher::performAction()
     //protocol_.setGoalPosition(ids,positions,comm_);
     std::vector<int> pos_ticks;
     int idx = 0;
-    std::stringstream ss;
+    //std::stringstream ss;
     for(const JointData& joint : joint_data_)
     {
         pos_ticks.push_back( rad2tick(joint.cmd) + params_.offsets_[idx] );
-        ss << "joint: " << idx << " value: " << joint.cmd << " pos_ticks: " << pos_ticks.back() << std::endl;
+        //ss << "joint: " << idx << " value: " << joint.cmd << " pos_ticks: " << pos_ticks.back() << std::endl;
         ++idx;
     }
-    ROS_INFO_STREAM("\n" << ss.str());
+    //ROS_INFO_STREAM("\n" << ss.str());
     protocol_.setGoalPosition( params_.ids_, pos_ticks, comm_ );
 }
 
@@ -246,12 +246,20 @@ void PxPincher::initRobot(){
 
     // Drive to Home-Position
     ROS_INFO("Driving to default position...");
-    protocol_.setGoalPosition(ids, params_.offsets_ ,comm_);
-    while (isMoving() && ros::ok())
-    {
-        ros::Duration(0.01).sleep();
-    }
+    driveToHomePosition(true); // blocking call
     ROS_INFO("Default position reached. Waiting for trajectory actions or messages ...");
+}
+
+void PxPincher::driveToHomePosition(bool blocking)
+{
+    protocol_.setGoalPosition(params_.ids_, params_.offsets_ ,comm_);
+    if (blocking)
+    {
+        while (isMoving() && ros::ok())
+        {
+            ros::Duration(0.01).sleep();
+        }
+    }
 }
 
 } // end namespace pxpincher

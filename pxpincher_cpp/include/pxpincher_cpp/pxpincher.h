@@ -80,6 +80,7 @@ protected:
     void calculateControlStep();
     void performAction();
     bool isMoving();
+    void driveToHomePosition(bool blocking = true);
     void initRobot();
     
 private:

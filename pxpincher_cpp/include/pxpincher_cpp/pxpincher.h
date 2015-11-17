@@ -53,24 +53,24 @@ private:
 
     void simulationCallback(const sensor_msgs::JointStateConstPtr &state);
 
-    ros::Publisher statePublisher_, diagnosticPublisher_;
-    ros::Subscriber simSubscriber_;
-    ros::NodeHandle nHandle_;
+    ros::Publisher state_publisher_, diagnostic_publisher_;
+    ros::Subscriber sim_subscriber_;
+    ros::NodeHandle nhandle_;
 
     hardware_interface::JointStateInterface jnt_state_interface_;
     hardware_interface::PositionJointInterface jnt_position_interface_;
 
     
-    controller_manager::ControllerManager controllerManager_;
+    controller_manager::ControllerManager controller_manager_;
 
-    Simulation simObject_;
-    PXParameter paramObject_;
+    Simulation sim_object_;
+    PXParameter params_;
 
     SerialComm comm_;
     PXProtocol protocol_;
 
     
-    struct JointInfo
+    struct JointData
     {
         double cmd = 0;
         double pos = 0;
@@ -78,7 +78,7 @@ private:
         double eff = 0;
     };
     
-    std::vector<JointInfo> joint_info_;
+    std::vector<JointData> joint_data_;
 
 
     constexpr static double PI = 3.141592653589793;

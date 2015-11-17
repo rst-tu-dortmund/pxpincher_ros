@@ -47,15 +47,15 @@
 #include <hardware_interface/robot_hw.h>
 #include <controller_manager/controller_manager.h>
 
-#include "sensor_msgs/JointState.h"
-#include "std_msgs/String.h"
-#include "pxpincher_msgs/pxpincher_diagnostic.h"
+#include <sensor_msgs/JointState.h>
+#include <std_msgs/String.h>
+#include <pxpincher_msgs/pxpincher_diagnostic.h>
 
-#include "ros/ros.h"
+#include <ros/ros.h>
 
-#include "pxpincher_comm/pxprotocol.h"
-#include "pxpincher_comm/serialcomm.h"
-#include "pxpincher_comm/servostatus.h"
+#include <pxpincher_comm/pxprotocol.h>
+#include <pxpincher_comm/serialcomm.h>
+#include <pxpincher_comm/servostatus.h>
 #include "pxparameter.h"
 
 #include "simulation.h"
@@ -79,16 +79,7 @@ private:
     void calculateControlStep();
     void performAction();
     void initRobot();
-
-    static double tick2rad(int position);
-    static std::vector<double> tick2rad(const std::vector<int>& positions);
     
-    static double tick2rads(int speed);
-    static std::vector<double> tick2rads(const std::vector<int>& speeds);
-    
-    static double convVoltage(int volt);
-    static std::vector<double> convVoltage(const std::vector<int>& volt);
-
     sensor_msgs::JointState getJointState();
     pxpincher_msgs::pxpincher_diagnostic getDiagnostics(const std::vector<ServoStatus>& stati);
 
@@ -120,11 +111,6 @@ private:
     };
     
     std::vector<JointData> joint_data_;
-
-
-    constexpr static double PI = 3.141592653589793;
-    constexpr static double conversionFactor1 = 5*PI/3066;
-    constexpr static double conversionFactor2 = 19*PI/5115;
 
     ros::Time last_;
 

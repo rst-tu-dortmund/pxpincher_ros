@@ -36,19 +36,69 @@
  * Authors: Maximilian Krämer, Christoph Rösmann
  *********************************************************************/
 
-#include <ros/ros.h>
-#include <std_msgs/String.h>
-#include <sstream>
+#ifndef PXMISC_H
+#define PXMISC_H
 
-#include <pxpincher_cpp/pxpincher.h>
-
-int main(int argc, char **argv)
+namespace pxpincher
 {
-    ros::init(argc, argv, "pxpincher_rst");
+    
 
-    pxpincher::PxPincher pincher;
+constexpr double PI = 3.141592653589793;
+constexpr double conversionFactorPos = 5*PI/3066;
+constexpr double conversionFactorSpeed = 19*PI/5115;
+    
 
-    pincher.start();
-
-    return 0;
+inline double tick2rad(int position)
+{
+    return conversionFactorPos*position;
 }
+
+
+inline std::vector<double> tick2rad(const std::vector<int>& positions)
+{
+    std::vector<double> rads;
+    rads.reserve(positions.size());
+    
+    for(int elem : positions){
+        rads.push_back(tick2rad(elem));
+    }
+    return rads;
+}
+
+
+inline double tick2rads(int speed)
+{
+    return conversionFactorSpeed*speed;
+}
+
+
+inline std::vector<double> tick2rads(const std::vector<int>& speeds)
+{
+    std::vector<double> rads;
+    rads.reserve(speeds.size());
+
+    for(int elem : speeds){
+        rads.push_back(tick2rads(elem));
+    }
+    return rads;
+}
+
+inline double convVoltage(int volt)
+{
+    return double(volt)/10.0;
+}
+
+inline std::vector<double> convVoltage(const std::vector<int>& volt)
+{
+    std::vector<double> new_volt;
+    new_volt.reserve(volt.size());
+
+    for(int elem : volt){
+        new_volt.push_back(convVoltage(elem));
+    }
+    return new_volt;
+}
+
+} // end namespace pxpincher
+
+#endif // PXMISC_H

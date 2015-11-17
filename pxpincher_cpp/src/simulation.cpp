@@ -36,7 +36,7 @@
  * Authors: Maximilian Krämer, Christoph Rösmann
  *********************************************************************/
 
-#include "pxpincher_cpp/simulation.h"
+#include <pxpincher_cpp/simulation.h>
 
 namespace pxpincher
 {

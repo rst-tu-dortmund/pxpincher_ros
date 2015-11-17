@@ -36,7 +36,8 @@
  * Authors: Maximilian Krämer, Christoph Rösmann
  *********************************************************************/
 
-#include "pxpincher_cpp/pxpincher.h"
+#include <pxpincher_cpp/pxpincher.h>
+#include <pxpincher_cpp/misc.h>
 
 namespace pxpincher
 {
@@ -162,55 +163,10 @@ void PxPincher::performAction()
 }
 
 
-double PxPincher::tick2rad(int position)
-{
-    return conversionFactor1*position;
-}
 
 
-std::vector<double> PxPincher::tick2rad(const std::vector<int>& positions)
-{
-    std::vector<double> rads;
-    rads.reserve(positions.size());
-    
-    for(int elem : positions){
-        rads.push_back(tick2rad(elem));
-    }
-    return rads;
-}
-
-double PxPincher::tick2rads(int speed)
-{
-    return conversionFactor2*speed;
-}
-
-std::vector<double> PxPincher::tick2rads(const std::vector<int>& speeds)
-{
-    std::vector<double> rads;
-    rads.reserve(speeds.size());
-
-    for(int elem : speeds){
-        rads.push_back(tick2rads(elem));
-    }
-    return rads;
-}
 
 
-double PxPincher::convVoltage(int volt)
-{
-    return double(volt)/10.0;
-}
-
-std::vector<double> PxPincher::convVoltage(const std::vector<int>& volt)
-{
-    std::vector<double> new_volt;
-    new_volt.reserve(volt.size());
-
-    for(int elem : volt){
-        new_volt.push_back(convVoltage(elem));
-    }
-    return new_volt;
-}
 
 
 sensor_msgs::JointState PxPincher::getJointState()

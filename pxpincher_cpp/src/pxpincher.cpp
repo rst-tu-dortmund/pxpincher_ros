@@ -139,7 +139,7 @@ void PxPincher::fillControlRegister(const std::vector<ServoStatus>& stati)
     int idx = 0;
     for (const ServoStatus& status : stati)
     {
-        joint_data_[idx].pos = tick2rad( status.position_ + params_.offsets_[idx]);
+        joint_data_[idx].pos = tick2rad( status.position_ - params_.offsets_[idx]);
         joint_data_[idx].vel = tick2rads( status.speed_ );
         ++idx;
     }
@@ -161,11 +161,6 @@ void PxPincher::performAction()
         ROS_INFO("Value: %f",joint.cmd);
     }
 }
-
-
-
-
-
 
 
 

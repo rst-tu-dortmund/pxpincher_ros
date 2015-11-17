@@ -41,6 +41,9 @@
 #include <XmlRpcValue.h>
 #include <ros/ros.h>
 
+namespace pxpincher
+{
+
 PXParameter::PXParameter()
 {
     update();
@@ -104,3 +107,6 @@ void PXParameter::update()
         ROS_ERROR("Cannot read joints form parameter server");
     }
 }
+
+
+} // end namespace pxpincher

@@ -50,6 +50,8 @@
 #include <thread> // for c++11 sleep
 #include <chrono> // for c++11 sleep
 
+namespace pxpincher
+{
 
 /**
  * @class SerialComm
@@ -111,5 +113,7 @@ private:
     bool initializing_; //!< \c true, if initializeConnection() currently tries to connect to a specific servo
 
 };
+
+} // end namespace pxpincher
 
 #endif // SERIALCOMM_H

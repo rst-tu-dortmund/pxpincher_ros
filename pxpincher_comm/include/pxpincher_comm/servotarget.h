@@ -41,6 +41,9 @@
 
 #include "codes.h"
 
+namespace pxpincher
+{
+
 /**
  * @class ServoTarget
  * @brief Define a servo target containing a target/goal position, speed and maximum torque.
@@ -75,5 +78,8 @@ public:
     int target_speed_; //!< target speed [0, 2047], ccw: [0, 1023] cw: [1024, 2047], unit in joint mode: 0.111rpm 
     int max_torque_; //!< max torque [0, 1023], unit: 0.1%.
 };
+
+
+}
 
 #endif // SERVOTARGET_H

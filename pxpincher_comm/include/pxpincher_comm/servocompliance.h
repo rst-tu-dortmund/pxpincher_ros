@@ -41,6 +41,9 @@
 
 #include "codes.h"
 
+namespace pxpincher
+{
+
 /**
  * @class ServoCompliance
  * @brief Object storing all compliance parameters of a servo
@@ -82,5 +85,7 @@ public:
     UBYTE ccw_slope_;
     UBYTE punch_;
 };
+
+} // end namespace pxpincher
 
 #endif // SERVOCOMPLIANCE_H

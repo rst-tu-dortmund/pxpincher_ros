@@ -46,6 +46,9 @@
 
 #include "pxpincher_comm/codes.h"
 
+namespace pxpincher
+{
+
 class PXParameter
 {
 public:
@@ -64,5 +67,7 @@ public:
     std::vector<std::string> names_;
 
 };
+
+} // end namespace pxpincher
 
 #endif // PXPARAMETER_H

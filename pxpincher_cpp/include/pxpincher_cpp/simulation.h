@@ -46,6 +46,9 @@
 
 #include "boost/thread/mutex.hpp"
 
+namespace pxpincher
+{
+
 class Simulation
 {
 public:
@@ -62,5 +65,7 @@ private:
     std::vector<double> offsets_, qDots_;
     sensor_msgs::JointState currentState_;
 };
+
+} // end namespace pxpincher
 
 #endif // SIMULATION_H

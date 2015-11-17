@@ -61,6 +61,9 @@
 #include "simulation.h"
 
 
+namespace pxpincher
+{
+
 class PxPincher : public hardware_interface::RobotHW
 {
 public:
@@ -129,5 +132,7 @@ private:
     int rate_;
 
 };
+
+} // end namespace pxpincher
 
 #endif // PXPINCHER_H

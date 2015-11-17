@@ -38,6 +38,9 @@
 
 #include "pxpincher_comm/servocompliance.h"
 
+namespace pxpincher
+{
+
 ServoCompliance::ServoCompliance(UBYTE id, UBYTE cw_margin, UBYTE ccw_margin, UBYTE cw_slope, UBYTE ccw_slope, UBYTE punch):
     id_(id),
     cw_margin_(cw_margin),
@@ -67,3 +70,5 @@ void ServoCompliance::clear()
     ccw_slope_ = 0;
     punch_ = 0;
 }
+
+} // end namespace pxpincher

@@ -41,6 +41,8 @@
 
 #include "codes.h"
 
+namespace pxpincher
+{
 
 /**
  * @class ServoStatus
@@ -80,5 +82,7 @@ public:
     UBYTE voltage_; //!< current voltage, unit 10V
     UBYTE temperature_; //!< current temperature, unit 1°C
 };
+
+} // end namespace pxpincher
 
 #endif // SERVOSTATUS_H

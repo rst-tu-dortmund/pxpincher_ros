@@ -38,6 +38,9 @@
 
 #include "pxpincher_comm/servostatus.h"
 
+namespace pxpincher
+{
+
 ServoStatus::ServoStatus(UBYTE id, int position, int speed, int load, UBYTE voltage, UBYTE temperature):
     id_(id),
     position_(position),
@@ -65,4 +68,6 @@ void ServoStatus::clear()
     load_ = 0;
     voltage_ = 0;
     temperature_ = 0;
+}
+
 }

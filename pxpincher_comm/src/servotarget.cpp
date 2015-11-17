@@ -38,6 +38,9 @@
 
 #include "pxpincher_comm/servotarget.h"
 
+namespace pxpincher
+{
+
 ServoTarget::ServoTarget(UBYTE id, int target_position, int target_speed, int max_torque):
     id_(id),
     target_position_(target_position),
@@ -60,3 +63,6 @@ void ServoTarget::clear()
     target_speed_ = 0;
     max_torque_ = 0;
 }
+
+
+} // end namespace pxpincher

@@ -38,6 +38,9 @@
 
 #include "pxpincher_comm/serialcomm.h"
 
+namespace pxpincher
+{
+
 SerialComm::SerialComm(const std::string& device, unsigned long baud):
     opened_(false),
     initialized_(false),
@@ -168,3 +171,5 @@ void SerialComm::readInitBytes(UBYTE id)
     // Send package and receive response
     sendData(package, &response, DYNAMIXEL_NO_DATA_RESPONSE + nBytes);
 }
+
+} // end namespace pxpincher

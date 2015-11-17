@@ -53,6 +53,9 @@
 //#define PRINT_BYTES
 
 
+namespace pxpincher
+{
+
 /**
  * @class PXProtocol
  * @brief Hardware interface to communicate with the arbotix board on the phantomx pincher robot
@@ -1304,5 +1307,8 @@ private:
      */
     std::vector<UBYTE> makeMultiWritePackage(const std::vector<UBYTE>& ids, UBYTE addr, const std::vector<UBYTE>& data, UBYTE n_bytes) const;
 };
+
+
+} // end namespace pxpincher
 
 #endif // PXPROTOCOL_H

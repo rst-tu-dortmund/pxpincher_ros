@@ -38,6 +38,9 @@
 
 #include "pxpincher_comm/pxprotocol.h"
 
+namespace pxpincher
+{
+
 PXProtocol::PXProtocol()
 {
 }
@@ -3399,3 +3402,6 @@ std::vector<UBYTE> PXProtocol::makeMultiWritePackage(const std::vector<UBYTE>& i
 
     return package;
 }
+
+
+} // end namespace pxpincher

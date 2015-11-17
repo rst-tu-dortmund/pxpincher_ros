@@ -38,6 +38,9 @@
 
 #include "pxpincher_cpp/pxpincher.h"
 
+namespace pxpincher
+{
+
 PxPincher::PxPincher():
     comm_(params_.port_,params_.baud_),
     sim_(params_.simulation_),
@@ -275,3 +278,4 @@ void PxPincher::initRobot(){
     ros::Duration(0.01).sleep();
 }
 
+} // end namespace pxpincher

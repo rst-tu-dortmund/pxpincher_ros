@@ -39,16 +39,19 @@
 #ifndef CODES_H
 #define CODES_H
 
-//Typedef
+namespace pxpincher
+{
 
-typedef unsigned char UBYTE; //8bit unsigned
-typedef signed char SBYTE; //8bit signed
-typedef unsigned short int UWORD; //16bit unsigned
-typedef signed short int SWORD; //16bit signed
-typedef unsigned int UDWORD; //32bit unsigned
-typedef signed int SDWORD; //32bit signed
-typedef unsigned long int ULONG; //64bit unsigned
-typedef signed long int SLONG; //64bit signed
+
+//Typedef
+using UBYTE = unsigned char; //8bit unsigned
+using SBYTE = signed char; //8bit signed
+using UWORD = unsigned short int; //16bit unsigned
+using SWORD = signed short int; //16bit signed
+using UDWORD = unsigned int; //32bit unsigned
+using SDWORD = signed int; //32bit signed
+using ULONG = unsigned long int; //64bit unsigned
+using SLONG = signed long int; //64bit signed
 
 
 //USB Device
@@ -130,5 +133,7 @@ typedef signed long int SLONG; //64bit signed
 
 #define DYNAMIXEL_PUNCH_L 0x30
 #define DYNAMIXEL_PUNCH_H 0x31
+
+} // end namespace pxpincher
 
 #endif // CODES_H

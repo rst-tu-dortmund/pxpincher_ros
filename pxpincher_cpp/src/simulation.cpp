@@ -38,6 +38,9 @@
 
 #include "pxpincher_cpp/simulation.h"
 
+namespace pxpincher
+{
+
 Simulation::Simulation()
 {
     offsets_ = {0.0,0.0,0.0,0.0,0.0};
@@ -84,3 +87,5 @@ sensor_msgs::JointState Simulation::getCurrentState()
 {
     return currentState_;
 }
+
+} // end namespace pxpincher

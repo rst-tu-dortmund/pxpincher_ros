@@ -39,6 +39,8 @@
 #ifndef PXMISC_H
 #define PXMISC_H
 
+#include <cmath>
+
 namespace pxpincher
 {
     
@@ -65,6 +67,10 @@ inline std::vector<double> tick2rad(const std::vector<int>& positions)
     return rads;
 }
 
+inline int rad2tick(double rad)
+{
+    return std::floor(rad/conversionFactorPos);
+}
 
 inline double tick2rads(int speed)
 {
@@ -81,6 +87,11 @@ inline std::vector<double> tick2rads(const std::vector<int>& speeds)
         rads.push_back(tick2rads(elem));
     }
     return rads;
+}
+
+inline int rads2tick(double speed_rad)
+{
+    return std::floor(speed_rad/conversionFactorSpeed);
 }
 
 inline double convVoltage(int volt)

@@ -72,13 +72,17 @@ public:
 
     void start();
 
-private:
 
+protected:
+    
     void update();
     void fillControlRegister(const std::vector<ServoStatus>& stati);
     void calculateControlStep();
     void performAction();
+    bool isMoving();
     void initRobot();
+    
+private:
     
     sensor_msgs::JointState getJointState();
     pxpincher_msgs::pxpincher_diagnostic getDiagnostics(const std::vector<ServoStatus>& stati);
@@ -92,7 +96,8 @@ private:
     hardware_interface::JointStateInterface jnt_state_interface_;
     hardware_interface::PositionJointInterface jnt_position_interface_;
 
-    
+    ros::Time last_;
+      
     controller_manager::ControllerManager controller_manager_;
 
     Simulation sim_object_;
@@ -112,7 +117,7 @@ private:
     
     std::vector<JointData> joint_data_;
 
-    ros::Time last_;
+  
 
     bool sim_;
     int rate_;

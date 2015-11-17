@@ -902,7 +902,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE setGoalPosition(const std::vector<UBYTE>& ids, std::vector<int> positions, SerialComm &comm);
+    UBYTE setGoalPosition(const std::vector<UBYTE>& ids, const std::vector<int>& positions, SerialComm &comm);
 
     /**
      * @brief Read current goal speed of a single servo
@@ -974,7 +974,7 @@ public:
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
-    UBYTE setGoalSpeed(const std::vector<UBYTE>& ids, std::vector<int> speeds, SerialComm &comm);
+    UBYTE setGoalSpeed(const std::vector<UBYTE>& ids, const std::vector<int>& speeds, SerialComm &comm);
     
     ///@}
     

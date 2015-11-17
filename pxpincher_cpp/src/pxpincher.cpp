@@ -38,6 +38,7 @@
 
 #include <pxpincher_cpp/pxpincher.h>
 #include <pxpincher_cpp/misc.h>
+#include <algorithm>
 
 namespace pxpincher
 {
@@ -46,8 +47,8 @@ PxPincher::PxPincher():
     comm_(params_.port_,params_.baud_),
     sim_(params_.simulation_),
     rate_(params_.rate_),
-    controller_manager_(this),
     last_(ros::Time::now()),
+    controller_manager_(this),
     nhandle_("pxpincher")
 {
     std::size_t no_joints = params_.names_.size();
@@ -81,7 +82,6 @@ PxPincher::~PxPincher()
     // Stop all movement
     // Hold torque for n seconds
     // Turn off torque
-
     comm_.close();
 }
 
@@ -91,8 +91,11 @@ void PxPincher::start()
 
     ros::AsyncSpinner spinner(1);
     spinner.start();
-
-    while(ros::ok()){
+    
+    last_ = ros::Time::now();
+    
+    while(ros::ok())
+    {
         update();
         ros::spinOnce();
         rate.sleep();
@@ -101,7 +104,8 @@ void PxPincher::start()
 
 void PxPincher::update()
 {
-    if(!sim_){
+    if(!sim_)
+    {
         // Get current servo status
         std::vector<ServoStatus> stati;
         for (int id : params_.ids_)
@@ -122,7 +126,9 @@ void PxPincher::update()
         // Publish current information
         state_publisher_.publish(getJointState());
         diagnostic_publisher_.publish(getDiagnostics(stati));
-    }else{
+    }
+    else
+    {
         // Publish current information
         state_publisher_.publish(sim_object_.performSimulationStep(1/rate_));
     }
@@ -148,7 +154,7 @@ void PxPincher::fillControlRegister(const std::vector<ServoStatus>& stati)
 void PxPincher::calculateControlStep()
 {
     ros::Time now = ros::Time::now();
-    ros::Duration period = last_ - now;
+    ros::Duration period = now - last_;
     controller_manager_.update(now,period,false);
 
     last_ = now;
@@ -156,10 +162,19 @@ void PxPincher::calculateControlStep()
 
 void PxPincher::performAction()
 {
+    
     //protocol_.setGoalPosition(ids,positions,comm_);
-    for(const JointData& joint : joint_data_){
-        ROS_INFO("Value: %f",joint.cmd);
+    std::vector<int> pos_ticks;
+    int idx = 0;
+    std::stringstream ss;
+    for(const JointData& joint : joint_data_)
+    {
+        pos_ticks.push_back( rad2tick(joint.cmd) + params_.offsets_[idx] );
+        ss << "joint: " << idx << " value: " << joint.cmd << " pos_ticks: " << pos_ticks.back() << std::endl;
+        ++idx;
     }
+    ROS_INFO_STREAM("\n" << ss.str());
+    protocol_.setGoalPosition( params_.ids_, pos_ticks, comm_ );
 }
 
 
@@ -206,6 +221,12 @@ void PxPincher::simulationCallback(const sensor_msgs::JointStateConstPtr &state)
     sim_object_.setQDot(state->velocity);
 }
 
+bool PxPincher::isMoving()
+{
+    std::vector<int> moving_vec;
+    protocol_.readMoving(params_.ids_, moving_vec, comm_ );    
+    return std::count_if(moving_vec.begin(), moving_vec.end(), [](int val){return val>0;}) > 0;
+}
 
 void PxPincher::initRobot(){
 
@@ -224,9 +245,13 @@ void PxPincher::initRobot(){
     ros::Duration(0.01).sleep();
 
     // Drive to Home-Position
-    std::vector<int> values = {511, 511, 511, 511, 215};
-    protocol_.setGoalPosition(ids,values,comm_);
-    ros::Duration(0.01).sleep();
+    ROS_INFO("Driving to default position...");
+    protocol_.setGoalPosition(ids, params_.offsets_ ,comm_);
+    while (isMoving() && ros::ok())
+    {
+        ros::Duration(0.01).sleep();
+    }
+    ROS_INFO("Default position reached. Waiting for trajectory actions or messages ...");
 }
 
 } // end namespace pxpincher

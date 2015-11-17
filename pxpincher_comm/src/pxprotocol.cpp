@@ -1675,7 +1675,7 @@ UBYTE PXProtocol::setGoalPosition(UBYTE id, int position, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::setGoalPosition(const std::vector<UBYTE>& ids, std::vector<int> positions, SerialComm &comm)
+UBYTE PXProtocol::setGoalPosition(const std::vector<UBYTE>& ids, const std::vector<int>& positions, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 
@@ -1799,7 +1799,7 @@ UBYTE PXProtocol::setGoalSpeed(UBYTE id, int speed, SerialComm &comm)
     return error;
 }
 
-UBYTE PXProtocol::setGoalSpeed(const std::vector<UBYTE>& ids, std::vector<int> speeds, SerialComm &comm)
+UBYTE PXProtocol::setGoalSpeed(const std::vector<UBYTE>& ids, const std::vector<int>& speeds, SerialComm &comm)
 {
     std::vector<UBYTE> package, data, response;
 

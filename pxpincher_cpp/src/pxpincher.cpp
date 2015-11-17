@@ -38,6 +38,7 @@
 
 #include <pxpincher_cpp/pxpincher.h>
 #include <pxpincher_cpp/misc.h>
+#include <pxpincher_msgs/Relax.h>
 #include <algorithm>
 
 namespace pxpincher
@@ -73,7 +74,8 @@ PxPincher::PxPincher():
     state_publisher_ = nhandle_.advertise<sensor_msgs::JointState>("/joint_states",1); // joint_states topic is always root
     diagnostic_publisher_ = nhandle_.advertise<pxpincher_msgs::pxpincher_diagnostic>("diagnostics",1);
     sim_subscriber_ = nhandle_.subscribe("joint_cmd_simulation",1, &PxPincher::simulationCallback,this);
-
+    auto relax_fun = [this](pxpincher_msgs::Relax::Request&, pxpincher_msgs::Relax::Response&) {relaxServos(); return true;};
+    relax_service_ = nhandle_.advertiseService("Relax", boost::function<bool(pxpincher_msgs::Relax::Request&,pxpincher_msgs::Relax::Response&)>(relax_fun)); // implicit casting does not work here (gcc)
 }
 
 PxPincher::~PxPincher()
@@ -162,6 +164,8 @@ void PxPincher::calculateControlStep()
 
 void PxPincher::performAction()
 {
+    if (!ctrl_enabled_)
+        return;
     
     //protocol_.setGoalPosition(ids,positions,comm_);
     std::vector<int> pos_ticks;
@@ -221,14 +225,15 @@ void PxPincher::simulationCallback(const sensor_msgs::JointStateConstPtr &state)
     sim_object_.setQDot(state->velocity);
 }
 
-bool PxPincher::isMoving()
+bool PxPincher::isMoving() // TODO Sim case
 {
     std::vector<int> moving_vec;
     protocol_.readMoving(params_.ids_, moving_vec, comm_ );    
     return std::count_if(moving_vec.begin(), moving_vec.end(), [](int val){return val>0;}) > 0;
 }
 
-void PxPincher::initRobot(){
+void PxPincher::initRobot()
+{ // TODO sim case
 
     std::vector<UBYTE> ids = params_.ids_;
     std::vector<int> cw_limits = params_.cwlimits_;
@@ -250,7 +255,7 @@ void PxPincher::initRobot(){
     ROS_INFO("Default position reached. Waiting for trajectory actions or messages ...");
 }
 
-void PxPincher::driveToHomePosition(bool blocking)
+void PxPincher::driveToHomePosition(bool blocking) // TODO Sim case
 {
     protocol_.setGoalPosition(params_.ids_, params_.offsets_ ,comm_);
     if (blocking)
@@ -259,6 +264,20 @@ void PxPincher::driveToHomePosition(bool blocking)
         {
             ros::Duration(0.01).sleep();
         }
+    }
+}
+
+
+void PxPincher::relaxServos()
+{
+    if (sim_)
+        return;
+    
+    ctrl_enabled_ = false;
+    
+    for (int id : params_.ids_)
+    {
+            protocol_.setTorqueState(id, 0, comm_);
     }
 }
 

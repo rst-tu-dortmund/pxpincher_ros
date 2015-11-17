@@ -82,6 +82,7 @@ protected:
     bool isMoving();
     void driveToHomePosition(bool blocking = true);
     void initRobot();
+    void relaxServos();
     
 private:
     
@@ -92,6 +93,7 @@ private:
 
     ros::Publisher state_publisher_, diagnostic_publisher_;
     ros::Subscriber sim_subscriber_;
+    ros::ServiceServer relax_service_;
     ros::NodeHandle nhandle_;
 
     hardware_interface::JointStateInterface jnt_state_interface_;
@@ -120,6 +122,7 @@ private:
 
   
 
+    bool ctrl_enabled_ = true; //!< This state allows controlling the robot (it is set to false if motors are relaxed), TODO allow renabling...
     bool sim_;
     int rate_;
 

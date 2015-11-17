@@ -82,7 +82,7 @@ protected:
     bool isMoving();
     void driveToHomePosition(bool blocking = true);
     void initRobot();
-    void relaxServos();
+    bool relaxServos(bool relaxed);
     
 private:
     
@@ -122,7 +122,7 @@ private:
 
   
 
-    bool ctrl_enabled_ = true; //!< This state allows controlling the robot (it is set to false if motors are relaxed), TODO allow renabling...
+    bool ctrl_enabled_ = true; //!< This state allows controlling the robot (it is set to false if motors are relaxed)
     bool sim_;
     int rate_;
 

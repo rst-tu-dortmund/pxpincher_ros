@@ -2253,6 +2253,7 @@ UBYTE PXProtocol::setTorqueState(UBYTE id, UBYTE state, SerialComm &comm)
     // Send package and recieve response
     comm.sendData(package, &response, DYNAMIXEL_NO_DATA_RESPONSE);
 
+    
 #ifdef PRINT_BYTES
     // Print out Bytes to the Console
     printBytes(package);
@@ -2267,6 +2268,8 @@ UBYTE PXProtocol::setTorqueState(UBYTE id, UBYTE state, SerialComm &comm)
 
     // Return Error Byte
     /// @todo TODO check error byte and throw exception if nescecary
+    if (response.size()<5)
+        return 1 << 7; // TODO: The size does not match here, check response!!!
     return response[4];
 }
 
@@ -3027,6 +3030,7 @@ UBYTE PXProtocol::readServoCompliance(std::vector<ServoCompliance> &comps, Seria
 
     // Return Error Byte
     /// @todo TODO check error byte and throw exception if nescecary
+
     return response[4];
 }
 
@@ -3195,7 +3199,7 @@ bool PXProtocol::checkChecksum(const std::vector<UBYTE> &data) const
     return check == checksum;
 }
 
-void PXProtocol::checkError(UBYTE error)
+bool PXProtocol::checkError(UBYTE error, bool silent)
 {
     /// @todo TODO Throw single excpetions in case of single error
 
@@ -3209,50 +3213,51 @@ void PXProtocol::checkError(UBYTE error)
     }
 
     if(c == 0){
-        return;
+        return false;
     }else if(c > 1){
         //throw mixed excpetion
-        ROS_INFO("Mixed Exception");
+        ROS_INFO_COND(!silent, "Mixed Exception");
     }
 
     if((error >> 0) & 1){
         //Voltage out of range
-        ROS_INFO("Voltage Exception");
+        ROS_INFO_COND(!silent, "Voltage Exception");
     }
 
     if((error >> 1) & 1){
         //Desired joint position out of limits
-        ROS_INFO("out of limits Exception");
+        ROS_INFO_COND(!silent, "out of limits Exception");
     }
 
     if((error >> 2) & 1){
         //Servo too hot
-        ROS_INFO("Servo too hot Exception");
+        ROS_INFO_COND(!silent, "Servo too hot Exception");
     }
 
     if((error >> 3) & 1){
         //Instruction out of range
-        ROS_INFO("Instruction out of range Exception");
+        ROS_INFO_COND(!silent, "Instruction out of range Exception");
     }
 
     if((error >> 4) & 1){
         //Checksum error
-        ROS_INFO("Checksum error Exception: %X",error);
+        ROS_INFO_COND(!silent, "Checksum error Exception: %X",error);
     }
 
     if((error >> 5) & 1){
         //Too much load for the maximum torque
-        ROS_INFO("Too much load Exception");
+        ROS_INFO_COND(!silent, "Too much load Exception");
     }
 
     if((error >> 6) & 1){
         //Undefined instruction
-        ROS_INFO("Undefined instruction Exception");
+        ROS_INFO_COND(!silent, "Undefined instruction Exception");
     }
 
     if((error >> 7) & 1){
-        ROS_INFO("Unknow Error");
+        ROS_INFO_COND(!silent, "Unknow Error");
     }
+    return true;
 }
 
 bool PXProtocol::checkParameterRange(int &param, int low, int high, bool exception) const

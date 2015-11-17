@@ -74,7 +74,7 @@ PxPincher::PxPincher():
     state_publisher_ = nhandle_.advertise<sensor_msgs::JointState>("/joint_states",1); // joint_states topic is always root
     diagnostic_publisher_ = nhandle_.advertise<pxpincher_msgs::pxpincher_diagnostic>("diagnostics",1);
     sim_subscriber_ = nhandle_.subscribe("joint_cmd_simulation",1, &PxPincher::simulationCallback,this);
-    auto relax_fun = [this](pxpincher_msgs::Relax::Request&, pxpincher_msgs::Relax::Response&) {relaxServos(); return true;};
+    auto relax_fun = [this](pxpincher_msgs::Relax::Request& req, pxpincher_msgs::Relax::Response& resp) {resp.success = relaxServos(req.relaxed>0); return true;};
     relax_service_ = nhandle_.advertiseService("Relax", boost::function<bool(pxpincher_msgs::Relax::Request&,pxpincher_msgs::Relax::Response&)>(relax_fun)); // implicit casting does not work here (gcc)
 }
 
@@ -268,17 +268,23 @@ void PxPincher::driveToHomePosition(bool blocking) // TODO Sim case
 }
 
 
-void PxPincher::relaxServos()
+bool PxPincher::relaxServos(bool relaxed)
 {
     if (sim_)
-        return;
+        return true;
     
-    ctrl_enabled_ = false;
+    bool ret_val = true;
     
-    for (int id : params_.ids_)
+    ctrl_enabled_ = !relaxed;
+
+    for (UBYTE id : params_.ids_)
     {
-            protocol_.setTorqueState(id, 0, comm_);
+            UBYTE error = protocol_.setTorqueState(id, (int) !relaxed, comm_);
+            if ( PXProtocol::checkError(error, true) )
+                ret_val = false;
+            ros::Duration(0.01).sleep();
     }
+    return ret_val;
 }
 
 } // end namespace pxpincher

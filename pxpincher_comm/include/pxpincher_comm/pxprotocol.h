@@ -478,8 +478,10 @@ public:
     /**
      * @brief Analyze an error byte and print related error messages (if occured)
      * @param error error byte
+     * @param silent if \c false print error messages, otherwise supress.
+     * @return \c false, if no error is found, \c true otherwise
      */
-    static void checkError(UBYTE error);
+    static bool checkError(UBYTE error, bool silent = false);
     
     ///@}
     

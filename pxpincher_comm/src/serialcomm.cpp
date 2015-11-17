@@ -46,16 +46,23 @@ SerialComm::SerialComm(const std::string& device, unsigned long baud):
     initialized_(false),
     initializing_(false)
 {
-    boost::mutex::scoped_lock lock(mex_, boost::try_to_lock); // non-blocking lock guard
+    boost::mutex::scoped_lock lock(mex_, boost::try_to_lock); // non-blocking lock guard // TODO change to blocking one?
 
-    serialComm_.open(device.c_str(),baud); //TODO Catch Exception and unlock mutex
+    if (lock)
+    {
+        serialComm_.open(device.c_str(),baud); //TODO Catch Exception and unlock mutex
 
-    if(serialComm_.portOpen()){ //TODO Catch Exception and unlock mutex
-        ROS_INFO("Serial port opened");
-        opened_ = true;
+        if(serialComm_.portOpen()){ //TODO Catch Exception and unlock mutex
+            ROS_INFO("Serial port opened");
+            opened_ = true;
 
-    }else{
-        ROS_INFO("Serial port not opened");
+        }else{
+            ROS_INFO("Serial port not opened");
+        }
+    }
+    else
+    {
+        ROS_ERROR("Could not create SerialComm object, since communication is blocked by another thread.");
     }
 }
 
@@ -71,7 +78,7 @@ void SerialComm::sendData(const std::vector<UBYTE>& output_data, std::vector<UBY
 
     const UBYTE* output_buffer = output_data.data();
 
-    boost::mutex::scoped_lock lock(mex_, boost::try_to_lock);
+    boost::mutex::scoped_lock lock(mex_);
 
     serialComm_.flush(); //TODO Catch Exception
     serialComm_.write((const char*)output_buffer,output_data.size()); //TODO Catch Exception

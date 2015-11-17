@@ -134,6 +134,16 @@ using SLONG = signed long int; //64bit signed
 #define DYNAMIXEL_PUNCH_L 0x30
 #define DYNAMIXEL_PUNCH_H 0x31
 
+// Error codes
+#define ERROR_VOLTAGE_EXCEPTION 1<<0
+#define ERROR_OUT_OF_LIMITS 1<<1
+#define ERROR_SERVO_TOO_HOT 1<<2
+#define ERROR_INSTRUCTION_OUT_OF_RANGE 1<<3
+#define ERROR_CHECKSUM_ERROR 1<<4
+#define ERROR_TOO_MUCH_LOAD 1<<5
+#define ERROR_UNDEFINED_INSTRUCTION 1<<6
+#define ERROR_UNKNOWN_ERROR 1<<7
+
 } // end namespace pxpincher
 
 #endif // CODES_H

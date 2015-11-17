@@ -48,7 +48,7 @@ PxPincher::PxPincher():
     rate_(params_.rate_),
     controller_manager_(this),
     last_(ros::Time::now()),
-    nhandle_("PXPincher")
+    nhandle_("pxpincher")
 {
     std::size_t no_joints = params_.names_.size();
     
@@ -70,8 +70,8 @@ PxPincher::PxPincher():
     registerInterface(&jnt_position_interface_);
 
     state_publisher_ = nhandle_.advertise<sensor_msgs::JointState>("/joint_states",1); // joint_states topic is always root
-    diagnostic_publisher_ = nhandle_.advertise<pxpincher_msgs::pxpincher_diagnostic>("Diagnostics",1);
-    sim_subscriber_ = nhandle_.subscribe("JointCMDSimulation",1, &PxPincher::simulationCallback,this);
+    diagnostic_publisher_ = nhandle_.advertise<pxpincher_msgs::pxpincher_diagnostic>("diagnostics",1);
+    sim_subscriber_ = nhandle_.subscribe("joint_cmd_simulation",1, &PxPincher::simulationCallback,this);
 
 }
 

@@ -36,13 +36,15 @@
  * Author: Christoph Rösmann
  *********************************************************************/
 
-#include <phantomx_lib/phantomx_interface.h>
+#include <pxpincher_lib/phantomx_interface.h>
+#include <pxpincher_hardware/misc.h> // conversions between ticks and angles in radiant
+#include <pxpincher_msgs/Relax.h>
 #include <signal.h>
 #include <sstream>
 #include <algorithm>
-#include <arbotix_msgs/Relax.h>
 
-namespace phantomx
+
+namespace pxpincher
 {
   
 PhantomXControl::PhantomXControl()
@@ -68,7 +70,7 @@ void PhantomXControl::initialize()
   ros::NodeHandle n;
     
   // overwrite signal handler in order to allow cancellation of actions after pressing ctrl-c
-  signal(SIGINT, phantomx::PhantomXControl::phantomXSigHandler);
+  signal(SIGINT, pxpincher::PhantomXControl::phantomXSigHandler);
     
   // instantiate arm action client
   std::string arm_action_topic = "/arm_controller/follow_joint_trajectory";
@@ -91,11 +93,11 @@ void PhantomXControl::initialize()
   n.setCallbackQueue(_joints_sub_queue);
   _joints_sub = n.subscribe("/joint_states", 1, &PhantomXControl::jointStateCallback, this);
   _joints_sub_spinner = make_unique<ros::AsyncSpinner>(1, _joints_sub_queue);
-  ROS_ERROR_COND(!_joints_sub_spinner->canStart(),"Asynchronous spinner for reveiving new joint state messages cannot be started.");
+  ROS_ERROR_COND(!_joints_sub_spinner->canStart(),"Asynchronous spinner for receiving new joint state messages cannot be started.");
   _joints_sub_spinner->start();
 
   // setup joint names
-  _joint_names_arm = {"arm_shoulder_pan_joint",
+  _joint_names_arm = {"arm_shoulder_pan_joint", // TODO : parse pxpincher_config
 		      "arm_shoulder_lift_joint",
 		      "arm_elbow_flex_joint",
 		      "arm_wrist_flex_joint"};
@@ -104,53 +106,55 @@ void PhantomXControl::initialize()
     _map_joint_to_index[_joint_names_arm.at(i)] = i;
   }
    
+  JointVector offsets; 
+   
   // get joint information (angle limits and max speed)
-  std::string arbotix_joints_ns = "/arbotix/joints/"; // TODO config param
+  std::string arbotix_joints_ns = "/pxpincher/joints/"; // TODO config param
   for (int i=0; i<_joint_names_arm.size(); ++i)
   {
 	std::string param_prefix = arbotix_joints_ns + _joint_names_arm[i]; 
-        std::string min_angle_key = param_prefix + "/min_angle";
-	std::string max_angle_key = param_prefix + "/max_angle";
-	std::string max_speed_key = param_prefix + "/max_speed";
+        std::string min_angle_key = param_prefix + "/cwlimit";
+	std::string max_angle_key = param_prefix + "/ccwlimit";
+        std::string offset_key = param_prefix + "/offset";
+	std::string max_speed_key = param_prefix + "/speed";
 	
-	if (!n.hasParam(min_angle_key) || !n.hasParam(max_angle_key) || !n.hasParam(max_speed_key))
-	  ROS_ERROR("Could not find one or all of the following parameters:\n %s\n %s\n %s", min_angle_key.c_str(), max_angle_key.c_str(), max_speed_key.c_str());
+	if (!n.hasParam(min_angle_key) || !n.hasParam(max_angle_key) || !n.hasParam(offset_key) || !n.hasParam(max_speed_key))
+	  ROS_ERROR("Could not find one or all of the following parameters:\n %s\n %s\n %s\n %s", min_angle_key.c_str(), max_angle_key.c_str(), offset_key.c_str() ,max_speed_key.c_str());
 	
 	n.getParam(min_angle_key, _joint_lower_bounds[i]);
 	n.getParam(max_angle_key, _joint_upper_bounds[i]);
+        n.getParam(offset_key, offsets[i]);
 	n.getParam(max_speed_key, _joint_max_speeds[i]);
 	
 	// convert angles to radiant
-	_joint_lower_bounds[i] = normalize_angle_rad( deg_to_rad( _joint_lower_bounds[i] ) ); // normalize to (-pi, pi]
-	_joint_upper_bounds[i] = normalize_angle_rad( deg_to_rad( _joint_upper_bounds[i] ) ); // normalize to (-pi, pi]
-	_joint_max_speeds[i] = deg_to_rad( _joint_max_speeds[i] );
+	_joint_lower_bounds[i] = tick2rad( _joint_lower_bounds[i] - offsets[i] );
+	_joint_upper_bounds[i] = tick2rad( _joint_upper_bounds[i] - offsets[i] );
+	_joint_max_speeds[i] = tick2rads( _joint_max_speeds[i] );
   }     
   
   // setup services for relaxing the servos
-  for (const std::string& name : _joint_names_arm)
-  {
-    _joint_relax_services.push_back( n.serviceClient<arbotix_msgs::Relax>( name + "/relax") );
-  }
+  _joint_relax_service = n.serviceClient<pxpincher_msgs::Relax>( "/pxpincher/Relax" ); // TODO param
+
   
   // setup gripper
   _gripper_joint_name = "gripper_joint";
+  double gripper_offset = 0;
   if (!n.hasParam(arbotix_joints_ns + _gripper_joint_name))
     ROS_ERROR("Could not find the specified gripper joint name: %s.", _gripper_joint_name.c_str());
-  n.getParam(arbotix_joints_ns + _gripper_joint_name + "/min_angle", _gripper_lower_bound);
-  n.getParam(arbotix_joints_ns + _gripper_joint_name + "/max_angle", _gripper_upper_bound);
+  n.getParam(arbotix_joints_ns + _gripper_joint_name + "/cwlimit", _gripper_lower_bound);
+  n.getParam(arbotix_joints_ns + _gripper_joint_name + "/ccwlimit", _gripper_upper_bound);
+  n.getParam(arbotix_joints_ns + _gripper_joint_name + "/offset", gripper_offset);
 //   n.param(arbotix_joints_ns + _gripper_joint_name + "/neutral", _gripper_neutral, 0.5*(_gripper_upper_bound+_gripper_lower_bound));
 //   n.getParam(arbotix_joints_ns + _gripper_joint_name + "/max_speed", _gripper_max_speed);
   // convert angles to radiant
-  _gripper_lower_bound = normalize_angle_rad( deg_to_rad( _gripper_lower_bound ) ); // normalize to (-pi, pi]
-  _gripper_upper_bound = normalize_angle_rad( deg_to_rad( _gripper_upper_bound ) ); // normalize to (-pi, pi]
+  _gripper_lower_bound = tick2rad( _gripper_lower_bound - gripper_offset );
+  _gripper_upper_bound = tick2rad( _gripper_upper_bound - gripper_offset );
 //   _gripper_neutral = normalize_angle_rad( deg_to_rad(_gripper_neutral) );
 //   _gripper_max_speed = deg_to_rad( _gripper_max_speed );
   
   _map_joint_to_index[_gripper_joint_name] = 255; // set gripper joint idx to 255 in our map
   
-  _joint_relax_services.push_back( n.serviceClient<arbotix_msgs::Relax>( _gripper_joint_name + "/relax") );
-  
-  
+
   // Setup kinematic model
 	
   // Wait for joint_state messages
@@ -444,7 +448,7 @@ void PhantomXControl::setJoints(const trajectory_msgs::JointTrajectoryPoint& joi
 void PhantomXControl::setJointVel(const Eigen::Ref<const JointVector>& velocities)
 {
   // Bound velocities
-  JointVector vel_bounded = phantomx::bound(-_joint_max_speeds, velocities, _joint_max_speeds);  
+  JointVector vel_bounded = pxpincher::bound(-_joint_max_speeds, velocities, _joint_max_speeds);  
     
   // Select lower and upper bound values for each joint as goal w.r.t. the direction of the velocity
   // For zero velocities stay at the current position
@@ -898,20 +902,25 @@ void PhantomXControl::createQuinticPolynomialJointTrajectory(const Eigen::Ref<co
 
 
 
-bool PhantomXControl::relaxServos()
+bool PhantomXControl::relaxServos(bool relaxed)
 {
     bool ret_val = true;
-    int idx=1;
-    for (ros::ServiceClient& serv : _joint_relax_services)
-    {
-        arbotix_msgs::Relax relax;
-        if (!serv.call(relax))
+    
+    pxpincher_msgs::Relax relax;
+    
+    relax.request.relaxed = relaxed;
+    
+        if (_joint_relax_service.call(relax))
         {
-            ROS_WARN("Failed to relax servo %d.", idx);
-            ret_val = false;
+            ret_val = relax.response.success;
+            ROS_WARN_COND(!ret_val, "Not all servos could be relaxed");
         }
-        ++idx;
-    }
+        else
+        {
+            ret_val = false;
+            ROS_WARN("Failed to relax servos");
+        }
+    
     return ret_val;    
 }
 
@@ -1064,4 +1073,4 @@ void PhantomXControl::printTrajectory(const trajectory_msgs::JointTrajectory& tr
 }
   
   
-} // end namespace phantomx
+} // end namespace pxpincher

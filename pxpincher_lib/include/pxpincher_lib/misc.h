@@ -43,7 +43,7 @@
 #include <math.h>
 #include <type_traits>
 
-#include <phantomx_lib/types.h>
+#include <pxpincher_lib/types.h>
 
 #include <ros/ros.h>
 #include <ros/console.h>
@@ -52,7 +52,7 @@
 
   
 
-namespace phantomx
+namespace pxpincher
 {
   
   
@@ -521,7 +521,7 @@ namespace phantomx
   
  
 
-} // namespace phantomx
+} // namespace pxpincher
 
 
 #endif /* MISC_H_ */

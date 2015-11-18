@@ -37,7 +37,7 @@
  *********************************************************************/
 
 
-#include <phantomx_lib/phantomx_interface.h>
+#include <pxpincher_lib/phantomx_interface.h>
 
 
 
@@ -48,7 +48,7 @@ int main( int argc, char** argv )
   ros::NodeHandle n("~");
   
  
-  phantomx::PhantomXControl robot;
+  pxpincher::PhantomXControl robot;
   robot.initialize();
   
 //   robot.setJoints({M_PI/2,M_PI/2,0,0},{0.6,0.2,0,0});

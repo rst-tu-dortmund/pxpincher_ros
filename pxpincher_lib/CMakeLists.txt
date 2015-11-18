@@ -3,7 +3,7 @@ project(pxpincher_lib)
 
 
 # Set to Release in order to speed up the program significantly
-set(CMAKE_BUILD_TYPE RelWithDebInfo) #None, Debug, Release, RelWithDebInfo, MinSizeRel
+set(CMAKE_BUILD_TYPE Debug) #None, Debug, Release, RelWithDebInfo, MinSizeRel
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -140,8 +140,8 @@ target_link_libraries(pxpincher_lib
 )
 
 ## Declare a cpp executable
-add_executable(pxpincher src/main.cpp)
-target_link_libraries(pxpincher phantomx_lib)
+add_executable(pxpincher_test src/main.cpp)
+target_link_libraries(pxpincher_test pxpincher_lib)
 
 
 ## Add cmake target dependencies of the executable/library

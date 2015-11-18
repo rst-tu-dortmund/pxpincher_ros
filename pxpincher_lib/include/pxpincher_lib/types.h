@@ -44,7 +44,7 @@
 #include <Eigen/Geometry>
 
 
-namespace phantomx
+namespace pxpincher
 {
   
 //! Typedef for a joint vector q=[q1,q2,q3,q4]^T  
@@ -65,7 +65,7 @@ using RobotJacobian = Eigen::Matrix<double,6,4>;
 //! Typedef for the robot jacobian 
 using RobotJacobianReduced = Eigen::Matrix4d;
 
-} // namespace phantomx
+} // namespace pxpincher
 
 
 #endif /* TYPES_H_ */

@@ -59,13 +59,13 @@
 #include <tf_conversions/tf_eigen.h>
 
 // own stuff
-#include <phantomx_lib/types.h>
-#include <phantomx_lib/misc.h>
-#include <phantomx_lib/kinematics.h>
+#include <pxpincher_lib/types.h>
+#include <pxpincher_lib/misc.h>
+#include <pxpincher_lib/kinematics.h>
 
 
 
-namespace phantomx
+namespace pxpincher
 {
   
 
@@ -572,8 +572,9 @@ public:
   
   /**
    * @brief Relax all servos (deactivate torque)
+   * @param relaxed if \c true servos are relaxed, otherwise torque is enabled
    */
-  bool relaxServos();
+  bool relaxServos(bool relaxed);
   
   /**
    * @brief Signal handler that terminates all actions before calling ros::shutdown().
@@ -638,7 +639,7 @@ private:
   bool _joint_values_received = false;
   tf::TransformListener _tf;
   
-  std::vector< ros::ServiceClient > _joint_relax_services;
+  ros::ServiceClient _joint_relax_service;
   
   Eigen::Affine3d _base_T_j1 = Eigen::Affine3d::Identity(); //!< Coordinate transformation from the base to the first joint
   Eigen::Affine3d _j1_T_base = Eigen::Affine3d::Identity(); //!< Coordinate transformation from the first joint to the base
@@ -670,7 +671,7 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
-} // namespace phantomx
+} // namespace pxpincher
 
 
 #endif /* PHANTOMX_INTERFACE_H_ */

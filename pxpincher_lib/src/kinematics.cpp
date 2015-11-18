@@ -36,10 +36,10 @@
  * Author: Christoph Rösmann
  *********************************************************************/
 
-#include <phantomx_lib/kinematics.h>
+#include <pxpincher_lib/kinematics.h>
 
 
-namespace phantomx
+namespace pxpincher
 {
 
     
@@ -351,4 +351,4 @@ bool KinematicModel::computeInverseKinematics(const std::vector<double>& desired
 }
   
   
-} // end namespace phantomx
+} // end namespace pxpincher

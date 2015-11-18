@@ -43,13 +43,13 @@
 #include <ros/ros.h>
 
 // own stuff
-#include <phantomx_lib/types.h>
-#include <phantomx_lib/misc.h>
+#include <pxpincher_lib//types.h>
+#include <pxpincher_lib/misc.h>
 
 
 
 
-namespace phantomx
+namespace pxpincher
 {
   
 
@@ -231,7 +231,7 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
-} // namespace phantomx
+} // namespace pxpincher
 
 
 #endif /* KINEMATICS_H_ */

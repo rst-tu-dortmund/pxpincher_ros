@@ -157,8 +157,8 @@ void PxPincher::calculateControlStep()
 {
     ros::Time now = ros::Time::now();
     ros::Duration period = now - last_;
-    controller_manager_.update(now,period,false);
-
+    controller_manager_.update(now,period, ctrl_reset_requested_);
+    ctrl_reset_requested_ = false;
     last_ = now;
 }
 
@@ -265,6 +265,7 @@ void PxPincher::driveToHomePosition(bool blocking) // TODO Sim case
             ros::Duration(0.01).sleep();
         }
     }
+    ctrl_reset_requested_ = true;
 }
 
 
@@ -275,7 +276,11 @@ bool PxPincher::relaxServos(bool relaxed)
     
     bool ret_val = true;
     
+    if (!ctrl_enabled_ && !relaxed)
+        ctrl_reset_requested_ = true; // reset controllers since torque is going to be enabled and the robot may has moved 
+    
     ctrl_enabled_ = !relaxed;
+
 
     for (UBYTE id : params_.ids_)
     {

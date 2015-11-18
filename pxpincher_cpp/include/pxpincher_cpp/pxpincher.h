@@ -123,6 +123,7 @@ private:
   
 
     bool ctrl_enabled_ = true; //!< This state allows controlling the robot (it is set to false if motors are relaxed)
+    bool ctrl_reset_requested_ = false;
     bool sim_;
     int rate_;
 

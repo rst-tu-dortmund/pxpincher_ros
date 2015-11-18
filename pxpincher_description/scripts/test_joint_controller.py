@@ -18,7 +18,7 @@ def traj_pub():
   
   point = JointTrajectoryPoint()
   point.positions = [1,0.6,-0.3,-0.4]
-  point.time_from_start.secs = 3
+  point.time_from_start.secs = 1
   
   
   msg.points.append(point)
@@ -45,8 +45,9 @@ def traj_action_client():
     goal.trajectory.joint_names = ["arm_elbow_flex_joint", "arm_shoulder_lift_joint", "arm_shoulder_pan_joint", "arm_wrist_flex_joint"]
   
     point = JointTrajectoryPoint()
-    point.positions = [1,0.6,-0.3,-0.4]
-    point.time_from_start.secs = 3
+    #point.positions = [1,0.6,-0.3,-0.4]
+    point.positions = [0,0.6,0,0]
+    point.time_from_start.secs = 1
   
     goal.trajectory.points.append(point)
     

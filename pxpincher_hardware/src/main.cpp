@@ -36,56 +36,19 @@
  * Authors: Maximilian Krämer, Christoph Rösmann
  *********************************************************************/
 
-#include <pxpincher_cpp/simulation.h>
+#include <ros/ros.h>
+#include <std_msgs/String.h>
+#include <sstream>
 
-namespace pxpincher
+#include <pxpincher_hardware/pxpincher.h>
+
+int main(int argc, char **argv)
 {
+    ros::init(argc, argv, "pxpincher_rst");
 
-Simulation::Simulation()
-{
-    offsets_ = {0.0,0.0,0.0,0.0,0.0};
-    qDots_ = {0.0,0.0,0.0,0.0,0.0};
+    pxpincher::PxPincher pincher;
 
-    currentState_.header.stamp = ros::Time::now();
-    currentState_.velocity = qDots_;
-    currentState_.position = offsets_;
+    pincher.start();
+
+    return 0;
 }
-
-Simulation::Simulation(std::vector<double> offsets):
-    offsets_(offsets)
-{
-    qDots_ = {0.0,0.0,0.0,0.0,0.0};
-
-    currentState_.header.stamp = ros::Time::now();
-    currentState_.velocity = qDots_;
-    currentState_.position = offsets_;
-}
-
-void Simulation::setQDot(std::vector<double> qDot)
-{
-    qDots_ = qDot;
-}
-
-sensor_msgs::JointState Simulation::performSimulationStep(double duration)
-{
-    std::vector<std::string> names = {"J1","J2","J3","J4","J5"};
-
-    for(int i = 0; i < qDots_.size(); ++i){
-        offsets_[i] += qDots_[i]*duration;
-    }
-
-
-    currentState_.header.stamp = ros::Time::now();
-    currentState_.name = names;
-    currentState_.position = offsets_;
-    currentState_.velocity = qDots_;
-
-    return currentState_;
-}
-
-sensor_msgs::JointState Simulation::getCurrentState()
-{
-    return currentState_;
-}
-
-} // end namespace pxpincher

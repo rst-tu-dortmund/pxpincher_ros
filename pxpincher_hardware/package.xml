@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>pxpincher_cpp</name>
+  <name>pxpincher_hardware</name>
   <version>0.0.1</version>
-  <description>The pxpincher_cpp package</description>
+  <description>The pxpincher_hardware package</description>
 
   <maintainer email="maximilian.kraemer@tu-dortmund.de">Maximilian Krämer</maintainer>
   <maintainer email="christoph.roesmann@tu-dortmund.de">Christoph Rösmann</maintainer>

@@ -11,7 +11,7 @@ set(CMAKE_BUILD_TYPE RelWithDebInfo) #None, Debug, Release, RelWithDebInfo, MinS
 find_package(catkin REQUIRED
 roscpp
 pxpincher_msgs
-pxpincher_cpp
+pxpincher_hardware
 actionlib
 control_msgs
 tf
@@ -107,7 +107,7 @@ catkin_package(
   LIBRARIES phantomx_lib
   CATKIN_DEPENDS
         pxpincher_msgs
-	pxpincher_cpp
+	pxpincher_hardware
   	actionlib 
 	control_msgs
 	tf

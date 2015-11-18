@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(pxpincher_cpp)
+project(pxpincher_hardware)
 
 set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
 
@@ -134,7 +134,7 @@ include_directories(
 # add_dependencies(pxpincher_rst_cpp ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a cpp executable
-add_executable(pxpincher_cpp
+add_executable(pxpincher_node
   src/main.cpp
   src/pxpincher.cpp
   src/simulation.cpp
@@ -146,7 +146,7 @@ add_executable(pxpincher_cpp
 # add_dependencies(pxpincher_rst_cpp_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(pxpincher_cpp
+target_link_libraries(pxpincher_node
   ${pxpincher_comm_LIBRARIES}
   ${catkin_LIBRARIES}
 )

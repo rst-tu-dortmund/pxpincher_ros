@@ -36,8 +36,8 @@
  * Authors: Maximilian Krämer, Christoph Rösmann
  *********************************************************************/
 
-#include <pxpincher_cpp/pxpincher.h>
-#include <pxpincher_cpp/misc.h>
+#include <pxpincher_hardware/pxpincher.h>
+#include <pxpincher_hardware/misc.h>
 #include <pxpincher_msgs/Relax.h>
 #include <algorithm>
 

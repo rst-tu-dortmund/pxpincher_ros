@@ -48,9 +48,9 @@ SerialComm::SerialComm(const std::string& device, unsigned long baud):
 {
     boost::mutex::scoped_lock lock(mex_);
     
-    serialComm_.open(device.c_str(),baud); //TODO Catch Exception and unlock mutex
+    serialComm_.open(device.c_str(),baud); //TODO Catch Exception
 
-    if(serialComm_.portOpen()){ //TODO Catch Exception and unlock mutex
+    if(serialComm_.portOpen()){ //TODO Catch Exception
         ROS_INFO("Serial port opened");
         opened_ = true;
 

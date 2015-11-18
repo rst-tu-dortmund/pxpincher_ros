@@ -36,7 +36,7 @@
  * Authors: Maximilian Krämer, Christoph Rösmann
  *********************************************************************/
 
-#include "pxpincher_cpp/pxparameter.h"
+#include "pxpincher_hardware/pxparameter.h"
 
 #include <XmlRpcValue.h>
 #include <ros/ros.h>

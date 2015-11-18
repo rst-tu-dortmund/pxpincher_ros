@@ -27,6 +27,12 @@
   <!-- Use test_depend for packages you need only for testing: -->
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
+  <run_depend>pxpincher_comm</run_depend>
+  <run_depend>pxpincher_config</run_depend>
+  <run_depend>pxpincher_description</run_depend>
+  <run_depend>pxpincher_hardware</run_depend>
+  <run_depend>pxpincher_lib</run_depend>
+  <run_depend>pxpincher_msgs</run_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

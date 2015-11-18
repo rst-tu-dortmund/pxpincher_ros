@@ -279,12 +279,12 @@ bool PxPincher::relaxServos(bool relaxed)
     if (!ctrl_enabled_ && !relaxed)
         ctrl_reset_requested_ = true; // reset controllers since torque is going to be enabled and the robot may has moved 
     
-    ctrl_enabled_ = !relaxed;
+    ctrl_enabled_ = !relaxed; // switching booleans is thread safe
 
 
     for (UBYTE id : params_.ids_)
     {
-            UBYTE error = protocol_.setTorqueState(id, (int) !relaxed, comm_);
+            UBYTE error = protocol_.setTorqueState(id, (int) !relaxed, comm_); // the protocol is thread safe
             if ( PXProtocol::checkError(error, true) )
                 ret_val = false;
             ros::Duration(0.01).sleep();

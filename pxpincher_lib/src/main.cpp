@@ -51,9 +51,9 @@ int main( int argc, char** argv )
   pxpincher::PhantomXControl robot;
   robot.initialize();
   
-//   robot.setJoints({M_PI/2,M_PI/2,0,0},{0.6,0.2,0,0});
-  robot.setJointVel({0.6,0.2,0,0});
-    
+  //robot.setJoints({-M_PI/2,M_PI/3,-M_PI/4,M_PI/2},{0.6,0.6,0.6,0.6});
+ // robot.setJointVel({0.6,0.2,0,0});
+   robot.testKinematicModel();
 
   ros::waitForShutdown();
   

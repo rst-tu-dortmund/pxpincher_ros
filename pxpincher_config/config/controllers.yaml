@@ -1,5 +1,6 @@
 arm_controller:
   type: "position_controllers/JointTrajectoryController"
+  state_publish_rate: 100
   joints:
     - arm_shoulder_pan_joint
     - arm_shoulder_lift_joint
@@ -7,6 +8,17 @@ arm_controller:
     - arm_wrist_flex_joint
   #gains: # no effect on position based controllers, only for velocity and effort interfaces
     #arm_shoulder_lift_joint: {p: 500,  d: 10, i: 20, i_clamp: 1}
+  constraints:
+    goal_time: 0.1                 
+    stopped_velocity_tolerance: 0.1
+    arm_shoulder_pan_joint:          
+      goal: 0.1                  
+    arm_shoulder_lift_joint:
+      goal: 0.1            
+    arm_elbow_flex_joint:
+      goal: 0.1   
+    arm_wrist_flex_joint: 
+      goal: 0.1   
 
 gripper_controller:
   type: "position_controllers/GripperActionController"

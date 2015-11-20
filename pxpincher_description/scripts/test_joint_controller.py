@@ -46,8 +46,10 @@ def traj_action_client():
   
     point = JointTrajectoryPoint()
     #point.positions = [1,0.6,-0.3,-0.4]
-    point.positions = [0,0.6,0,0]
-    point.time_from_start.secs = 1
+    point.positions = [0,1.2,0,0]
+    point.velocities = [0,0,0,0]
+    point.accelerations = [0,0,0,0]
+    point.time_from_start.secs = 2
   
     goal.trajectory.points.append(point)
     

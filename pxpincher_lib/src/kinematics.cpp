@@ -351,4 +351,56 @@ bool KinematicModel::computeInverseKinematics(const std::vector<double>& desired
 }
   
   
+  
+void KinematicModel::visualizeTaskSpace(ros::Publisher& pub, double resolution)
+{
+    if (_joint_lower_bounds.rows() != 4 || _joint_upper_bounds.rows() != 4)
+    {
+        ROS_ERROR("KinematicModel::visualizeTaskSpace() only supports 4 joints at the moment.");
+        return;
+    }
+    if (resolution<=0)
+    {
+        ROS_ERROR("KinematicModel::visualizeTaskSpace(): resolution must be positive");
+        return;
+    }
+    
+    JointVector lower = _joint_lower_bounds;
+    JointVector upper = _joint_upper_bounds;
+    
+    std::vector<int> number_steps;
+    for (int i=0; i<(int)lower.rows(); ++i)
+    {
+        number_steps.push_back( std::floor( (upper[i]-lower[i])/resolution ) );
+    }
+    
+    
+    JointVector q;
+    for (int j1 = 0; j1 < number_steps[0]; ++j1)
+    {
+        q[0] = lower[0] + double(j1) * (upper[0]-lower[0]);
+        for (int j2 = 0; j2 < number_steps[1]; ++j2)
+        {
+            q[1] = lower[1] + double(j2) * (upper[1]-lower[1]);
+            for (int j3 = 0; j3 < number_steps[2]; ++j3)
+            {
+                q[2] = lower[2] + double(j3) * (upper[2]-lower[2]);
+                for (int j4 = 0; j4 < number_steps[3]; ++j4)
+                {
+                   q[3] = lower[3] + double(j4) * (upper[3]-lower[3]);
+                    
+                   Eigen::Affine3d f = computeForwardKinematics(q);
+                   // TODO create point cloud with x,y,z
+                }
+            }
+            
+        }
+        
+    }
+    
+    
+    
+}
+  
+  
 } // end namespace pxpincher

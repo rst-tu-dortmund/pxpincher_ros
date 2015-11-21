@@ -423,6 +423,21 @@ public:
      */
     UBYTE setTorqueState(UBYTE id, UBYTE state, SerialComm &comm);
 
+
+    /**
+     * @brief Set torque state for a bunch of servos
+     *
+     * Two different states are possible:
+     * State 0: Keeps toque from generating by interrupting the power of motor
+     * State 1: Generates Torque by impressing the power to the motor.
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_11
+     * @param ids servo id vector
+     * @param states state vector with torque states according to servos specified in \c ids
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE setTorqueState(const std::vector<UBYTE>& ids, std::vector<int> states, SerialComm &comm);
+
     
     /**
      * @brief Read led state of a single servo

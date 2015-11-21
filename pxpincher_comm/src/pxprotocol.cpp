@@ -2237,39 +2237,66 @@ UBYTE PXProtocol::readTorqueState(const std::vector<UBYTE>& ids, std::vector<int
 
 UBYTE PXProtocol::setTorqueState(UBYTE id, UBYTE state, SerialComm &comm)
 {
-    if (!checkParameterRange(state,0,1)){
-        //return 0xFF;
-    }
+    std::vector<UBYTE> ids = {id};
+    std::vector<int> states = {(int)state};
 
+    // Wrap to multi servo command
+    UBYTE error = setTorqueState(ids,states,comm);
+
+    return error;
+}
+
+UBYTE PXProtocol::setTorqueState(const std::vector<UBYTE> &ids, std::vector<int> states, SerialComm &comm)
+{
     std::vector<UBYTE> package, data, response;
 
+    UBYTE nServos = ids.size();
     UBYTE reg = DYNAMIXEL_TORQUE_ENDABLE;
+    UBYTE nBytes = 0x01;
 
-    data.push_back(reg);
-    data.push_back(state);
+    if(nServos > 1){
+        // Multi Servo Mode
+        appendData(data,states,true);
 
-    package = makeSinglePackage(id,DYNAMIXEL_WRITE_DATA,data);
+        package = makeMultiWritePackage(ids,reg,data,nBytes);
 
-    // Send package and recieve response
-    comm.sendData(package, &response, DYNAMIXEL_NO_DATA_RESPONSE);
+        // Send package and recieve response
+        comm.sendData(package);
 
-    
 #ifdef PRINT_BYTES
     // Print out Bytes to the Console
     printBytes(package);
     printBytes(response);
 #endif
 
-    //Check Checksum
-    if(!checkChecksum(response)){
-        /// @todo TODO Throw Exception
-        ROS_INFO("Checksum mismatch");
+        return 0x00;
+
+    }else{
+        // Single Servo Mode
+        data.push_back(reg);
+        appendData(data,states,true);
+
+        package = makeSinglePackage(ids.at(0),DYNAMIXEL_WRITE_DATA,data);
+
+        // Send package and recieve response
+        comm.sendData(package, &response, DYNAMIXEL_NO_DATA_RESPONSE);
+
+        // Check Checksum
+        if(!checkChecksum(response)){
+            /// @todo TODO Throw Exception
+            ROS_INFO("Checksum mismatch");
+        }
+
+#ifdef PRINT_BYTES
+    // Print out Bytes to the Console
+    printBytes(package);
+    printBytes(response);
+#endif
+
+        // Return Error Byte
+        checkError(response[4]);
+        return response[4];
     }
-
-    // Return Error Byte
-    /// @todo TODO check error byte and throw exception if nescecary
-
-    return response[4];
 }
 
 UBYTE PXProtocol::readLEDState(UBYTE id, int &state, SerialComm &comm)

@@ -2268,8 +2268,7 @@ UBYTE PXProtocol::setTorqueState(UBYTE id, UBYTE state, SerialComm &comm)
 
     // Return Error Byte
     /// @todo TODO check error byte and throw exception if nescecary
-    if (response.size()<5)
-        return 1 << 7; // TODO: The size does not match here, check response!!!
+
     return response[4];
 }
 

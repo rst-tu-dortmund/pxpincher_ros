@@ -143,6 +143,8 @@ target_link_libraries(pxpincher_lib
 add_executable(pxpincher_test src/main.cpp)
 target_link_libraries(pxpincher_test pxpincher_lib)
 
+add_executable(teach src/teach.cpp)
+target_link_libraries(teach pxpincher_lib)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes

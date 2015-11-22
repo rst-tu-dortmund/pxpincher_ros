@@ -1,0 +1,8 @@
+<launch>
+
+   <!-- Run the pxp launch file with sim enabled -->
+  <include file="$(find pxpincher_launch)/launch/pxp.launch">
+    <arg name="sim" value="true" />
+  </include>
+
+</launch>

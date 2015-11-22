@@ -2,7 +2,6 @@ source: pincher_arm.yaml
 port: /dev/ttyUSB0
 rate: 10
 baud: 115200
-simulation: false
 joints: {
     arm_shoulder_pan_joint: {id: 1, cwlimit: 35,  ccwlimit: 900, offset: 511, speed: 60},
     arm_shoulder_lift_joint: {id: 2, cwlimit: 100, ccwlimit: 900, offset: 511, speed: 60},

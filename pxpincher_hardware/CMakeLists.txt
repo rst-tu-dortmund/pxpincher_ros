@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(pxpincher_hardware)
 
+#set (CMAKE_BUILD_TYPE Debug)
+
 set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
 
 ## Find catkin macros and libraries

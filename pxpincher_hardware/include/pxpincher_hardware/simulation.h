@@ -44,6 +44,7 @@
 #include <pxpincher_hardware/misc.h>
 #include <pxpincher_comm/codes.h>
 #include <pxpincher_comm/servostatus.h>
+#include <ros/callback_queue.h>
 
 #include <ros/ros.h>
 
@@ -57,8 +58,10 @@ class Simulation
 public:
       
     Simulation();
+    
+    void start(ros::Rate rate);
 
-    void addJoint(UBYTE id, const std::string& name, int default_pos, int lower_bound, int upper_bound);
+    void addJoint(UBYTE id, const std::string& name, int default_pos, int default_speed, int lower_bound, int upper_bound);
     
     void clearJoints();
     
@@ -67,11 +70,15 @@ public:
     
     void readServoStatus(std::vector<ServoStatus>& stati);
     
-    bool isMoving();
+    void simCallback(const ros::TimerEvent& event);
     
-    sensor_msgs::JointState performSimulationStep(double duration);
-    sensor_msgs::JointState getCurrentState();
+    bool isMoving();
+       
 
+protected:
+      void performSimulationStep(double duration);
+      bool isGoalReached();
+    
 private:
 
     struct JointData
@@ -86,6 +93,17 @@ private:
       int lower;
       int upper;
     };
+    
+    bool moving_ = false;
+    
+    ros::Timer sim_callback_; 
+    ros::CallbackQueue callback_queue_;
+    ros::AsyncSpinner spinner_;
+    
+    ros::Time last_step_;
+    bool started_ = false;
+    
+    ros::NodeHandle nhandle_;
     
     std::map<UBYTE, JointData> joint_data_;   
     boost::mutex data_mutex_;

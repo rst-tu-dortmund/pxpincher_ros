@@ -51,6 +51,10 @@ constexpr double conversionFactorPos = 5*PI/3066;
 constexpr double conversionFactorSpeed = 19*PI/5115;
 constexpr double INF = 0.8*std::numeric_limits< double >::max();
     
+template <typename T> int sign(T val) 
+{
+    return (T(0) < val) - (val < T(0));
+}
 
 inline double tick2rad(int position)
 {

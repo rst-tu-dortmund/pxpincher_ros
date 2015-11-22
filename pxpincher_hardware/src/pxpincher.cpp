@@ -112,37 +112,29 @@ void PxPincher::start()
 
 void PxPincher::update()
 {
-    if(!sim_)
+    // Get current servo status
+    std::vector<ServoStatus> stati;
+    for (int id : params_.ids_)
     {
-        // Get current servo status
-        std::vector<ServoStatus> stati;
-        for (int id : params_.ids_)
-        {
-            stati.emplace_back(id);
-        }
-        if (sim_)
-	  sim_object_.readServoStatus(stati);
-	else
-	  protocol_.readServoStatus(stati,comm_);
-
-        // Fill control variables
-        fillControlRegister(stati);
-
-        // Do control step
-        calculateControlStep();
-
-        // Write control command
-        performAction();
-
-        // Publish current information
-        state_publisher_.publish(getJointState());
-        diagnostic_publisher_.publish(getDiagnostics(stati));
+	stati.emplace_back(id);
     }
+    if (sim_)
+      sim_object_.readServoStatus(stati);
     else
-    {
-        // Publish current information
-        state_publisher_.publish(sim_object_.performSimulationStep(1/rate_));
-    }
+      protocol_.readServoStatus(stati,comm_);
+
+    // Fill control variables
+    fillControlRegister(stati);
+
+    // Do control step
+    calculateControlStep();
+
+    // Write control command
+    performAction();
+
+    // Publish current information
+    state_publisher_.publish(getJointState());
+    diagnostic_publisher_.publish(getDiagnostics(stati));
 }
 
 void PxPincher::fillControlRegister(const std::vector<ServoStatus>& stati)
@@ -250,8 +242,9 @@ void PxPincher::initRobot()
       sim_object_.clearJoints();
       for (int i=0; i<(int)params_.ids_.size(); ++i) // TODO: check sizes
       {
-	sim_object_.addJoint(params_.ids_[i], params_.names_[i], params_.offsets_[i], params_.cwlimits_[i], params_.ccwlimits_[i]);
+	sim_object_.addJoint(params_.ids_[i], params_.names_[i], params_.offsets_[i], params_.speeds_[i], params_.cwlimits_[i], params_.ccwlimits_[i]);
       }
+      sim_object_.start(ros::Rate(rate_));
     }
     else
     {

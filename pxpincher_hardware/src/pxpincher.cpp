@@ -244,7 +244,7 @@ void PxPincher::initRobot()
       {
 	sim_object_.addJoint(params_.ids_[i], params_.names_[i], params_.offsets_[i], params_.speeds_[i], params_.cwlimits_[i], params_.ccwlimits_[i]);
       }
-      sim_object_.start(ros::Rate(rate_));
+      sim_object_.start(ros::Rate(3*rate_)); // let simulator run with a faster rate (otherwise the timing (execution) might not be well)
     }
     else
     {

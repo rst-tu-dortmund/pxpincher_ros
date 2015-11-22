@@ -42,7 +42,7 @@
 namespace pxpincher
 {
 
-Simulation::Simulation() : nhandle_("sim"), spinner_(1, &callback_queue_)  // TODO check if multithreading works on all computers, otherwise we must add use the callback queue of the pxpincher class
+Simulation::Simulation() : nhandle_("sim"), spinner_(2, &callback_queue_)  // TODO check if multithreading works on all computers, otherwise we must add use the callback queue of the pxpincher class
 {
     nhandle_.setCallbackQueue(&callback_queue_);
 }
@@ -143,7 +143,7 @@ bool Simulation::isGoalReached()
     std::vector<bool> reached;
     for (const auto& data : joint_data_)
     {
-	reached.push_back( std::abs(data.second.goal - data.second.pos) < 0.001 ); // TODO: check threshold
+	reached.push_back( std::abs(data.second.goal - data.second.pos) < 1e-5 ); // TODO: check threshold
     }
     return std::find(reached.begin(), reached.end(), false) == reached.end();
 }
@@ -156,7 +156,6 @@ bool Simulation::isMoving()
 void Simulation::performSimulationStep(double duration)
 {
     boost::mutex::scoped_lock lock(data_mutex_);
-    
     for (std::pair<const UBYTE, JointData>& data : joint_data_)
     {
       int speed_max = data.second.speed; 

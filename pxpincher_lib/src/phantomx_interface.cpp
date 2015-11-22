@@ -491,7 +491,7 @@ void PhantomXControl::setJointTrajectory(control_msgs::FollowJointTrajectoryGoal
   }
   
   if (blocking)
-    _arm_action->sendGoalAndWait(trajectory, ros::Duration(20));
+    _arm_action->sendGoalAndWait(trajectory, ros::Duration(30));
   else
     _arm_action->sendGoal(trajectory);
 }
@@ -932,27 +932,27 @@ bool PhantomXControl::testKinematicModel()
   // Default position
   JointVector values;
   values.setZero();
-  retval = retval && testKinematicModel(values);
+  retval = testKinematicModel(values) && retval;
      
   // Pos 1
   values << -M_PI/2, 0, 0, 0;
-  retval = retval && testKinematicModel(values);
+  retval = testKinematicModel(values) && retval;
   
   // Pos 2
   values << 0, M_PI/3, 0, 0;
-  retval = retval && testKinematicModel(values);
+  retval = testKinematicModel(values) && retval;
   
   // Pos 3
   values << 0, 0, M_PI/2, 0;
-  retval = retval && testKinematicModel(values);
+  retval = testKinematicModel(values) && retval;
   
   // Pos 4
   values << 0, 0, 0, -M_PI/2;
-  retval = retval && testKinematicModel(values);
+  retval = testKinematicModel(values) && retval;
   
   // Pos 5
   values << M_PI/2, -M_PI/3, M_PI/5, -M_PI/2;
-  retval = retval && testKinematicModel(values);
+  retval = testKinematicModel(values) && retval;
   
   if (retval)
     ROS_INFO_STREAM("testKinematicModel successfully completed.");
@@ -970,6 +970,7 @@ bool PhantomXControl::testKinematicModel(const Eigen::Ref<const JointVector>& jo
   
   // command robot
   setJoints(joint_values,ros::Duration(5));
+    
   // get current state
   Eigen::Affine3d real;
   getEndeffectorState(real);

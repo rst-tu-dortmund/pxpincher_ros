@@ -41,11 +41,31 @@
 namespace pxpincher
 {
 
+  
+SerialComm::SerialComm():
+    opened_(false),
+    initialized_(false),
+    initializing_(false)
+{
+}
+
+
 SerialComm::SerialComm(const std::string& device, unsigned long baud):
     opened_(false),
     initialized_(false),
     initializing_(false)
 {
+    open(device, baud);
+}
+
+bool SerialComm::open(const std::string& device, unsigned long baud)
+{
+    if (opened_)
+    {
+      ROS_INFO("SerialPort already opened. Skipping...");
+      return true;
+    }
+  
     boost::mutex::scoped_lock lock(mex_);
     
     serialComm_.open(device.c_str(),baud); //TODO Catch Exception
@@ -57,7 +77,7 @@ SerialComm::SerialComm(const std::string& device, unsigned long baud):
     }else{
         ROS_INFO("Serial port not opened");
     }
-
+    return opened_;
 }
 
 void SerialComm::sendData(const std::vector<UBYTE>& output_data, std::vector<UBYTE>* input_data, int resp_len)

@@ -43,31 +43,74 @@ namespace pxpincher
 
 Simulation::Simulation()
 {
-    offsets_ = {0.0,0.0,0.0,0.0,0.0};
-    qDots_ = {0.0,0.0,0.0,0.0,0.0};
-
-    currentState_.header.stamp = ros::Time::now();
-    currentState_.velocity = qDots_;
-    currentState_.position = offsets_;
 }
 
-Simulation::Simulation(std::vector<double> offsets):
-    offsets_(offsets)
+void Simulation::addJoint(UBYTE id, const std::string& name, int default_pos, int lower_bound, int upper_bound)
 {
-    qDots_ = {0.0,0.0,0.0,0.0,0.0};
-
-    currentState_.header.stamp = ros::Time::now();
-    currentState_.velocity = qDots_;
-    currentState_.position = offsets_;
+    joint_data_[id] = JointData(name, default_pos, 0, default_pos, lower_bound, upper_bound);
 }
 
-void Simulation::setQDot(std::vector<double> qDot)
+void Simulation::clearJoints()
 {
-    qDots_ = qDot;
+  joint_data_.clear();
+}
+
+void Simulation::setGoalPosition(UBYTE id, int position)
+{
+  boost::mutex::scoped_lock lock(data_mutex_);
+  try
+  {
+    joint_data_.at(id).goal = position;
+  }
+  catch (const std::out_of_range& oor)
+  {
+    ROS_ERROR_STREAM("Simulation::setGoalPosition(): invalid id: " << (int) id);
+  }
+}
+
+void Simulation::setGoalPosition(const std::vector<UBYTE>& ids, const std::vector<int>& positions)
+{
+  ROS_ASSERT(ids.size() == positions.size());
+  int idx = 0;
+  for (UBYTE id : ids)
+  {
+    setGoalPosition(id, positions[idx]);
+    ++idx;
+  }
+}
+
+void Simulation::readServoStatus(std::vector<ServoStatus>& stati)
+{
+    boost::mutex::scoped_lock lock(data_mutex_);
+    
+    // Get the ids
+    for(ServoStatus& elem : stati)
+    { 
+	try
+	{
+	  const JointData& data = joint_data_.at(elem.id_);
+	  elem.load_ = 0; // no load model simulated
+	  elem.position_ = data.pos;
+	  elem.speed_ = data.speed;
+	  elem.temperature_ = 0;
+	  elem.voltage_ = 0;
+	}
+	catch (const std::out_of_range& oor)
+	{
+	  ROS_ERROR_STREAM("Simulation::readServoStatus(): invalid id: " << (int) elem.id_);
+	}
+    }
+    
+}
+
+bool Simulation::isMoving()
+{
+  return false;
 }
 
 sensor_msgs::JointState Simulation::performSimulationStep(double duration)
 {
+  /*
     std::vector<std::string> names = {"J1","J2","J3","J4","J5"};
 
     for(int i = 0; i < qDots_.size(); ++i){
@@ -81,11 +124,14 @@ sensor_msgs::JointState Simulation::performSimulationStep(double duration)
     currentState_.velocity = qDots_;
 
     return currentState_;
+    */
+  return sensor_msgs::JointState();
 }
 
 sensor_msgs::JointState Simulation::getCurrentState()
 {
-    return currentState_;
+   // return currentState_;
+  return sensor_msgs::JointState();
 }
 
 } // end namespace pxpincher

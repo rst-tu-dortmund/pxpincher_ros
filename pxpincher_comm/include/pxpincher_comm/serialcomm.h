@@ -66,11 +66,24 @@ class SerialComm
 public:
     
     /**
-     * @brief Default constructor
+     * @brief Construct SerialComm class
+     */
+    SerialComm();
+    
+    /**
+     * @brief Construct SerialComm class and open device
      * @param device port name (e.g. "/dev/ttyUSB0")
      * @param baud baud rate of the serial port (e.g. 115200)
      */
     SerialComm(const std::string& device, unsigned long baud);
+    
+    /**
+     * @brief Open device (if not already opened using a proper constructor)
+     * @param device port name (e.g. "/dev/ttyUSB0")
+     * @param baud baud rate of the serial port (e.g. 115200)
+     * @return \c true, if port is open, otherwise \c false.
+     */
+    bool open(const std::string& device, unsigned long baud);
     
     /**
      * @brief Send vector of bytes via already initialized serial port

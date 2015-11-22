@@ -45,13 +45,20 @@ namespace pxpincher
 {
 
 PxPincher::PxPincher():
-    comm_(params_.port_,params_.baud_),
+    comm_(),
     sim_(params_.simulation_),
     rate_(params_.rate_),
     last_(ros::Time::now()),
     controller_manager_(this),
     nhandle_("pxpincher")
 {
+    if (!sim_ && !comm_.open(params_.port_,params_.baud_))
+    {
+	ROS_ERROR_STREAM("Could not open serial connection on port: " << params_.port_ << " with baudrate: " << params_.baud_); 
+	ROS_ERROR_STREAM("Exiting node, since simulation mode is not activated.");
+	ros::shutdown();
+    }
+  
     std::size_t no_joints = params_.names_.size();
     
     joint_data_.resize(no_joints);
@@ -73,7 +80,6 @@ PxPincher::PxPincher():
 
     state_publisher_ = nhandle_.advertise<sensor_msgs::JointState>("/joint_states",1); // joint_states topic is always root
     diagnostic_publisher_ = nhandle_.advertise<pxpincher_msgs::pxpincher_diagnostic>("diagnostics",1);
-    sim_subscriber_ = nhandle_.subscribe("joint_cmd_simulation",1, &PxPincher::simulationCallback,this);
     auto relax_fun = [this](pxpincher_msgs::Relax::Request& req, pxpincher_msgs::Relax::Response& resp) {resp.success = relaxServos(req.relaxed>0); return true;};
     relax_service_ = nhandle_.advertiseService("Relax", boost::function<bool(pxpincher_msgs::Relax::Request&,pxpincher_msgs::Relax::Response&)>(relax_fun)); // implicit casting does not work here (gcc)
 }
@@ -114,7 +120,10 @@ void PxPincher::update()
         {
             stati.emplace_back(id);
         }
-        protocol_.readServoStatus(stati,comm_);
+        if (sim_)
+	  sim_object_.readServoStatus(stati);
+	else
+	  protocol_.readServoStatus(stati,comm_);
 
         // Fill control variables
         fillControlRegister(stati);
@@ -178,7 +187,10 @@ void PxPincher::performAction()
         ++idx;
     }
     //ROS_INFO_STREAM("\n" << ss.str());
-    protocol_.setGoalPosition( params_.ids_, pos_ticks, comm_ );
+    if (sim_)
+      sim_object_.setGoalPosition( params_.ids_, pos_ticks );
+    else
+      protocol_.setGoalPosition( params_.ids_, pos_ticks, comm_ );
 }
 
 
@@ -220,34 +232,43 @@ pxpincher_msgs::pxpincher_diagnostic PxPincher::getDiagnostics(const std::vector
     return diag;
 }
 
-void PxPincher::simulationCallback(const sensor_msgs::JointStateConstPtr &state)
-{
-    sim_object_.setQDot(state->velocity);
-}
 
-bool PxPincher::isMoving() // TODO Sim case
+bool PxPincher::isMoving()
 {
+    if (sim_)
+      return sim_object_.isMoving();
+    
     std::vector<int> moving_vec;
     protocol_.readMoving(params_.ids_, moving_vec, comm_ );    
     return std::count_if(moving_vec.begin(), moving_vec.end(), [](int val){return val>0;}) > 0;
 }
 
 void PxPincher::initRobot()
-{ // TODO sim case
+{ 
+    if (sim_)
+    {
+      sim_object_.clearJoints();
+      for (int i=0; i<(int)params_.ids_.size(); ++i) // TODO: check sizes
+      {
+	sim_object_.addJoint(params_.ids_[i], params_.names_[i], params_.offsets_[i], params_.cwlimits_[i], params_.ccwlimits_[i]);
+      }
+    }
+    else
+    {
+      std::vector<UBYTE> ids = params_.ids_;
+      std::vector<int> cw_limits = params_.cwlimits_;
+      std::vector<int> ccw_limits = params_.ccwlimits_;
+      std::vector<int> speeds = params_.speeds_;
 
-    std::vector<UBYTE> ids = params_.ids_;
-    std::vector<int> cw_limits = params_.cwlimits_;
-    std::vector<int> ccw_limits = params_.ccwlimits_;
-    std::vector<int> speeds = params_.speeds_;
+      protocol_.setCCWAngleLimit(ids,ccw_limits,comm_);
+      ros::Duration(0.01).sleep();
 
-    protocol_.setCCWAngleLimit(ids,ccw_limits,comm_);
-    ros::Duration(0.01).sleep();
+      protocol_.setCWAngleLimit(ids,cw_limits,comm_);
+      ros::Duration(0.01).sleep();
 
-    protocol_.setCWAngleLimit(ids,cw_limits,comm_);
-    ros::Duration(0.01).sleep();
-
-    protocol_.setGoalSpeed(ids,speeds,comm_);
-    ros::Duration(0.01).sleep();
+      protocol_.setGoalSpeed(ids,speeds,comm_);
+      ros::Duration(0.01).sleep();
+    }
 
     // Drive to Home-Position
     ROS_INFO("Driving to default position...");
@@ -257,7 +278,11 @@ void PxPincher::initRobot()
 
 void PxPincher::driveToHomePosition(bool blocking) // TODO Sim case
 {
-    protocol_.setGoalPosition(params_.ids_, params_.offsets_ ,comm_);
+    if (sim_)
+      sim_object_.setGoalPosition(params_.ids_, params_.offsets_);
+    else
+      protocol_.setGoalPosition(params_.ids_, params_.offsets_ ,comm_);
+    
     if (blocking)
     {
         while (isMoving() && ros::ok())

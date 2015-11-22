@@ -92,7 +92,6 @@ private:
     void simulationCallback(const sensor_msgs::JointStateConstPtr &state);
 
     ros::Publisher state_publisher_, diagnostic_publisher_;
-    ros::Subscriber sim_subscriber_;
     ros::ServiceServer relax_service_;
     ros::NodeHandle nhandle_;
 

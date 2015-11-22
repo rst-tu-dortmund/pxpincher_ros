@@ -40,6 +40,7 @@
 #define PXMISC_H
 
 #include <cmath>
+#include <limits>
 
 namespace pxpincher
 {
@@ -48,6 +49,7 @@ namespace pxpincher
 constexpr double PI = 3.141592653589793;
 constexpr double conversionFactorPos = 5*PI/3066;
 constexpr double conversionFactorSpeed = 19*PI/5115;
+constexpr double INF = 0.8*std::numeric_limits< double >::max();
     
 
 inline double tick2rad(int position)

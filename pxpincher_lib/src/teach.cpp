@@ -40,6 +40,10 @@
 #include <pxpincher_lib/phantomx_interface.h>
 
 
+#include <termios.h>
+char getch(); // allow to capture keyboard inputs without blocking the program (we use this to disable and enable torque / relax)
+
+
 
 // =============== Main function =================
 int main( int argc, char** argv )
@@ -61,21 +65,74 @@ int main( int argc, char** argv )
   
   ros::Rate r(10);
   
+  ROS_INFO("Press 'r' to (un)relax motors (set torque on/off)");
+  
+  bool relaxed = false;
+  
   while (ros::ok())
   {
       
+      char c = getch();
+      if (c == 'r' || c == 'R')
+      {
+	robot.relaxServos(!relaxed);
+	relaxed = !relaxed;
+	ROS_INFO_STREAM(std::boolalpha << "Servos relaxed: " << relaxed);
+      }
+    
       // visualize work space
       workspace.header.stamp = ros::Time::now();
       pub_workspace.publish(workspace);
+      
+      robot.publishInformationMarker();
       
       ros::spinOnce();
       r.sleep();
   }
   
-  
-  
- 
+
   
   return 0;
+}
+
+
+
+// source http://answers.ros.org/question/63491/keyboard-key-pressed/
+char getch()
+{
+    fd_set set;
+    struct timeval timeout;
+    int rv;
+    char buff = 0;
+    int len = 1;
+    int filedesc = 0;
+    FD_ZERO(&set);
+    FD_SET(filedesc, &set);
+
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 50;
+
+    rv = select(filedesc + 1, &set, NULL, NULL, &timeout);
+
+    struct termios old = {0};
+    if (tcgetattr(filedesc, &old) < 0)
+        ROS_ERROR("tcsetattr()");
+    old.c_lflag &= ~ICANON;
+    old.c_lflag &= ~ECHO;
+    old.c_cc[VMIN] = 1;
+    old.c_cc[VTIME] = 0;
+    if (tcsetattr(filedesc, TCSANOW, &old) < 0)
+        ROS_ERROR("tcsetattr ICANON");
+
+    if(rv == -1)
+        ROS_ERROR("select");
+    else if (rv != 0) // == 0 -> nothing selected
+        read(filedesc, &buff, len );
+
+    old.c_lflag |= ICANON;
+    old.c_lflag |= ECHO;
+    if (tcsetattr(filedesc, TCSADRAIN, &old) < 0)
+        ROS_ERROR ("tcsetattr ~ICANON");
+    return (buff);
 }
 

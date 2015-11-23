@@ -91,6 +91,9 @@ void PhantomXControl::initialize()
   _gripper_action->waitForServer(); // will wait for infinite time
   ROS_INFO("All action servers started.");
   
+  // marker pub
+  _marker_pub = n.advertise<visualization_msgs::Marker>( "markers", 100 );
+  
   // setup subscriber (get joint_states in a separate thread)
   _joints_sub_queue = new ros::CallbackQueue();
   n.setCallbackQueue(_joints_sub_queue);
@@ -780,12 +783,18 @@ void PhantomXControl::setGripperRawJointAngle(double joint_value, bool blocking)
     _gripper_action->sendGoal(goal);
 }
 
-double PhantomXControl::getGripperJointAngle()
+double PhantomXControl::getGripperRawJointAngle()
 {
     std::lock_guard<std::mutex> lock(_joints_mutex); // TODO: makes no sense here?
     return _gripper_value;
 }
 
+int PhantomXControl::getGripperJointPercentage()
+{
+  double raw_angle = getGripperRawJointAngle();
+  double percent_open = std::round( (raw_angle - _gripper_lower_bound)/(_gripper_upper_bound-_gripper_lower_bound)/0.01 );
+  return (int) percent_open;
+}
 
 
 void PhantomXControl::createP2PTrajectoryWithIndividualVel(const std::vector<double>& start_conf,
@@ -1261,6 +1270,76 @@ void PhantomXControl::gripperMarkerFeedback(const visualization_msgs::Interactiv
     double desired_angle = -1 * getRotationAroundAxis(Eigen::Matrix3d::Identity(), pose_cur.linear(), Eigen::Vector3d::UnitZ(), Eigen::Vector3d::UnitX()); // we need the oposite direction
 
     setGripperRawJointAngle(desired_angle, false);
+}
+
+void PhantomXControl::publishInformationMarker()
+{
+    Eigen::Affine3d ee_state;
+    getEndeffectorState(ee_state);
+    
+    RpyVector rpy = convertRotMatToRpy(ee_state.linear());
+    
+    int gripper_opened = getGripperJointPercentage();
+  
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = _map_joint_to_joint_frame[_map_joint_to_index[_gripper_joint_name]];
+    marker.header.stamp = ros::Time();
+    marker.ns = "gripper_pose";
+    marker.id = 0;
+    marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.pose.position.x = 0.05;
+    marker.pose.position.y = 0;
+    marker.pose.position.z = 0;
+    marker.pose.orientation.w = 1;
+    marker.pose.orientation.x = 0;
+    marker.pose.orientation.y = 0;
+    marker.pose.orientation.z = 0;
+    marker.scale.z = 0.01;
+    marker.color.a = 1.0; // Don't forget to set the alpha!
+    marker.color.r = 1.0;
+    marker.color.g = 0.0;
+    marker.color.b = 0.0;
+    std::stringstream ss;
+    ss.precision(3);
+    ss << std::fixed << "EE pose: [ x: " << ee_state.translation().x() << ", y: " << ee_state.translation().y() << " z: " << ee_state.translation().z() << " ]"
+      << "\nEE rpy: [ " << " roll: " << rpy[0] << " pitch: " << rpy[1] << " yaw: " << rpy[2] << " ]"
+      << "\nGripper opened: " << gripper_opened << "\%";
+    marker.text = ss.str();
+
+  _marker_pub.publish( marker );
+  
+  // print joint values
+  JointVector joints = getJointAngles();
+  for (int i=0; i<(int)joints.rows(); ++i)
+  {
+        visualization_msgs::Marker joint_marker;
+	joint_marker.header.frame_id = _map_joint_to_joint_frame[i]; // TODO:  map with id instead of just 0..n
+	joint_marker.header.stamp = ros::Time();
+	joint_marker.ns = "joint_angles";
+	joint_marker.id = i;
+	joint_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+	joint_marker.action = visualization_msgs::Marker::ADD;
+	joint_marker.pose.position.x = -0.07;
+	joint_marker.pose.position.y = 0;
+	joint_marker.pose.position.z = 0;
+	joint_marker.pose.orientation.w = 1;
+	joint_marker.pose.orientation.x = 0;
+	joint_marker.pose.orientation.y = 0;
+	joint_marker.pose.orientation.z = 0;
+	joint_marker.scale.z = 0.01;
+	joint_marker.color.a = 1.0; // Don't forget to set the alpha!
+	joint_marker.color.r = 0.0;
+	joint_marker.color.g = 0.0;
+	joint_marker.color.b = 1.0;
+	std::stringstream ss_joint;
+	ss_joint.precision(2);
+	ss_joint << std::fixed << "q" << i << " = " << joints[i];
+	joint_marker.text = ss_joint.str();
+
+      _marker_pub.publish( joint_marker );
+  }
+  
 }
 
 } // end namespace pxpincher

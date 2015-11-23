@@ -488,7 +488,13 @@ public:
    * @brief Return the current joint angle of the gripper
    * @return current joint angle
    */
-  double getGripperJointAngle();
+  double getGripperRawJointAngle();
+  
+ /** 
+  * @brief Return the current joint angle of the gripper in percentage
+  * @return current joint angle [%]
+  */
+  int getGripperJointPercentage();
   
  
   //@}
@@ -614,6 +620,11 @@ public:
   void activateInteractiveJointControl();
   
   /**
+   * @brief Publish text marker with endeffector pose and joint configuration
+   */
+  void publishInformationMarker();
+  
+  /**
    * @brief Print the position and velocity porfile of a given trajectory on the screen.
    */
   static void printTrajectory(const trajectory_msgs::JointTrajectory& trajectory);
@@ -673,6 +684,7 @@ private:
   std::unique_ptr<ros::AsyncSpinner> _joints_sub_spinner;
   bool _joint_values_received = false;
   tf::TransformListener _tf;
+  ros::Publisher _marker_pub;
   
   ros::ServiceClient _joint_relax_service;
   

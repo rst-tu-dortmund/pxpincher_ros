@@ -39,10 +39,11 @@
 #include <pxpincher_hardware/simulation.h>
 #include <cmath>
 
+
 namespace pxpincher
 {
 
-Simulation::Simulation() : nhandle_("sim"), spinner_(2, &callback_queue_)  // TODO check if multithreading works on all computers, otherwise we must add use the callback queue of the pxpincher class
+Simulation::Simulation() : nhandle_("sim"), spinner_(1, &callback_queue_)  // TODO check if multithreading works on all computers, otherwise we must add use the callback queue of the pxpincher class
 {
     nhandle_.setCallbackQueue(&callback_queue_);
 }
@@ -164,7 +165,9 @@ void Simulation::performSimulationStep(double duration)
       int speed_req = std::trunc( double(std::abs(dist)) / duration );
       int speed_des = std::min(speed_max, speed_req);
       
-      data.second.pos +=  sign(dist) * speed_des * duration; // simple integrator model
+      int speed2ticks = conversionFactorSpeed / conversionFactorPos;
+      
+      data.second.pos +=  sign(dist) * speed_des * speed2ticks * duration; // simple integrator model
     }
 }
 

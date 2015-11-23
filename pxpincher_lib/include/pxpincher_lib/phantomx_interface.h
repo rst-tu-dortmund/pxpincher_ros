@@ -656,11 +656,7 @@ protected:
    */
   void gripperMarkerFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback );
   
-  /**
-   * @brief Callback for updating the markers according to current joint configurations
-   */
-  void jointMarkerUpdate();
-  
+
   
 private:
     
@@ -701,6 +697,7 @@ private:
   std::string _arm_base_link_frame = "/arm_base_link"; // TODO ros param
   
   std::map<std::string, int> _map_joint_to_index;
+  std::map<int, std::string> _map_joint_to_joint_frame;
   
   std::vector<std::string> _joint_names_arm; //!< Store names for all joints of the arm
   

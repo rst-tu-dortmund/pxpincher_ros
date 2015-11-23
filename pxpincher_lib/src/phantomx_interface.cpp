@@ -155,7 +155,7 @@ void PhantomXControl::initialize()
 //   _gripper_neutral = normalize_angle_rad( deg_to_rad(_gripper_neutral) );
 //   _gripper_max_speed = deg_to_rad( _gripper_max_speed );
   
-  _map_joint_to_index[_gripper_joint_name] = 255; // set gripper joint idx to 255 in our map
+  _map_joint_to_index[_gripper_joint_name] = 255; // set gripper joint idx to 255 in our map (// TODO: ids from yaml file)
   
 
   // Setup kinematic model
@@ -170,13 +170,20 @@ void PhantomXControl::initialize()
   ROS_INFO("Driving into default position in order to setup kinematic model...");
   setJointsDefault(0.2);
 
+  // Transformations
+  // TODO rosparam
+  _map_joint_to_joint_frame[0] = "/arm_shoulder_pan_servo_link";
+  _map_joint_to_joint_frame[1] = "/arm_shoulder_lift_servo_link";
+  _map_joint_to_joint_frame[2] = "/arm_elbow_flex_servo_link";
+  _map_joint_to_joint_frame[3] = "/arm_wrist_flex_servo_link";
+  _map_joint_to_joint_frame[255] = "/gripper_link"; // TODO: ids from yaml file
   
   // get transform: base to first joint 
   tf::StampedTransform transform;
   try
   {
-    _tf.waitForTransform(_arm_base_link_frame, "/arm_shoulder_pan_servo_link", ros::Time(0), ros::Duration(10.0) );
-    _tf.lookupTransform(_arm_base_link_frame, "/arm_shoulder_pan_servo_link", ros::Time(0), transform); // TODO: param
+    _tf.waitForTransform(_arm_base_link_frame, _map_joint_to_joint_frame[0], ros::Time(0), ros::Duration(10.0) );
+    _tf.lookupTransform(_arm_base_link_frame, _map_joint_to_joint_frame[0], ros::Time(0), transform); // TODO: param
   }
   catch (tf::TransformException &ex)
   {
@@ -189,8 +196,8 @@ void PhantomXControl::initialize()
   // get transform: first joint to second joint
   try
   {
-    _tf.waitForTransform("/arm_shoulder_pan_servo_link", "/arm_shoulder_lift_servo_link", ros::Time(0), ros::Duration(10.0) );
-    _tf.lookupTransform("/arm_shoulder_pan_servo_link", "/arm_shoulder_lift_servo_link", ros::Time(0), transform); // TODO: param
+    _tf.waitForTransform(_map_joint_to_joint_frame[0], _map_joint_to_joint_frame[1], ros::Time(0), ros::Duration(10.0) );
+    _tf.lookupTransform(_map_joint_to_joint_frame[0], _map_joint_to_joint_frame[1], ros::Time(0), transform); // TODO: param
   }
   catch (tf::TransformException &ex)
   {
@@ -203,8 +210,8 @@ void PhantomXControl::initialize()
   // get transform: second joint to third joint
   try
   {
-    _tf.waitForTransform("/arm_shoulder_lift_servo_link", "/arm_elbow_flex_servo_link", ros::Time(0), ros::Duration(10.0) );
-    _tf.lookupTransform("/arm_shoulder_lift_servo_link", "/arm_elbow_flex_servo_link", ros::Time(0), transform); // TODO: param
+    _tf.waitForTransform( _map_joint_to_joint_frame[1], _map_joint_to_joint_frame[2], ros::Time(0), ros::Duration(10.0) );
+    _tf.lookupTransform( _map_joint_to_joint_frame[1], _map_joint_to_joint_frame[2], ros::Time(0), transform); // TODO: param
   }
   catch (tf::TransformException &ex)
   {
@@ -217,8 +224,8 @@ void PhantomXControl::initialize()
   // get transform: forth joint to second joint
   try
   {
-    _tf.waitForTransform("/arm_elbow_flex_servo_link", "/arm_wrist_flex_servo_link", ros::Time(0), ros::Duration(10.0) );
-    _tf.lookupTransform("/arm_elbow_flex_servo_link", "/arm_wrist_flex_servo_link", ros::Time(0), transform); // TODO: param
+    _tf.waitForTransform( _map_joint_to_joint_frame[2], _map_joint_to_joint_frame[3], ros::Time(0), ros::Duration(10.0) );
+    _tf.lookupTransform( _map_joint_to_joint_frame[2], _map_joint_to_joint_frame[3], ros::Time(0), transform); // TODO: param
   }
   catch (tf::TransformException &ex)
   {
@@ -231,8 +238,8 @@ void PhantomXControl::initialize()
   // get transform: last joint to gripper
   try
   {
-    _tf.waitForTransform("/arm_wrist_flex_servo_link", "/gripper_link", ros::Time(0), ros::Duration(10.0) );
-    _tf.lookupTransform("/arm_wrist_flex_servo_link", "/gripper_link", ros::Time(0), transform); // TODO: param
+    _tf.waitForTransform(_map_joint_to_joint_frame[3], _map_joint_to_joint_frame[255], ros::Time(0), ros::Duration(10.0) ); // TODO index
+    _tf.lookupTransform(_map_joint_to_joint_frame[3], _map_joint_to_joint_frame[255], ros::Time(0), transform); // TODO: param
   }
   catch (tf::TransformException &ex)
   {
@@ -775,7 +782,7 @@ void PhantomXControl::setGripperRawJointAngle(double joint_value, bool blocking)
 
 double PhantomXControl::getGripperJointAngle()
 {
-    std::lock_guard<std::mutex> lock(_joints_mutex);
+    std::lock_guard<std::mutex> lock(_joints_mutex); // TODO: makes no sense here?
     return _gripper_value;
 }
 
@@ -1170,16 +1177,12 @@ void PhantomXControl::activateInteractiveJointControl()
     for (int i = 0; i<(int)joint_angles.rows(); ++i)
     {
         visualization_msgs::InteractiveMarker joint_marker;
-        joint_marker.header.frame_id = _arm_base_link_frame;
-        joint_marker.header.stamp = ros::Time::now();
+        joint_marker.header.frame_id = _map_joint_to_joint_frame[i];
+        joint_marker.header.stamp = ros::Time(0);
         joint_marker.name = "joint" + std::to_string(i);
         _marker_to_joint[joint_marker.name] = i; // TODO: loop over joint index map
         joint_marker.scale = 0.05;
         //joint_marker.description = "Interactive joint position control";
-        
-        // pose of marker i:
-        Eigen::Affine3d pose = kinematics().computeForwardKinematics(joint_angles, i);
-        tf::poseEigenToMsg(pose, joint_marker.pose);   
         
         // add the control to the interactive marker
         joint_marker.controls.push_back(rotate_control);
@@ -1194,12 +1197,12 @@ void PhantomXControl::activateInteractiveJointControl()
     // which will cause RViz to insert two arrows
     visualization_msgs::InteractiveMarkerControl gripper_control;
     gripper_control.name = "grippercontrol";
-    gripper_control.orientation = tf::createQuaternionMsgFromRollPitchYaw(0,0,M_PI/2);
-    gripper_control.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_AXIS;
+    //gripper_control.orientation = tf::createQuaternionMsgFromRollPitchYaw(0,0,M_PI/2);
+    gripper_control.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS;
     
     visualization_msgs::InteractiveMarker gripper_marker;
-    gripper_marker.header.frame_id = _arm_base_link_frame;
-    gripper_marker.header.stamp = ros::Time::now();
+    gripper_marker.header.frame_id = _map_joint_to_joint_frame[_map_joint_to_index[_gripper_joint_name]];
+    gripper_marker.header.stamp = ros::Time(0);
     gripper_marker.name = "gripper";
     gripper_marker.scale = 0.05;
     
@@ -1208,10 +1211,7 @@ void PhantomXControl::activateInteractiveJointControl()
     if (gripper != _map_joint_to_index.end())
     {
         _marker_to_joint[gripper_marker.name] = gripper->second;
-            
-        Eigen::Affine3d pose = kinematics().computeForwardKinematics(joint_angles, gripper->second);
-        tf::poseEigenToMsg(pose, gripper_marker.pose);   
-        
+                    
         // add the control to the interactive marker
         gripper_marker.controls.push_back(gripper_control);
 
@@ -1224,11 +1224,6 @@ void PhantomXControl::activateInteractiveJointControl()
     
     // 'commit' changes and send to all clients
     _marker_server->applyChanges();
-    
-    // create timer to update joint markers
-    ros::NodeHandle nh;
-    _marker_pose_updater = nh.createTimer(ros::Duration(0.05), boost::bind(&PhantomXControl::jointMarkerUpdate, this));
-
 }
 
 void PhantomXControl::jointMarkerFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback )
@@ -1241,50 +1236,31 @@ void PhantomXControl::jointMarkerFeedback(const visualization_msgs::InteractiveM
         return;
     }
 
-    _joints_sub_queue->callAvailable();
-    
     int joint_id = joint->second;
 
-   // if (feedback->event_type != visualization_msgs::InteractiveMarkerFeedback::MOUSE_UP)
-   //     return; // disable moving while dragging
-    
-    // Get current forward kinematics
     JointVector joint_angles;
     getJointAngles(joint_angles);
     ROS_ASSERT(joint_id < joint_angles.rows());
     
-    Eigen::Affine3d pose_ref = kinematics().computeForwardKinematics(joint_angles, joint_id);
     Eigen::Affine3d pose_cur;
     tf::poseMsgToEigen(feedback->pose, pose_cur);
-    
-    joint_angles.setZero();
-    joint_angles[joint_id] = -1 * getRotationAroundAxis(pose_ref.linear(), pose_cur.linear(), Eigen::Vector3d::UnitZ(), Eigen::Vector3d::UnitX()); // we need the oposite direction
-    
-    setJoints(joint_angles, 0.8*_joint_max_speeds[joint_id], true, false); // relative and non-blocking
+
+    joint_angles[joint_id] = -1 * getRotationAroundAxis(Eigen::Matrix3d::Identity(), pose_cur.linear(), Eigen::Vector3d::UnitZ(), Eigen::Vector3d::UnitX()); // we need the oposite direction
+
+    setJoints(joint_angles, 0.8*_joint_max_speeds[joint_id], false, false); // relative and non-blocking
 }
 
 void PhantomXControl::gripperMarkerFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback )
 {
-    
+    // get joint number
+    //double current_angle = getGripperJointAngle();
+        
+    Eigen::Affine3d pose_cur;
+    tf::poseMsgToEigen(feedback->pose, pose_cur);
+
+    double desired_angle = -1 * getRotationAroundAxis(Eigen::Matrix3d::Identity(), pose_cur.linear(), Eigen::Vector3d::UnitZ(), Eigen::Vector3d::UnitX()); // we need the oposite direction
+
+    setGripperRawJointAngle(desired_angle, false);
 }
 
-void PhantomXControl::jointMarkerUpdate()
-{
-    if (!_marker_server)
-        return;
-    
-    JointVector joint_angles;
-    getJointAngles(joint_angles);
-    
-    for (const auto& joint : _marker_to_joint)
-    {
-        // pose of joint i:
-        Eigen::Affine3d pose = kinematics().computeForwardKinematics(joint_angles, joint.second);
-        geometry_msgs::Pose pose_msg;
-        tf::poseEigenToMsg(pose, pose_msg);  
-        _marker_server->setPose(joint.first, pose_msg);
-    }
-    _marker_server->applyChanges();
-}
-  
 } // end namespace pxpincher

@@ -44,19 +44,37 @@
 // =============== Main function =================
 int main( int argc, char** argv )
 {
-  ros::init(argc, argv, "phantomx");
+  ros::init(argc, argv, "pxpincher_teach");
   ros::NodeHandle n("~");
   
- 
+  ros::Publisher pub_workspace = n.advertise<sensor_msgs::PointCloud>("workspace", 100);
+  
   pxpincher::PhantomXControl robot;
   robot.initialize();
   
-  //robot.setJoints({-M_PI/2,M_PI/3,-M_PI/4,M_PI/2},{0.6,0.6,0.6,0.6});
- // robot.setJointVel({0.6,0.2,0,0});
-   robot.testKinematicModel();
-
-  ros::waitForShutdown();
+  ROS_INFO("Sampling joint configurations to generate workspace pointcloud ...");
+  sensor_msgs::PointCloud workspace;
+  robot.visualizeWorkSpace(workspace, 0.5);
+  ROS_INFO("Sampling finished.");
   
+  robot.activateInteractiveJointControl();
+  
+  ros::Rate r(10);
+  
+  while (ros::ok())
+  {
+      
+      // visualize work space
+      workspace.header.stamp = ros::Time::now();
+      pub_workspace.publish(workspace);
+      
+      ros::spinOnce();
+      r.sleep();
+  }
+  
+  
+  
+ 
   
   return 0;
 }

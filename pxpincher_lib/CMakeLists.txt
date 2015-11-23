@@ -16,8 +16,10 @@ actionlib
 control_msgs
 tf
 tf_conversions
+eigen_conversions
 trajectory_msgs
 sensor_msgs
+interactive_markers
 cmake_modules
 )
 
@@ -112,8 +114,10 @@ catkin_package(
 	control_msgs
 	tf
 	tf_conversions
+	eigen_conversions
 	trajectory_msgs
 	sensor_msgs
+	interactive_markers
 	cmake_modules
   DEPENDS system_lib Eigen3
 )
@@ -141,10 +145,10 @@ target_link_libraries(pxpincher_lib
 
 ## Declare a cpp executable
 add_executable(pxpincher_test src/main.cpp)
-target_link_libraries(pxpincher_test pxpincher_lib)
+target_link_libraries(pxpincher_test pxpincher_lib ${catkin_LIBRARIES})
 
 add_executable(teach src/teach.cpp)
-target_link_libraries(teach pxpincher_lib)
+target_link_libraries(teach pxpincher_lib ${catkin_LIBRARIES})
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes

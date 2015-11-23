@@ -44,7 +44,7 @@
 // =============== Main function =================
 int main( int argc, char** argv )
 {
-  ros::init(argc, argv, "phantomx");
+  ros::init(argc, argv, "pxpincher_test");
   ros::NodeHandle n("~");
   
  

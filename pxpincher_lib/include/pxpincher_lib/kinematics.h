@@ -47,8 +47,6 @@
 #include <pxpincher_lib/misc.h>
 
 
-
-
 namespace pxpincher
 {
   
@@ -205,13 +203,6 @@ public:
    */
   bool computeInverseKinematics(const std::vector<double>& desired_xyz, double desired_pitch, Eigen::Ref<JointVector> joint_values) const;
   
-  /**
-   * @brief Visualize the task space using a sensor_msgs/PointCloud message
-   * @details The task space is defiend by the kinematics of the arm and the joint limits
-   * @param pub Reference to a ros publisher which publishes a sensor_msgs/PointCloud message
-   * @param resolution define the angular resolution that should be used to sample task space points
-   */
-  void visualizeTaskSpace(ros::Publisher& pub, double resolution = 0.1);
 
 protected:
   

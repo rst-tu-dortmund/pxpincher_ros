@@ -48,6 +48,8 @@ int main(int argc, char **argv)
 
     pxpincher::PxPincher pincher;
 
+    ros::Duration(1).sleep();
+    
     pincher.start();
 
     return 0;

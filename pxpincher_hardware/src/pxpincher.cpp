@@ -123,9 +123,12 @@ void PxPincher::update()
     else
       protocol_.readServoStatus(stati,comm_);
 
+    // Verify servo status (saftey check)
+    emergencyStopIfRequired(stati);
+        
     // Fill control variables
     fillControlRegister(stati);
-
+    
     // Do control step
     calculateControlStep();
 
@@ -136,6 +139,36 @@ void PxPincher::update()
     state_publisher_.publish(getJointState());
     diagnostic_publisher_.publish(getDiagnostics(stati));
 }
+
+
+void PxPincher::emergencyStopIfRequired(const std::vector<ServoStatus>& stati)
+{
+    if (!ctrl_enabled_)
+        return;
+        
+    int idx = 0;
+    for (const ServoStatus& status : stati)
+    {
+        if (status.speed_ > 1.5 * params_.speeds_[idx]) // 10% above speed limit
+        {
+            ROS_ERROR_STREAM("Critical velocity above bounds detected (vel of joint" << (int) params_.ids_[idx] << ": " <<  status.speed_ << "). Emergency stop.");
+            ROS_ERROR("Please move the robot to its working space manually and restart the node.");
+            
+            relaxServos(true);
+            ros::shutdown();
+        }
+        ++idx;
+    }
+    
+     if (!isInsideBounds(stati))
+    {
+        ROS_ERROR("The robot is currently outside its working space. The servos are relaxed now, please catch the falling robot.");
+        ROS_ERROR("Please move the robot to its working space manually and restart the node or use the services to unrelax servos.");
+        relaxServos(true);
+    }
+}
+
+
 
 void PxPincher::fillControlRegister(const std::vector<ServoStatus>& stati)
 {
@@ -151,6 +184,16 @@ void PxPincher::fillControlRegister(const std::vector<ServoStatus>& stati)
         joint_data_[idx].pos = tick2rad( status.position_ - params_.offsets_[idx]);
         joint_data_[idx].vel = tick2rads( status.speed_ );
         ++idx;
+    }
+    
+    // the controller takes some time to initialize, therefore use the initial position as control variable
+    if (initial_loop_)
+    {
+        for (JointData& joint : joint_data_)
+        {
+            joint.cmd = joint.pos;
+        }
+        initial_loop_ = false;
     }
 }
 
@@ -186,6 +229,17 @@ void PxPincher::performAction()
 }
 
 
+bool PxPincher::isInsideBounds(const std::vector<ServoStatus>& stati)
+{
+    int idx = 0;
+    for (const ServoStatus& status : stati)
+    {
+        if ( status.position_ < 0.95 * params_.cwlimits_[idx] || status.position_ > 1.05 * params_.ccwlimits_[idx])
+            return false;
+        ++idx;
+    }
+    return true;
+}
 
 sensor_msgs::JointState PxPincher::getJointState()
 {
@@ -264,24 +318,34 @@ void PxPincher::initRobot()
     }
 
     // Drive to Home-Position
-    ROS_INFO("Driving to default position...");
-    driveToHomePosition(true); // blocking call
-    ROS_INFO("Default position reached. Waiting for trajectory actions or messages ...");
+//     ROS_INFO("Driving to default position...");
+//     driveToHomePosition(); // blocking call
+//     ROS_INFO("Default position reached. Waiting for trajectory actions or messages ...");
 }
 
-void PxPincher::driveToHomePosition(bool blocking) // TODO Sim case
+void PxPincher::driveToHomePosition()
 {
     if (sim_)
       sim_object_.setGoalPosition(params_.ids_, params_.offsets_);
     else
       protocol_.setGoalPosition(params_.ids_, params_.offsets_ ,comm_);
     
-    if (blocking)
+
+    while (isMoving() && ros::ok())
     {
-        while (isMoving() && ros::ok())
+        if (!sim_)
         {
-            ros::Duration(0.01).sleep();
+            std::vector<ServoStatus> stati;
+            for (int id : params_.ids_)
+            {
+                stati.emplace_back(id);
+            }
+            protocol_.readServoStatus(stati,comm_);
+
+            // Verify servo status (saftey check)
+            emergencyStopIfRequired(stati);
         }
+        ros::Duration(0.01).sleep();
     }
     ctrl_reset_requested_ = true;
 }

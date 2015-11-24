@@ -77,9 +77,17 @@ int main( int argc, char** argv )
       if (c == 'r' || c == 'R')
       {
         robot.stopMoving();
-        robot.relaxServos(!relaxed);
-	relaxed = !relaxed;
-	ROS_INFO_STREAM(std::boolalpha << "Servos relaxed: " << relaxed);
+        
+        if (!robot.isExceedingJointLimits(robot.getJointAngles()))
+        {    
+            robot.relaxServos(!relaxed);
+            relaxed = !relaxed;
+            ROS_INFO_STREAM(std::boolalpha << "Servos relaxed: " << relaxed);
+        }
+        else
+        {
+            ROS_WARN("Robot exceeds joint limits, cannot unrelax motors. Please move the robot into its workspace manually");
+        }
       }
       if (c== 'd' || c == 'D')
       {
@@ -89,7 +97,7 @@ int main( int argc, char** argv )
             robot.setJointsDefault(0.5*robot.getMaxJointSpeeds(), false);
           }
           else
-            ROS_INFO_STREAM("Cannot drive to default configuration, since servos are relaxed.");
+            ROS_WARN_STREAM("Cannot drive to default configuration, since servos are relaxed.");
       }
 
     

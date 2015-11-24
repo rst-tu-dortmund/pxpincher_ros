@@ -674,6 +674,13 @@ protected:
    */
   void gripperMarkerFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback );
   
+  /**
+   * @brief Callback for pose updates received from the taskspace marker (incorporating inverse kinematics)
+   * @todo Make online movement working (e.g. velocity based)
+   * @param feedback message containing new marker information
+   */
+  void taskSpaceMarkerFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback );
+  
 
   
 private:

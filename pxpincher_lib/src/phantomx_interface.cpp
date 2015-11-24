@@ -1221,6 +1221,7 @@ void PhantomXControl::activateInteractiveJointControl()
     gripper_marker.header.frame_id = _map_joint_to_joint_frame[_map_joint_to_index[_gripper_joint_name]];
     gripper_marker.header.stamp = ros::Time(0);
     gripper_marker.name = "gripper";
+    gripper_marker.pose.position.x = -0.025;
     gripper_marker.scale = 0.05;
     
     // pose of marker i:
@@ -1236,6 +1237,50 @@ void PhantomXControl::activateInteractiveJointControl()
         // tell the server to call processFeedback() when feedback arrives for it
         _marker_server->insert(gripper_marker, boost::bind(&PhantomXControl::gripperMarkerFeedback, this, _1));
     }
+        
+    // add task space control   
+    
+    visualization_msgs::Marker arrow_marker;
+    arrow_marker.type = visualization_msgs::Marker::ARROW;
+    arrow_marker.scale.x = 0.02;
+    arrow_marker.scale.y =  0.012;
+    arrow_marker.scale.z =  0.012;
+    arrow_marker.color.r = 1;
+    arrow_marker.color.g = 0;
+    arrow_marker.color.b = 0;
+    arrow_marker.color.a = 0.6;
+    
+    visualization_msgs::InteractiveMarker taskspace_marker;
+    taskspace_marker.header.frame_id = _arm_base_link_frame;
+    taskspace_marker.header.stamp = ros::Time(0);
+    taskspace_marker.name = "taskspace_marker";
+    Eigen::Affine3d ee_pose;
+    getEndeffectorState(ee_pose);
+    tf::poseEigenToMsg(ee_pose,taskspace_marker.pose);
+    taskspace_marker.scale = 0.025;
+    
+    // add the control to the interactive marker
+    visualization_msgs::InteractiveMarkerControl tilt;
+    tilt.name = "tilt";
+    tilt.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_ROTATE;
+    tilt.orientation_mode = visualization_msgs::InteractiveMarkerControl::INHERIT;
+    tilt.orientation = tf::createQuaternionMsgFromRollPitchYaw(0,0,M_PI/2);
+    tilt.markers.push_back(arrow_marker);
+    taskspace_marker.controls.push_back(tilt);
+    
+    visualization_msgs::InteractiveMarkerControl move_xy;
+    move_xy.name = "move_xy";
+    move_xy.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_PLANE;
+    move_xy.orientation_mode = visualization_msgs::InteractiveMarkerControl::INHERIT;
+    taskspace_marker.controls.push_back(move_xy);
+    
+
+
+    // add the interactive marker to our collection &
+    // tell the server to call processFeedback() when feedback arrives for it
+    _marker_server->insert(taskspace_marker, boost::bind(&PhantomXControl::taskSpaceMarkerFeedback, this, _1));
+   
+       
     
     // Finalize
     
@@ -1283,6 +1328,61 @@ void PhantomXControl::gripperMarkerFeedback(const visualization_msgs::Interactiv
     double desired_angle = -1 * getRotationAroundAxis(Eigen::Matrix3d::Identity(), pose_cur.linear(), Eigen::Vector3d::UnitZ(), Eigen::Vector3d::UnitX()); // we need the oposite direction
 
     setGripperRawJointAngle(desired_angle, false);
+}
+
+void PhantomXControl::taskSpaceMarkerFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback )
+{
+    if (feedback->event_type != visualization_msgs::InteractiveMarkerFeedback::MOUSE_UP)
+       return; // disable moving while dragging (draggin and moving together does not work currently. 
+               // the real robot moves towards the wrong direction, the simulated robot gets stucked...)
+               
+           
+    // get current end effector frame in the base frame:                              
+    Eigen::Affine3d desired_ee;
+    tf::poseMsgToEigen(feedback->pose, desired_ee);
+    
+    if ( feedback->control_name.compare("move_xy") == 0 ) // if controller is move_xy
+    {
+        // adjust yaw angle of the marker
+        
+        // get distance vector to current pose (we are currently in the base frame)
+        // and extract yaw angle
+        double yaw = 0;
+        if (desired_ee.translation().head(2).norm()>1e-6)
+        {
+            yaw = std::atan2( desired_ee.translation().y(), desired_ee.translation().x() );
+        }
+        ROS_INFO_STREAM("yaw: " << yaw);
+        Eigen::AngleAxisd aa(yaw, Eigen::Vector3d::UnitZ());
+        
+        // Change only rotation matrix (rotate in pace, but according to the fixed frame axis of the base frame)
+        desired_ee.linear() =  aa * desired_ee.rotation();
+//         Eigen::Affine3d aux1 = desired_ee;
+//         aux1.translation().setZero();
+//         aux1 = aa * aux1;
+//         
+//         desired_ee = aux1;
+        
+        geometry_msgs::Pose desired_ee_msg;
+        tf::poseEigenToMsg(desired_ee, desired_ee_msg);
+        _marker_server->setPose(feedback->marker_name, desired_ee_msg);
+        
+    }
+    else if (feedback->control_name.compare("tilt") == 0 ) // if controller is tilt)
+    {
+        visualization_msgs::InteractiveMarker marker;
+        if (!_marker_server->get(feedback->marker_name, marker))
+            return;
+        marker.controls;
+        auto mvxy = std::find_if(marker.controls.begin(), marker.controls.end(),
+                                 [](const visualization_msgs::InteractiveMarkerControl& ctrl) {return ctrl.name.compare("move_xy") == 0;} );
+        if (mvxy != marker.controls.end())
+        {
+            ROS_INFO("control found");
+        }
+    }
+   _marker_server->applyChanges();
+   // setEndeffectorPose(desired_ee, 0.2, false, false);
 }
 
 void PhantomXControl::publishInformationMarker()

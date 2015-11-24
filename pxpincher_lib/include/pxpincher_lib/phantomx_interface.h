@@ -165,6 +165,13 @@ public:
   void setJointsDefault(double speed, bool blocking=true);
   
   /**
+   * @brief Set joints to the default position q=[0,0,0,0]^T
+   * @param speed speed vector: individual speed for each joint
+   * @param blocking if \c true, wait until the goal is reached or the timeout is exceeded before continuing 
+   */ 
+  void setJointsDefault(const Eigen::Ref<const JointVector>& speed, bool blocking);
+  
+  /**
    * @brief Command new joint angles
    * @param values vector of new joint angles q=[q1,q2,q3,q4]^T
    * @param duration duration for the transition to the new joint state.

@@ -326,6 +326,11 @@ void PhantomXControl::setJointsDefault(double speed, bool blocking)
 {
   setJoints(JointVector::Zero(), speed, false, blocking);
 }  
+
+void PhantomXControl::setJointsDefault(const Eigen::Ref<const JointVector>& speed, bool blocking)
+{
+  setJoints(JointVector::Zero(), speed, false, blocking);
+}  
   
 void PhantomXControl::setJoints(const Eigen::Ref< const JointVector>& values, const ros::Duration& duration, bool relative, bool blocking)
 {
@@ -774,9 +779,12 @@ void PhantomXControl::setGripperJoint(int percent_open, bool blocking)
 
 void PhantomXControl::setGripperRawJointAngle(double joint_value, bool blocking)
 {
+  // bound value
+  joint_value = bound(_gripper_lower_bound, joint_value, _gripper_upper_bound);
+        
   control_msgs::GripperCommandGoal goal;
   goal.command.position = joint_value;
-    
+      
   if (blocking)
     _gripper_action->sendGoalAndWait(goal, ros::Duration(5));
   else
@@ -1237,6 +1245,11 @@ void PhantomXControl::activateInteractiveJointControl()
 
 void PhantomXControl::jointMarkerFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback )
 {
+    
+    if (feedback->event_type != visualization_msgs::InteractiveMarkerFeedback::MOUSE_UP)
+       return; // disable moving while dragging (draggin and moving together does not work currently. 
+               // the real robot moves towards the wrong direction, the simulated robot gets stucked...)
+    
     // get joint number
     auto joint = _marker_to_joint.find(feedback->marker_name);
     if (joint == _marker_to_joint.end())
@@ -1244,7 +1257,7 @@ void PhantomXControl::jointMarkerFeedback(const visualization_msgs::InteractiveM
         ROS_ERROR("jointMarkerFeedback(): Unknown joint mapping");
         return;
     }
-
+    
     int joint_id = joint->second;
 
     JointVector joint_angles;

@@ -66,6 +66,7 @@ int main( int argc, char** argv )
   ros::Rate r(10);
   
   ROS_INFO("Press 'r' to (un)relax motors (set torque on/off)");
+  ROS_INFO("Press 'd' to drive into default configuration");
   
   bool relaxed = false;
   
@@ -75,10 +76,22 @@ int main( int argc, char** argv )
       char c = getch();
       if (c == 'r' || c == 'R')
       {
-	robot.relaxServos(!relaxed);
+        robot.stopMoving();
+        robot.relaxServos(!relaxed);
 	relaxed = !relaxed;
 	ROS_INFO_STREAM(std::boolalpha << "Servos relaxed: " << relaxed);
       }
+      if (c== 'd' || c == 'D')
+      {
+          if (!relaxed)
+          {
+            ROS_INFO_STREAM("Driving to default configuration");
+            robot.setJointsDefault(0.5*robot.getMaxJointSpeeds(), false);
+          }
+          else
+            ROS_INFO_STREAM("Cannot drive to default configuration, since servos are relaxed.");
+      }
+
     
       // visualize work space
       workspace.header.stamp = ros::Time::now();

@@ -1378,7 +1378,10 @@ void PhantomXControl::taskSpaceMarkerFeedback(const visualization_msgs::Interact
                                  [](const visualization_msgs::InteractiveMarkerControl& ctrl) {return ctrl.name.compare("move_xy") == 0;} );
         if (mvxy != marker.controls.end())
         {
-            ROS_INFO("control found");
+	    tf::quaternionEigenToMsg(Eigen::Quaterniond(desired_ee.rotation().transpose()) * Eigen::AngleAxisd(M_PI/2, Eigen::Vector3d::UnitY()), mvxy->orientation);
+	    _marker_server->insert(marker); // replace
+	    ROS_INFO("changed");
+                
         }
     }
    _marker_server->applyChanges();

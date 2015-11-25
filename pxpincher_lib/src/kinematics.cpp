@@ -202,11 +202,11 @@ bool KinematicModel::computeInverseKinematics(const Eigen::Affine3d& desired_pos
       // verify translation
       if (!fwd.translation().isApprox( desired_pose.translation(), 3e-2 ))
       {
-        ROS_WARN_STREAM("Inverse Kinematics: solution found, but mismatch in the translational part found.");
+        ROS_WARN_STREAM("Inverse Kinematics: solution found, but mismatch in the translational part detected.");
       }
       if (!Eigen::Quaterniond(fwd.rotation()).isApprox(Eigen::Quaterniond(desired_pose.rotation()), 1e-2))
       {
-        ROS_WARN_STREAM("Inverse Kinematics: solution found, but mismatch in the orientation part found.");
+        ROS_WARN_STREAM("Inverse Kinematics: solution found, but mismatch in the orientation part detected.");
       }
       joint_values = q_cand1;
       return true;

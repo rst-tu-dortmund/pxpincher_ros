@@ -171,7 +171,7 @@ void PhantomXControl::initialize()
   }
   // Drive into default position
   ROS_INFO("Driving into default position in order to setup kinematic model...");
-  setJointsDefault(0.2);
+  setJointsDefault(0.5*getSlowestMaxSpeed());
 
   // Transformations
   // TODO rosparam

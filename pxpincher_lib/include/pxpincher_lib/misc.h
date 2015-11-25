@@ -150,9 +150,9 @@ namespace pxpincher
    */
   inline bool isInsideInterval(const Eigen::Ref<const Eigen::VectorXd>& l, const Eigen::Ref<const Eigen::VectorXd>& x, const Eigen::Ref<const Eigen::VectorXd>& u) 
   {
-    if ( (x.array() < l.array()).all() )
+    if ( (x.array() < l.array()).any() )
       return false;
-    if ( (x.array() > u.array()).all() )
+    if ( (x.array() > u.array()).any() )
       return false;
     return true;
   }

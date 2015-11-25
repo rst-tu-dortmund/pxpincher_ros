@@ -51,14 +51,14 @@ int main( int argc, char** argv )
   pxpincher::PhantomXControl robot;
   robot.initialize();
   
-  robot.setJoints({1, 0.5, 0.9, 1.6});
-  //robot.setJoints({-M_PI/2,0,0,0},{0.5,0,0,0});
-  //robot.setJoints({-M_PI/2,M_PI/3,-M_PI/4,M_PI/2},{0.5,0.5,0.5,0.5});
- // robot.setJointVel({0.6,0.2,0,0});
-  // robot.testKinematicModel();
+//   robot.setJoints({1, 0.5, 0.9, 1.6});
+//   //robot.setJoints({-M_PI/2,0,0,0},{0.5,0,0,0});
+//   //robot.setJoints({-M_PI/2,M_PI/3,-M_PI/4,M_PI/2},{0.5,0.5,0.5,0.5});
+//  // robot.setJointVel({0.6,0.2,0,0});
+//   // robot.testKinematicModel();
+//   
+//   robot.setEndeffectorPoseInc(0.01, -0.15, -0.02, 0.1, false);
   
-  robot.setEndeffectorPoseInc(0.01, -0.15, -0.02, 0.1, false);
-
   ros::Rate r(10);
   while (ros::ok())
   {

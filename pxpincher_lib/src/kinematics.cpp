@@ -147,21 +147,21 @@ bool KinematicModel::computeInverseKinematics(const Eigen::Affine3d& desired_pos
   // check both possibilities for joint 1: q1 and q1+pi
   double q1_cand1 = atan2( j1_T_pose.translation().x(), j1_T_pose.translation().z() ); // because of the coordinate system of j1, x() replaces the old y-axis.
   double q1_cand2 = normalize_angle_rad(q1_cand1+M_PI);
-    
+      
   JointVector q_cand1 = joint_values;
   JointVector q_cand2 = joint_values;
   // calculate cand1:
   
   // we must rotate j1 first by the angle q1 that we have computed already:
   q_cand1.coeffRef(0) = q1_cand1;
-  Eigen::Affine3d j2_T_pose = _j2_T_j1 * Eigen::AngleAxisd( -q_cand1.coeffRef(0), Eigen::Vector3d::UnitY() ) * j1_T_pose;
-  bool success_cand1 = isInsideInterval(_joint_lower_bounds.coeffRef(0),q_cand1.coeffRef(0),_joint_upper_bounds.coeffRef(0));
+  Eigen::Affine3d j2_T_pose = _j2_T_j1 * Eigen::AngleAxisd( -q_cand1[0], Eigen::Vector3d::UnitY() ) * j1_T_pose;
+  bool success_cand1 = isInsideInterval(_joint_lower_bounds[0],q_cand1[0],_joint_upper_bounds[0]);
   success_cand1 = success_cand1 && computeIk3LinkPlanarElbowUpAndDown(j2_T_pose, q_cand1.bottomRows(3));
- 
+
   // calculate cand2:
   q_cand2.coeffRef(0) = q1_cand2;
   j2_T_pose = _j2_T_j1 * Eigen::AngleAxisd( -q_cand2.coeffRef(0), Eigen::Vector3d::UnitY() ) * j1_T_pose;
-  bool success_cand2 = isInsideInterval(_joint_lower_bounds.coeffRef(0),q_cand2.coeffRef(0),_joint_upper_bounds.coeffRef(0));
+  bool success_cand2 = isInsideInterval(_joint_lower_bounds[0],q_cand2[0],_joint_upper_bounds[0]);
   success_cand2 = success_cand2 && computeIk3LinkPlanarElbowUpAndDown(j2_T_pose, q_cand2.bottomRows(3)); 
 
   if (success_cand1 && success_cand2)
@@ -228,7 +228,7 @@ bool KinematicModel::computeInverseKinematics(const Eigen::Affine3d& desired_pos
       return true;
   }
    
-  ROS_ERROR_STREAM("InverseKinematics: No solution found");
+  ROS_ERROR_STREAM("InverseKinematics: No exact feasible solution found");
   return false;
  
 }
@@ -255,15 +255,15 @@ bool KinematicModel::computeIk3LinkPlanar(const Eigen::Affine3d& j2_T_pose, Eige
   // we can ignore the y compontent since we operate planar only from now on (just consider z-x plane)
   Eigen::Vector3d w = j2_T_pose * Eigen::Vector3d(-a3,0,0);
   double w_sq_length_2d = w.z()*w.z() + w.x()*w.x();
-  
+
   double c2 = ( w_sq_length_2d - a1*a1 - a2*a2 ) / (2*a1*a2);
   ROS_ASSERT_MSG(c2!=0, " TODO: c2==0");
   
   // c2 must be within the interval -1 <= c2 <= 1
   // sometimes we have numerical issues:
-  if ( fabs(c2-1) < 1e-2 )
+  if ( fabs(c2-1) < 1e-1 )
     c2 = 1;
-  if ( fabs(c2+1) < 1e-2 )
+  if ( fabs(c2+1) < 1e-1 )
     c2 = -1;
   
   if (!isInsideInterval(-1.0,c2,1.0))
@@ -281,7 +281,7 @@ bool KinematicModel::computeIk3LinkPlanar(const Eigen::Affine3d& j2_T_pose, Eige
     q2 = -std::atan2( s2, c2 ); // up and down configurations are swapped in contrast to many example books,
 						// since our angle is oriented clock-wise (in the plane) (therefore the minus sign)  
   values.coeffRef(1) = q2;
-  
+
   // now compute the value of joint 2
   double aux = a1+a2*cos(-values.coeffRef(1));
   if ( fabs(w.z())<1e-2 && fabs(aux)<1e-2) // if w.x()==0  or aux==0, link a1 and a2 are anti-parallel / colinear, which leads to a self-collision
@@ -293,9 +293,15 @@ bool KinematicModel::computeIk3LinkPlanar(const Eigen::Affine3d& j2_T_pose, Eige
 
     // determine desired final orientation of the gripper in the joint 2 frame
 //   double phi = -1*std::atan2(-j2_T_pose.linear().coeffRef(0,2), j2_T_pose.linear().coeffRef(2,2));
-  RpyVector rpy = convertRotMatToRpy(j2_T_pose.linear());
-  double phi = M_PI/2 + rpy.coeffRef(1); // pitch value
-    
+ 
+ 
+  // RpyVector rpy = convertRotMatToRpy(j2_T_pose.linear());
+  //double phi = M_PI/2 + rpy.coeffRef(1); // pitch value    (but the pitch value is zero at the top and increases on both sides)
+  // therefore use phi:
+  double phi = M_PI/2 + getRotationAroundAxis(Eigen::Matrix3d::Identity(), j2_T_pose.linear(), Eigen::Vector3d::UnitZ(), Eigen::Vector3d::UnitY()); 
+  // we add pi/2, since the default pose for the angle is zero (and in default conf the angle phi is -pi/2)
+  //phi = -phi; // negative since angels are counted in the opposite way
+  
   
   // it is phi = q2+q3+q4
   values.coeffRef(2) = normalize_angle_rad(phi - values.coeffRef(1) - values.coeffRef(0));
@@ -306,7 +312,8 @@ bool KinematicModel::computeIk3LinkPlanar(const Eigen::Affine3d& j2_T_pose, Eige
 bool KinematicModel::computeIk3LinkPlanarElbowUpAndDown(const Eigen::Affine3d& j2_T_pose, Eigen::Ref<Eigen::Vector3d> values) const
 {
   Eigen::Vector3d q_elbowup, q_elbowdown;
-  bool elbow_up_succ = computeIk3LinkPlanar(j2_T_pose, q_elbowup, true);
+  bool elbow_up_succ = computeIk3LinkPlanar(j2_T_pose, q_elbowup, true); 
+    
   bool elbow_down_succ = computeIk3LinkPlanar(j2_T_pose, q_elbowdown, false);
   elbow_up_succ = elbow_up_succ && isInsideInterval(_joint_lower_bounds.bottomRows(3), q_elbowup, _joint_upper_bounds.bottomRows(3));
   elbow_down_succ = elbow_down_succ && isInsideInterval(_joint_lower_bounds.bottomRows(3), q_elbowdown, _joint_upper_bounds.bottomRows(3));

@@ -1254,6 +1254,7 @@ void PhantomXControl::activateInteractiveJointControl()
     taskspace_marker.header.frame_id = _arm_base_link_frame;
     taskspace_marker.header.stamp = ros::Time(0);
     taskspace_marker.name = "taskspace_marker";
+    taskspace_marker.description = "TCP control";
     Eigen::Affine3d ee_pose;
     getEndeffectorState(ee_pose);
     tf::poseEigenToMsg(ee_pose,taskspace_marker.pose);
@@ -1352,40 +1353,38 @@ void PhantomXControl::taskSpaceMarkerFeedback(const visualization_msgs::Interact
         {
             yaw = std::atan2( desired_ee.translation().y(), desired_ee.translation().x() );
         }
-        ROS_INFO_STREAM("yaw: " << yaw);
+        
         Eigen::AngleAxisd aa(yaw, Eigen::Vector3d::UnitZ());
         
+        // get tilt angle
+        double tilt = getRotationAroundAxis(Eigen::Matrix3d::Identity(), desired_ee.linear(), Eigen::Vector3d::UnitZ(), Eigen::Vector3d::UnitY());
+        Eigen::AngleAxisd tilt_aa(tilt, Eigen::Vector3d::UnitY());
+            
+        //ROS_INFO_STREAM("tilt:" << tilt << " yaw: " << yaw);   
         // Change only rotation matrix (rotate in pace, but according to the fixed frame axis of the base frame)
-        desired_ee.linear() =  aa * desired_ee.rotation();
-//         Eigen::Affine3d aux1 = desired_ee;
-//         aux1.translation().setZero();
-//         aux1 = aa * aux1;
-//         
-//         desired_ee = aux1;
+       desired_ee.linear() =  (aa * tilt_aa).toRotationMatrix();// * desired_ee.rotation();
         
         geometry_msgs::Pose desired_ee_msg;
         tf::poseEigenToMsg(desired_ee, desired_ee_msg);
         _marker_server->setPose(feedback->marker_name, desired_ee_msg);
         
     }
-    else if (feedback->control_name.compare("tilt") == 0 ) // if controller is tilt)
+    else if (feedback->control_name.compare("tilt") == 0 ) // if controller is tilt, correct move_xy to always remain in the xy plane
     {
         visualization_msgs::InteractiveMarker marker;
         if (!_marker_server->get(feedback->marker_name, marker))
             return;
-        marker.controls;
+
         auto mvxy = std::find_if(marker.controls.begin(), marker.controls.end(),
                                  [](const visualization_msgs::InteractiveMarkerControl& ctrl) {return ctrl.name.compare("move_xy") == 0;} );
         if (mvxy != marker.controls.end())
         {
 	    tf::quaternionEigenToMsg(Eigen::Quaterniond(desired_ee.rotation().transpose()) * Eigen::AngleAxisd(M_PI/2, Eigen::Vector3d::UnitY()), mvxy->orientation);
-	    _marker_server->insert(marker); // replace
-	    ROS_INFO("changed");
-                
+	    _marker_server->insert(marker); // replace marker               
         }
     }
    _marker_server->applyChanges();
-   // setEndeffectorPose(desired_ee, 0.2, false, false);
+    setEndeffectorPose(desired_ee, 0.2, false, false);
 }
 
 void PhantomXControl::publishInformationMarker()
@@ -1418,8 +1417,8 @@ void PhantomXControl::publishInformationMarker()
     marker.color.b = 0.0;
     std::stringstream ss;
     ss.precision(3);
-    ss << std::fixed << "EE pose: [ x: " << ee_state.translation().x() << ", y: " << ee_state.translation().y() << " z: " << ee_state.translation().z() << " ]"
-      << "\nEE rpy: [ " << " roll: " << rpy[0] << " pitch: " << rpy[1] << " yaw: " << rpy[2] << " ]"
+    ss << std::fixed << "TCP pose: [ x: " << ee_state.translation().x() << ", y: " << ee_state.translation().y() << " z: " << ee_state.translation().z() << " ]"
+      << "\nTCP rpy: [ " << " roll: " << rpy[0] << " pitch: " << rpy[1] << " yaw: " << rpy[2] << " ]"
       << "\nGripper opened: " << gripper_opened << "\%";
     marker.text = ss.str();
 

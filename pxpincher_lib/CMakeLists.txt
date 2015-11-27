@@ -106,7 +106,7 @@ endif()
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES phantomx_lib
+  LIBRARIES pxpincher_lib
   CATKIN_DEPENDS
         pxpincher_msgs
 	pxpincher_hardware

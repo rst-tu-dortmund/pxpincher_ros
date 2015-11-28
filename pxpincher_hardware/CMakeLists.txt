@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   std_msgs
   pxpincher_comm
+  pxpincher_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -108,7 +109,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES pxpincher_rst_cpp
-  CATKIN_DEPENDS controller_manager roscpp sensor_msgs std_msgs pxpincher_comm
+  CATKIN_DEPENDS controller_manager roscpp sensor_msgs std_msgs pxpincher_comm pxpincher_msgs
 #  DEPENDS system_lib
 )
 

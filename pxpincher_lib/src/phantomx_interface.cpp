@@ -342,6 +342,11 @@ void PhantomXControl::setJoints(const Eigen::Ref< const JointVector>& values, co
 
 void PhantomXControl::setJoints(const std::vector<double>& values, const ros::Duration& duration, bool relative, bool blocking)
 {
+  if (values.size() != _joint_lower_bounds.size())
+  {
+      ROS_ERROR("Number of joint values provided does not match number of joints");
+      return;
+  }
   Eigen::Map<const JointVector> values_map(values.data());
   setJoints(values_map, duration, relative, blocking);
 }
@@ -367,7 +372,6 @@ void PhantomXControl::setJoints(const Eigen::Ref<const JointVector>& values, dou
   // get time corresponding to the distace max_diff and the given speed value
   // assume a constant velocity: phi=omega*t
   double duration = max_diff/speed;
-  
   if (duration<0)
   {
     ROS_ERROR("PhantomXControl::setJoints(): obtained an invalid (negative) duration. Cannot set new joint values.");
@@ -378,6 +382,11 @@ void PhantomXControl::setJoints(const Eigen::Ref<const JointVector>& values, dou
   
 void PhantomXControl::setJoints(const std::vector<double>& values, double speed, bool relative, bool blocking)
 {
+  if (values.size() != _joint_lower_bounds.size())
+  {
+      ROS_ERROR("Number of joint values provided does not match number of joints");
+      return;
+  }
   Eigen::Map<const JointVector> values_map(values.data());
   setJoints(values_map, speed, relative, blocking);
 }  
@@ -388,16 +397,22 @@ void PhantomXControl::setJoints(const Eigen::Ref<const JointVector>& values, con
     JointVector current_states;  
     getJointAngles(current_states); // we need to copy here, rather accessing '_joint_angles' directly,
                                     // since receiving new states is multi threaded.
-                                    
+                                      
     JointVector act_speed = ( speed.array() >= MaxSpeed).select(_joint_max_speeds, speed); // take max speed definition into account (here it is desired by the user, therefore no warning!)
     
     trajectory_msgs::JointTrajectory traj;
     createP2PTrajectoryWithIndividualVel(current_states, values, act_speed, traj);
+    //printTrajectory(traj);
     setJointTrajectory(traj, blocking);
 }
   
 void PhantomXControl::setJoints(const std::vector<double>& values, const std::vector<double>& speed, bool relative, bool blocking)
 {
+  if (values.size() != _joint_lower_bounds.size())
+  {
+      ROS_ERROR("Number of joint values provided does not match number of joints");
+      return;
+  }
   Eigen::Map<const JointVector> values_map(values.data());
   Eigen::Map<const JointVector> vel_map(speed.data());
   setJoints(values_map, vel_map, relative, blocking);
@@ -484,6 +499,11 @@ void PhantomXControl::setJointVel(const Eigen::Ref<const JointVector>& velocitie
   
 void PhantomXControl::setJointVel(const std::vector<double>& velocities)
 {
+  if (velocities.size() != _joint_lower_bounds.size())
+  {
+      ROS_ERROR("Number of joint velocities provided does not match number of joints");
+      return;
+  }
   Eigen::Map<const JointVector> vel_map(velocities.data());
   setJointVel(vel_map);
 }  
@@ -751,7 +771,12 @@ bool PhantomXControl::setEndeffectorPose(const Eigen::Ref<const Eigen::Vector3d>
 
 bool PhantomXControl::setEndeffectorPose(const std::vector<double>& desired_xyz, double desired_pitch, double speed, bool relative, bool blocking)
 {
-    setEndeffectorPose(desired_xyz, desired_pitch, speed, relative, blocking);
+    if (desired_xyz.size()!=3)
+    {
+        ROS_ERROR("Endeffector position must be a 3d vector.");
+        return false;
+    }
+    setEndeffectorPose(Eigen::Map<const Eigen::Vector3d>(desired_xyz.data()), desired_pitch, speed, relative, blocking);
 }
 
 
@@ -833,9 +858,19 @@ void PhantomXControl::createP2PTrajectoryWithIndividualVel(const Eigen::Ref<cons
     // Let's determine the durations for each transition
     JointVector durations = diff.cwiseQuotient(new_speed).cwiseAbs();
     
-    // Limit durations
+    // Limit durations to a specific value
     durations = (durations.array()<20.0).select(durations, 20.0); // limit to 20 seconds (which is actually really long for velocity control)
-    
+    // we iterate through the array, since some action servers needs different durations for each transition
+//     double duration_max = 20;
+//     for (int i=0; i<(int)durations.rows(); ++i)
+//     {
+//         if (durations[i] > 20)
+//         {
+//             durations[i] = duration_max;
+//             duration_max += 0.1;
+//         }
+//     }
+
     double max_duration = durations.maxCoeff();
 
     // sort and keep track about indices
@@ -845,7 +880,7 @@ void PhantomXControl::createP2PTrajectoryWithIndividualVel(const Eigen::Ref<cons
     // now sort indices based on durations (from short to long)
     std::sort(indices.begin(), indices.end(),
               [&durations](std::size_t i, std::size_t j) {return durations.coeffRef(i) < durations.coeffRef(j);});
-    
+
 //     ROS_INFO_STREAM("indices:" << (Eigen::Map<const Eigen::Matrix<int,-1,1> >(indices.data(),durations.rows())).transpose());
     
     // init trajectory
@@ -906,6 +941,23 @@ void PhantomXControl::createP2PTrajectoryWithIndividualVel(const Eigen::Ref<cons
             }
         }    
     }
+    
+    // Delete duplicates
+    auto start_it = trajectory.points.begin();
+    start_it = std::next(start_it); // start with i=1;
+    while (start_it != trajectory.points.end())
+    {
+        if (start_it->time_from_start == std::prev(start_it)->time_from_start)
+        {
+            start_it = trajectory.points.erase(start_it); // get iterator to subsequent element
+        }
+        else
+        {
+            ++start_it; // increment manually
+        }
+    }
+      // std::unique(trajectory.points.begin(), trajectory.points.end(), 
+       //            [](const trajectory_msgs::JointTrajectoryPoint& pt1, const trajectory_msgs::JointTrajectoryPoint& pt2){return pt1.time_from_start == pt2.time_from_start;});
 }
 
 

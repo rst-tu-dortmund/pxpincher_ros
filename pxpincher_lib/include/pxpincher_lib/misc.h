@@ -43,6 +43,7 @@
 #include <math.h>
 #include <type_traits>
 
+#include <pxpincher_hardware/misc.h>
 #include <pxpincher_lib/types.h>
 
 #include <ros/ros.h>
@@ -149,9 +150,9 @@ namespace pxpincher
    */
   inline bool isInsideInterval(const Eigen::Ref<const Eigen::VectorXd>& l, const Eigen::Ref<const Eigen::VectorXd>& x, const Eigen::Ref<const Eigen::VectorXd>& u) 
   {
-    if ( (x.array() < l.array()).all() )
+    if ( (x.array() < l.array()).any() )
       return false;
-    if ( (x.array() > u.array()).all() )
+    if ( (x.array() > u.array()).any() )
       return false;
     return true;
   }
@@ -361,6 +362,30 @@ namespace pxpincher
     rel.translation() = to_pose.translation() - from_pose.translation();
     return rel;
   }
+  
+  /**
+   * @brief Compute the relative rotation of two transformations if only rotated around a known axis
+   * @test this function must be tested for all special cases
+   * @param from_rot first rotation
+   * @param to_rot second rotation
+   * @param axis the axis that should be checked (will be normalized automatically)
+   * @param normal the normal vector of the rotation used for determinining the sign.
+   * @return relative angle between \c from_rot and \c to_rot
+   */
+   inline double getRotationAroundAxis(const Eigen::Ref<const Eigen::Matrix3d>& from_rot, const Eigen::Ref<const Eigen::Matrix3d>& to_rot, 
+                                       const Eigen::Ref<const Eigen::Vector3d>& axis, const Eigen::Ref<const Eigen::Vector3d>& normal)
+   {
+     Eigen::Vector3d axis_norm = axis.normalized();
+     Eigen::Vector3d normal_norm = normal.normalized();
+     Eigen::Vector3d ref = from_rot * axis_norm;
+     Eigen::Vector3d cur = to_rot * axis_norm;
+
+     // since we rotate around the x axis, x axis is always zero:
+     double angle = sign((ref.cross(cur)).dot(normal_norm)) * std::acos( ref.dot(cur) );
+     if (std::isnan(angle))
+         angle = 0;
+     return angle;
+   }
   
   
   /**

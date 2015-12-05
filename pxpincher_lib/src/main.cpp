@@ -44,18 +44,35 @@
 // =============== Main function =================
 int main( int argc, char** argv )
 {
-  ros::init(argc, argv, "phantomx");
+  ros::init(argc, argv, "pxpincher_test");
   ros::NodeHandle n("~");
   
  
   pxpincher::PhantomXControl robot;
   robot.initialize();
   
-  //robot.setJoints({-M_PI/2,M_PI/3,-M_PI/4,M_PI/2},{0.6,0.6,0.6,0.6});
- // robot.setJointVel({0.6,0.2,0,0});
-   robot.testKinematicModel();
+  robot.setJoints({0.8, 0.6, 0.9, 1.6});
+  
+  ROS_INFO_STREAM(std::setprecision(2) << "Current joint configuration q=[" << robot.getJointAngles().transpose() << "]");
+ 
+  robot.setEndeffectorPoseInc(0, 0, -0.05, 0.1); // notice: blocking call
+  
+  Eigen::Affine3d tcp;
+  robot.getEndeffectorState(tcp);
+  ROS_INFO_STREAM(std::setprecision(2) << "TCP rotation matrix w.r.t. base:\n" << tcp.rotation());
+  ROS_INFO_STREAM(std::setprecision(2) << "TCP translation vector w.r.t. base: [" << tcp.translation().transpose() << "]");
+  
+  robot.setEndeffectorPoseInc(0, -0.2, 0, 0.1, false); // notice: non-blocking call
+  
+  ros::Rate r(10);
+  while (ros::ok())
+  {
+      robot.publishInformationMarker();
+      ros::spinOnce();
+      r.sleep();
+  }
+  
 
-  ros::waitForShutdown();
   
   
   return 0;

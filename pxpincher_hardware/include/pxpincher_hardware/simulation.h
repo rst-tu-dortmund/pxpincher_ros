@@ -40,11 +40,15 @@
 #define SIMULATION_H
 
 #include <vector>
-#include "sensor_msgs/JointState.h"
+#include <sensor_msgs/JointState.h>
+#include <pxpincher_hardware/misc.h>
+#include <pxpincher_comm/codes.h>
+#include <pxpincher_comm/servostatus.h>
+#include <ros/callback_queue.h>
 
-#include "ros/ros.h"
+#include <ros/ros.h>
 
-#include "boost/thread/mutex.hpp"
+#include <boost/thread/mutex.hpp>
 
 namespace pxpincher
 {
@@ -52,18 +56,58 @@ namespace pxpincher
 class Simulation
 {
 public:
+      
     Simulation();
-    Simulation(std::vector<double> offsets);
+    
+    void start(ros::Rate rate);
 
-    sensor_msgs::JointState performSimulationStep(double duration);
-    void setQDot(std::vector<double> qDot);
-    sensor_msgs::JointState getCurrentState();
+    void addJoint(UBYTE id, const std::string& name, int default_pos, int default_speed, int lower_bound, int upper_bound);
+    
+    void clearJoints();
+    
+    void setGoalPosition(UBYTE id, int position);
+    void setGoalPosition(const std::vector<UBYTE>& ids, const std::vector<int>& positions);
+    
+    void readServoStatus(std::vector<ServoStatus>& stati);
+    
+    void simCallback(const ros::TimerEvent& event);
+    
+    bool isMoving();
+       
 
+protected:
+      void performSimulationStep(double duration);
+      bool isGoalReached();
+    
 private:
 
-    double q1Old, q2Old, q3Old, q4Old, q5Old;
-    std::vector<double> offsets_, qDots_;
-    sensor_msgs::JointState currentState_;
+    struct JointData
+    {
+      JointData() : name(""), pos(0), speed(0), goal(0), lower(std::numeric_limits<int>::min()), upper(std::numeric_limits<int>::max()) {};
+      JointData(const std::string& name, int pos, int speed, int goal, double lower, int upper) : name(name), pos(pos), speed(speed), 
+													      goal(goal), lower(lower), upper(upper) {};
+      std::string name;
+      int pos;
+      int speed;
+      int goal;
+      int lower;
+      int upper;
+    };
+    
+    bool moving_ = false;
+    
+    ros::Timer sim_callback_; 
+    ros::CallbackQueue callback_queue_;
+    ros::AsyncSpinner spinner_;
+    
+    ros::Time last_step_;
+    bool started_ = false;
+    
+    ros::NodeHandle nhandle_;
+    
+    std::map<UBYTE, JointData> joint_data_;   
+    boost::mutex data_mutex_;
+    
 };
 
 } // end namespace pxpincher

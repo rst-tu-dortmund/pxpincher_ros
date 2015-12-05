@@ -3082,7 +3082,7 @@ UBYTE PXProtocol::readServoTarget(std::vector<ServoTarget> &targets, SerialComm 
     ids.reserve(targets.size());
 
     // Get the ids
-    for(ServoTarget elem : targets){
+    for(const ServoTarget& elem : targets){
         ids.push_back(elem.id_);
     }
 
@@ -3153,7 +3153,7 @@ UBYTE PXProtocol::readServoStatus(std::vector<ServoStatus> &status, SerialComm &
     ids.reserve(status.size());
 
     // Get the ids
-    for(ServoStatus elem : status){
+    for(const ServoStatus& elem : status){
         ids.push_back(elem.id_);
     }
 

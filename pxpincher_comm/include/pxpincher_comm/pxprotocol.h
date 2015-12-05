@@ -1004,7 +1004,7 @@ public:
      * @brief Read current target/goal of a single servo
      * 
      * @see ServoTarget
-     * @param target ServoTarget object
+     * @param[in,out] target ServoTarget object (the ID must be provided within status)
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
@@ -1014,7 +1014,7 @@ public:
      * @brief Read current target/goal for a bunch of servos
      * 
      * @see ServoTarget
-     * @param targets vector of ServoTarget objects (a single target for each servo)
+     * @param[in,out] targets vector of ServoTarget objects (a single target for each servo);  (the ID must be provided for each status)
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
@@ -1024,7 +1024,7 @@ public:
      * @brief Read current status of a single servo
      * 
      * @see ServoStatus
-     * @param status ServoStatus object
+     * @param[in,out] status ServoStatus object (the ID must be provided within status)
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */
@@ -1034,7 +1034,7 @@ public:
      * @brief Read current status for a bunch of servos
      * 
      * @see ServoStatus
-     * @param status vector of ServoStatus objects (a single status for each servo)
+     * @param[in,out] status vector of ServoStatus objects (a single status for each servo); (the ID must be provided for each status)
      * @param comm reference to the related serial communication object
      * @return error/checksum byte
      */

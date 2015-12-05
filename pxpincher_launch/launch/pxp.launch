@@ -1,5 +1,6 @@
 <launch>
 
+  <arg name="sim" default="false" />
 
   <!--Here we broadcast our final coordinate system for the gripper, since gripper_finger_base_link from the arbotix package is
       not centered at the gripper for our PhantomX Pincher arm. We choose the name gripper_link since the turtlebot_arm package depends on it. -->
@@ -14,7 +15,8 @@
 
   <!-- Start Arbotix driver -->
   <node name="pxpincher" pkg="pxpincher_hardware" type="pxpincher_node" output="screen">
-  <rosparam file="$(find pxpincher_config)/config/pincher_arm.yaml" command="load"/>
+ 	<param name="simulation" value="$(arg sim)"/>
+  	<rosparam file="$(find pxpincher_config)/config/pincher_arm.yaml" command="load"/>
   </node>
 
   <!-- Load default controller -->

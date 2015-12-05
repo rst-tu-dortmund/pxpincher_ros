@@ -44,19 +44,24 @@
 #include <mutex>
 #include <numeric>
 #include <cmath>
+#include <unordered_map>
 
 // ros stuff
 #include <ros/ros.h>
 #include <ros/callback_queue.h>
 #include <actionlib/client/simple_action_client.h>
 #include <actionlib/client/terminal_state.h>
+#include <interactive_markers/interactive_marker_server.h>
 #include <control_msgs/FollowJointTrajectoryAction.h>
 #include <control_msgs/FollowJointTrajectoryActionGoal.h>
 #include <trajectory_msgs/JointTrajectory.h>
 #include <control_msgs/GripperCommandAction.h>
 #include <sensor_msgs/JointState.h>
+#include <sensor_msgs/PointCloud.h>
+#include <geometry_msgs/Point32.h>
 #include <tf/transform_listener.h>
 #include <tf_conversions/tf_eigen.h>
+#include <eigen_conversions/eigen_msg.h>
 
 // own stuff
 #include <pxpincher_lib/types.h>
@@ -158,6 +163,13 @@ public:
    * @param blocking if \c true, wait until the goal is reached or the timeout is exceeded before continuing 
    */ 
   void setJointsDefault(double speed, bool blocking=true);
+  
+  /**
+   * @brief Set joints to the default position q=[0,0,0,0]^T
+   * @param speed speed vector: individual speed for each joint
+   * @param blocking if \c true, wait until the goal is reached or the timeout is exceeded before continuing 
+   */ 
+  void setJointsDefault(const Eigen::Ref<const JointVector>& speed, bool blocking);
   
   /**
    * @brief Command new joint angles
@@ -483,7 +495,13 @@ public:
    * @brief Return the current joint angle of the gripper
    * @return current joint angle
    */
-  double getGripperJointAngle();
+  double getGripperRawJointAngle();
+  
+ /** 
+  * @brief Return the current joint angle of the gripper in percentage
+  * @return current joint angle [%]
+  */
+  int getGripperJointPercentage();
   
  
   //@}
@@ -595,6 +613,25 @@ public:
   } 
   
   /**
+   * @brief Visualize the work space using a sensor_msgs/PointCloud message
+   * @details The work space is defiend by the kinematics of the arm and the joint limits
+   * @param[out] sampled_points Reference to a sensor_msgs/PointCloud message which will be filled with samples
+   * @param resolution define the angular resolution that should be used to sample task space points
+   */
+  void visualizeWorkSpace(sensor_msgs::PointCloud& sampled_points, double resolution = 0.5) const;
+  
+  
+  /**
+   * @brief Activate interactive marker server that allows users to control joints using rviz
+   */
+  void activateInteractiveJointControl();
+  
+  /**
+   * @brief Publish text marker with endeffector pose and joint configuration
+   */
+  void publishInformationMarker();
+  
+  /**
    * @brief Print the position and velocity porfile of a given trajectory on the screen.
    */
   static void printTrajectory(const trajectory_msgs::JointTrajectory& trajectory);
@@ -623,6 +660,29 @@ protected:
   bool verifyTrajectory(trajectory_msgs::JointTrajectory& trajectory);
   
   
+  /**
+   * @brief Callback for position updates received from joint markers.
+   * @todo Make online movement working (e.g. velocity based)
+   * @param feedback message containing new marker information
+   */
+  void jointMarkerFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback );
+  
+  /**
+   * @brief Callback for position updates received from the gripper marker.
+   * @todo Make online movement working (e.g. velocity based)
+   * @param feedback message containing new marker information
+   */
+  void gripperMarkerFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback );
+  
+  /**
+   * @brief Callback for pose updates received from the taskspace marker (incorporating inverse kinematics)
+   * @todo Make online movement working (e.g. velocity based)
+   * @param feedback message containing new marker information
+   */
+  void taskSpaceMarkerFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback );
+  
+
+  
 private:
     
   void jointStateCallback(const sensor_msgs::JointStateConstPtr& msg);
@@ -638,6 +698,7 @@ private:
   std::unique_ptr<ros::AsyncSpinner> _joints_sub_spinner;
   bool _joint_values_received = false;
   tf::TransformListener _tf;
+  ros::Publisher _marker_pub;
   
   ros::ServiceClient _joint_relax_service;
   
@@ -659,13 +720,20 @@ private:
 //   double _gripper_max_speed = 0;
   std::string _gripper_joint_name;
   
+  std::string _arm_base_link_frame = "/arm_base_link"; // TODO ros param
+  
   std::map<std::string, int> _map_joint_to_index;
+  std::map<int, std::string> _map_joint_to_joint_frame;
   
   std::vector<std::string> _joint_names_arm; //!< Store names for all joints of the arm
   
   bool _collision_check_enabled = true; //! Workaround, this variable is set to false in case of velocity control 
   
   bool _initialized = false;
+  
+  std::unique_ptr<interactive_markers::InteractiveMarkerServer> _marker_server;
+  std::unordered_map<std::string, int> _marker_to_joint; // store mapping from marker name to joint number // TODO: maybe merge with _map_joint_to_index
+  ros::Timer _marker_pose_updater;
   
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW

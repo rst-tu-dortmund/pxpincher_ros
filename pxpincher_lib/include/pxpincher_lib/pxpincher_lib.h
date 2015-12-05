@@ -33,94 +33,15 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * Authors: Maximilian Krämer, Christoph Rösmann
+ * Author: Christoph Rösmann
  *********************************************************************/
 
-#ifndef PXMISC_H
-#define PXMISC_H
+#ifndef PXPINCHER_LIB_
+#define PXPINCHER_LIB_
 
-#include <cmath>
-#include <limits>
-
-namespace pxpincher
-{
-    
-
-constexpr double PI = 3.141592653589793;
-constexpr double conversionFactorPos = 5*PI/3066;
-constexpr double conversionFactorSpeed = 19*PI/5115;
-constexpr double INF = 0.8*std::numeric_limits< double >::max();
-
-/**
-* @brief Determine the sign of a specified value
-* @param val value to be checked
-* @return -1 if val<0; 0 if val==0; 1 if val>0
-*/
-template <typename T> int sign(T val) 
-{
-    return (T(0) < val) - (val < T(0));
-}
-    
-inline double tick2rad(int position)
-{
-    return conversionFactorPos*position;
-}
+#include <pxpincher_lib/types.h>
+#include <pxpincher_lib/kinematics.h>
+#include <pxpincher_lib/phantomx_interface.h>
 
 
-inline std::vector<double> tick2rad(const std::vector<int>& positions)
-{
-    std::vector<double> rads;
-    rads.reserve(positions.size());
-    
-    for(int elem : positions){
-        rads.push_back(tick2rad(elem));
-    }
-    return rads;
-}
-
-inline int rad2tick(double rad)
-{
-    return std::floor(rad/conversionFactorPos);
-}
-
-inline double tick2rads(int speed)
-{
-    return conversionFactorSpeed*speed;
-}
-
-
-inline std::vector<double> tick2rads(const std::vector<int>& speeds)
-{
-    std::vector<double> rads;
-    rads.reserve(speeds.size());
-
-    for(int elem : speeds){
-        rads.push_back(tick2rads(elem));
-    }
-    return rads;
-}
-
-inline int rads2tick(double speed_rad)
-{
-    return std::floor(speed_rad/conversionFactorSpeed);
-}
-
-inline double convVoltage(int volt)
-{
-    return double(volt)/10.0;
-}
-
-inline std::vector<double> convVoltage(const std::vector<int>& volt)
-{
-    std::vector<double> new_volt;
-    new_volt.reserve(volt.size());
-
-    for(int elem : volt){
-        new_volt.push_back(convVoltage(elem));
-    }
-    return new_volt;
-}
-
-} // end namespace pxpincher
-
-#endif // PXMISC_H
+#endif /* PXPINCHER_LIB_ */

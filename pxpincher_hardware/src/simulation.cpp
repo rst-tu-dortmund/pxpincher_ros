@@ -37,55 +37,139 @@
  *********************************************************************/
 
 #include <pxpincher_hardware/simulation.h>
+#include <cmath>
+
 
 namespace pxpincher
 {
 
-Simulation::Simulation()
+Simulation::Simulation() : nhandle_("sim"), spinner_(1, &callback_queue_)  // TODO check if multithreading works on all computers, otherwise we must add use the callback queue of the pxpincher class
 {
-    offsets_ = {0.0,0.0,0.0,0.0,0.0};
-    qDots_ = {0.0,0.0,0.0,0.0,0.0};
-
-    currentState_.header.stamp = ros::Time::now();
-    currentState_.velocity = qDots_;
-    currentState_.position = offsets_;
+    nhandle_.setCallbackQueue(&callback_queue_);
 }
 
-Simulation::Simulation(std::vector<double> offsets):
-    offsets_(offsets)
+void Simulation::start(ros::Rate rate)
 {
-    qDots_ = {0.0,0.0,0.0,0.0,0.0};
-
-    currentState_.header.stamp = ros::Time::now();
-    currentState_.velocity = qDots_;
-    currentState_.position = offsets_;
+    spinner_.start();
+    sim_callback_= nhandle_.createTimer(rate, &Simulation::simCallback, this);
 }
 
-void Simulation::setQDot(std::vector<double> qDot)
+void Simulation::addJoint(UBYTE id, const std::string& name, int default_pos, int default_speed, int lower_bound, int upper_bound)
 {
-    qDots_ = qDot;
+    joint_data_[id] = JointData(name, default_pos, default_speed, default_pos, lower_bound, upper_bound);
 }
 
-sensor_msgs::JointState Simulation::performSimulationStep(double duration)
+void Simulation::clearJoints()
 {
-    std::vector<std::string> names = {"J1","J2","J3","J4","J5"};
+    joint_data_.clear();
+}
 
-    for(int i = 0; i < qDots_.size(); ++i){
-        offsets_[i] += qDots_[i]*duration;
+void Simulation::setGoalPosition(UBYTE id, int position)
+{
+    boost::mutex::scoped_lock lock(data_mutex_);
+    try
+    {
+	joint_data_.at(id).goal = position;
+	moving_ = true;
+	
+	if (!started_)
+	{
+	  last_step_ = ros::Time::now();
+	  started_ = true;
+	  return;
+	}
     }
-
-
-    currentState_.header.stamp = ros::Time::now();
-    currentState_.name = names;
-    currentState_.position = offsets_;
-    currentState_.velocity = qDots_;
-
-    return currentState_;
+    catch (const std::out_of_range& oor)
+    {
+      ROS_ERROR_STREAM("Simulation::setGoalPosition(): invalid id: " << (int) id);
+    }
 }
 
-sensor_msgs::JointState Simulation::getCurrentState()
+void Simulation::setGoalPosition(const std::vector<UBYTE>& ids, const std::vector<int>& positions)
 {
-    return currentState_;
+    ROS_ASSERT(ids.size() == positions.size());
+    int idx = 0;
+    for (UBYTE id : ids)
+    {
+      setGoalPosition(id, positions[idx]);
+      ++idx;
+    }
+    
 }
+
+void Simulation::readServoStatus(std::vector<ServoStatus>& stati)
+{
+    boost::mutex::scoped_lock lock(data_mutex_);
+    
+    // Get the ids
+    for(ServoStatus& elem : stati)
+    { 
+	try
+	{
+	  const JointData& data = joint_data_.at(elem.id_);
+	  elem.load_ = 0; // no load model simulated
+	  elem.position_ = data.pos;
+	  elem.speed_ = data.speed;
+	  elem.temperature_ = 0;
+	  elem.voltage_ = 0;
+	}
+	catch (const std::out_of_range& oor)
+	{
+	  ROS_ERROR_STREAM("Simulation::readServoStatus(): invalid id: " << (int) elem.id_);
+	}
+    }
+    
+}
+
+void Simulation::simCallback(const ros::TimerEvent& event)
+{
+  if (!moving_) // moving_ is requested by setGoalPosition
+    return;
+  
+  ros::Time now = ros::Time::now();
+  
+  performSimulationStep( (now-last_step_).toSec() );
+  
+  last_step_ = now;
+  
+  // check goal condition to cancel moving
+  if (isGoalReached())
+  {
+    moving_ = false;
+  }
+}
+
+bool Simulation::isGoalReached()
+{
+    std::vector<bool> reached;
+    for (const auto& data : joint_data_)
+    {
+	reached.push_back( std::abs(data.second.goal - data.second.pos) < 1e-5 ); // TODO: check threshold
+    }
+    return std::find(reached.begin(), reached.end(), false) == reached.end();
+}
+
+bool Simulation::isMoving()
+{
+    return moving_;
+}
+
+void Simulation::performSimulationStep(double duration)
+{
+    boost::mutex::scoped_lock lock(data_mutex_);
+    for (std::pair<const UBYTE, JointData>& data : joint_data_)
+    {
+      int speed_max = data.second.speed; 
+      // limit speed close to goal
+      int dist = data.second.goal - data.second.pos;
+      int speed_req = std::trunc( double(std::abs(dist)) / duration );
+      int speed_des = std::min(speed_max, speed_req);
+      
+      int speed2ticks = conversionFactorSpeed / conversionFactorPos;
+      
+      data.second.pos +=  sign(dist) * speed_des * speed2ticks * duration; // simple integrator model
+    }
+}
+
 
 } // end namespace pxpincher

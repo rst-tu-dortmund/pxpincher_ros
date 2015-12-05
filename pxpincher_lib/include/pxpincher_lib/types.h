@@ -42,6 +42,7 @@
 // eigen 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include <pxpincher_hardware/misc.h>
 
 
 namespace pxpincher
@@ -64,6 +65,9 @@ using RobotJacobian = Eigen::Matrix<double,6,4>;
 
 //! Typedef for the robot jacobian 
 using RobotJacobianReduced = Eigen::Matrix4d;
+
+//! Global constant for MaxSpeed
+constexpr double MaxSpeed = INF;
 
 } // namespace pxpincher
 

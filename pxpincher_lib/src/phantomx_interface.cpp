@@ -39,6 +39,9 @@
 #include <pxpincher_lib/phantomx_interface.h>
 #include <pxpincher_hardware/misc.h> // conversions between ticks and angles in radiant
 #include <pxpincher_msgs/Relax.h>
+#include <tf_conversions/tf_eigen.h>
+#include <tf/transform_datatypes.h>
+#include <geometry_msgs/Quaternion.h>
 #include <signal.h>
 #include <sstream>
 #include <algorithm>
@@ -88,11 +91,14 @@ void PhantomXControl::initialize()
   _gripper_action->waitForServer(); // will wait for infinite time
   ROS_INFO("All action servers started.");
   
+  // marker pub
+  _marker_pub = n.advertise<visualization_msgs::Marker>( "markers", 100 );
+  
   // setup subscriber (get joint_states in a separate thread)
   _joints_sub_queue = new ros::CallbackQueue();
   n.setCallbackQueue(_joints_sub_queue);
   _joints_sub = n.subscribe("/joint_states", 1, &PhantomXControl::jointStateCallback, this);
-  _joints_sub_spinner = make_unique<ros::AsyncSpinner>(1, _joints_sub_queue);
+  _joints_sub_spinner = make_unique<ros::AsyncSpinner>(0, _joints_sub_queue);
   ROS_ERROR_COND(!_joints_sub_spinner->canStart(),"Asynchronous spinner for receiving new joint state messages cannot be started.");
   _joints_sub_spinner->start();
 
@@ -152,7 +158,7 @@ void PhantomXControl::initialize()
 //   _gripper_neutral = normalize_angle_rad( deg_to_rad(_gripper_neutral) );
 //   _gripper_max_speed = deg_to_rad( _gripper_max_speed );
   
-  _map_joint_to_index[_gripper_joint_name] = 255; // set gripper joint idx to 255 in our map
+  _map_joint_to_index[_gripper_joint_name] = 255; // set gripper joint idx to 255 in our map (// TODO: ids from yaml file)
   
 
   // Setup kinematic model
@@ -165,15 +171,22 @@ void PhantomXControl::initialize()
   }
   // Drive into default position
   ROS_INFO("Driving into default position in order to setup kinematic model...");
-  setJointsDefault(0.2);
+  setJointsDefault(0.5*getSlowestMaxSpeed());
 
+  // Transformations
+  // TODO rosparam
+  _map_joint_to_joint_frame[0] = "/arm_shoulder_pan_servo_link";
+  _map_joint_to_joint_frame[1] = "/arm_shoulder_lift_servo_link";
+  _map_joint_to_joint_frame[2] = "/arm_elbow_flex_servo_link";
+  _map_joint_to_joint_frame[3] = "/arm_wrist_flex_servo_link";
+  _map_joint_to_joint_frame[255] = "/gripper_link"; // TODO: ids from yaml file
   
   // get transform: base to first joint 
   tf::StampedTransform transform;
   try
   {
-    _tf.waitForTransform("/arm_base_link", "/arm_shoulder_pan_servo_link", ros::Time(0), ros::Duration(10.0) );
-    _tf.lookupTransform("/arm_base_link", "/arm_shoulder_pan_servo_link", ros::Time(0), transform); // TODO: param
+    _tf.waitForTransform(_arm_base_link_frame, _map_joint_to_joint_frame[0], ros::Time(0), ros::Duration(10.0) );
+    _tf.lookupTransform(_arm_base_link_frame, _map_joint_to_joint_frame[0], ros::Time(0), transform); // TODO: param
   }
   catch (tf::TransformException &ex)
   {
@@ -186,8 +199,8 @@ void PhantomXControl::initialize()
   // get transform: first joint to second joint
   try
   {
-    _tf.waitForTransform("/arm_shoulder_pan_servo_link", "/arm_shoulder_lift_servo_link", ros::Time(0), ros::Duration(10.0) );
-    _tf.lookupTransform("/arm_shoulder_pan_servo_link", "/arm_shoulder_lift_servo_link", ros::Time(0), transform); // TODO: param
+    _tf.waitForTransform(_map_joint_to_joint_frame[0], _map_joint_to_joint_frame[1], ros::Time(0), ros::Duration(10.0) );
+    _tf.lookupTransform(_map_joint_to_joint_frame[0], _map_joint_to_joint_frame[1], ros::Time(0), transform); // TODO: param
   }
   catch (tf::TransformException &ex)
   {
@@ -200,8 +213,8 @@ void PhantomXControl::initialize()
   // get transform: second joint to third joint
   try
   {
-    _tf.waitForTransform("/arm_shoulder_lift_servo_link", "/arm_elbow_flex_servo_link", ros::Time(0), ros::Duration(10.0) );
-    _tf.lookupTransform("/arm_shoulder_lift_servo_link", "/arm_elbow_flex_servo_link", ros::Time(0), transform); // TODO: param
+    _tf.waitForTransform( _map_joint_to_joint_frame[1], _map_joint_to_joint_frame[2], ros::Time(0), ros::Duration(10.0) );
+    _tf.lookupTransform( _map_joint_to_joint_frame[1], _map_joint_to_joint_frame[2], ros::Time(0), transform); // TODO: param
   }
   catch (tf::TransformException &ex)
   {
@@ -214,8 +227,8 @@ void PhantomXControl::initialize()
   // get transform: forth joint to second joint
   try
   {
-    _tf.waitForTransform("/arm_elbow_flex_servo_link", "/arm_wrist_flex_servo_link", ros::Time(0), ros::Duration(10.0) );
-    _tf.lookupTransform("/arm_elbow_flex_servo_link", "/arm_wrist_flex_servo_link", ros::Time(0), transform); // TODO: param
+    _tf.waitForTransform( _map_joint_to_joint_frame[2], _map_joint_to_joint_frame[3], ros::Time(0), ros::Duration(10.0) );
+    _tf.lookupTransform( _map_joint_to_joint_frame[2], _map_joint_to_joint_frame[3], ros::Time(0), transform); // TODO: param
   }
   catch (tf::TransformException &ex)
   {
@@ -228,8 +241,8 @@ void PhantomXControl::initialize()
   // get transform: last joint to gripper
   try
   {
-    _tf.waitForTransform("/arm_wrist_flex_servo_link", "/gripper_link", ros::Time(0), ros::Duration(10.0) );
-    _tf.lookupTransform("/arm_wrist_flex_servo_link", "/gripper_link", ros::Time(0), transform); // TODO: param
+    _tf.waitForTransform(_map_joint_to_joint_frame[3], _map_joint_to_joint_frame[255], ros::Time(0), ros::Duration(10.0) ); // TODO index
+    _tf.lookupTransform(_map_joint_to_joint_frame[3], _map_joint_to_joint_frame[255], ros::Time(0), transform); // TODO: param
   }
   catch (tf::TransformException &ex)
   {
@@ -313,6 +326,11 @@ void PhantomXControl::setJointsDefault(double speed, bool blocking)
 {
   setJoints(JointVector::Zero(), speed, false, blocking);
 }  
+
+void PhantomXControl::setJointsDefault(const Eigen::Ref<const JointVector>& speed, bool blocking)
+{
+  setJoints(JointVector::Zero(), speed, false, blocking);
+}  
   
 void PhantomXControl::setJoints(const Eigen::Ref< const JointVector>& values, const ros::Duration& duration, bool relative, bool blocking)
 {
@@ -324,6 +342,11 @@ void PhantomXControl::setJoints(const Eigen::Ref< const JointVector>& values, co
 
 void PhantomXControl::setJoints(const std::vector<double>& values, const ros::Duration& duration, bool relative, bool blocking)
 {
+  if (values.size() != _joint_lower_bounds.size())
+  {
+      ROS_ERROR("Number of joint values provided does not match number of joints");
+      return;
+  }
   Eigen::Map<const JointVector> values_map(values.data());
   setJoints(values_map, duration, relative, blocking);
 }
@@ -342,11 +365,13 @@ void PhantomXControl::setJoints(const Eigen::Ref<const JointVector>& values, dou
 
   if (max_diff<0.001)
       return; // we are already there...
+      
+  if (speed >= MaxSpeed) // TODO: really taking all joints into account?
+      speed = _joint_max_speeds.minCoeff();
 
   // get time corresponding to the distace max_diff and the given speed value
   // assume a constant velocity: phi=omega*t
   double duration = max_diff/speed;
-  
   if (duration<0)
   {
     ROS_ERROR("PhantomXControl::setJoints(): obtained an invalid (negative) duration. Cannot set new joint values.");
@@ -357,6 +382,11 @@ void PhantomXControl::setJoints(const Eigen::Ref<const JointVector>& values, dou
   
 void PhantomXControl::setJoints(const std::vector<double>& values, double speed, bool relative, bool blocking)
 {
+  if (values.size() != _joint_lower_bounds.size())
+  {
+      ROS_ERROR("Number of joint values provided does not match number of joints");
+      return;
+  }
   Eigen::Map<const JointVector> values_map(values.data());
   setJoints(values_map, speed, relative, blocking);
 }  
@@ -367,14 +397,22 @@ void PhantomXControl::setJoints(const Eigen::Ref<const JointVector>& values, con
     JointVector current_states;  
     getJointAngles(current_states); // we need to copy here, rather accessing '_joint_angles' directly,
                                     // since receiving new states is multi threaded.
+                                      
+    JointVector act_speed = ( speed.array() >= MaxSpeed).select(_joint_max_speeds, speed); // take max speed definition into account (here it is desired by the user, therefore no warning!)
     
     trajectory_msgs::JointTrajectory traj;
-    createP2PTrajectoryWithIndividualVel(current_states, values, speed, traj);
+    createP2PTrajectoryWithIndividualVel(current_states, values, act_speed, traj);
+    //printTrajectory(traj);
     setJointTrajectory(traj, blocking);
 }
   
 void PhantomXControl::setJoints(const std::vector<double>& values, const std::vector<double>& speed, bool relative, bool blocking)
 {
+  if (values.size() != _joint_lower_bounds.size())
+  {
+      ROS_ERROR("Number of joint values provided does not match number of joints");
+      return;
+  }
   Eigen::Map<const JointVector> values_map(values.data());
   Eigen::Map<const JointVector> vel_map(speed.data());
   setJoints(values_map, vel_map, relative, blocking);
@@ -461,6 +499,11 @@ void PhantomXControl::setJointVel(const Eigen::Ref<const JointVector>& velocitie
   
 void PhantomXControl::setJointVel(const std::vector<double>& velocities)
 {
+  if (velocities.size() != _joint_lower_bounds.size())
+  {
+      ROS_ERROR("Number of joint velocities provided does not match number of joints");
+      return;
+  }
   Eigen::Map<const JointVector> vel_map(velocities.data());
   setJointVel(vel_map);
 }  
@@ -491,7 +534,7 @@ void PhantomXControl::setJointTrajectory(control_msgs::FollowJointTrajectoryGoal
   }
   
   if (blocking)
-    _arm_action->sendGoalAndWait(trajectory, ros::Duration(20));
+    _arm_action->sendGoalAndWait(trajectory, ros::Duration(30));
   else
     _arm_action->sendGoal(trajectory);
 }
@@ -728,7 +771,12 @@ bool PhantomXControl::setEndeffectorPose(const Eigen::Ref<const Eigen::Vector3d>
 
 bool PhantomXControl::setEndeffectorPose(const std::vector<double>& desired_xyz, double desired_pitch, double speed, bool relative, bool blocking)
 {
-    setEndeffectorPose(desired_xyz, desired_pitch, speed, relative, blocking);
+    if (desired_xyz.size()!=3)
+    {
+        ROS_ERROR("Endeffector position must be a 3d vector.");
+        return false;
+    }
+    setEndeffectorPose(Eigen::Map<const Eigen::Vector3d>(desired_xyz.data()), desired_pitch, speed, relative, blocking);
 }
 
 
@@ -756,21 +804,30 @@ void PhantomXControl::setGripperJoint(int percent_open, bool blocking)
 
 void PhantomXControl::setGripperRawJointAngle(double joint_value, bool blocking)
 {
+  // bound value
+  joint_value = bound(_gripper_lower_bound, joint_value, _gripper_upper_bound);
+        
   control_msgs::GripperCommandGoal goal;
   goal.command.position = joint_value;
-    
+      
   if (blocking)
     _gripper_action->sendGoalAndWait(goal, ros::Duration(5));
   else
     _gripper_action->sendGoal(goal);
 }
 
-double PhantomXControl::getGripperJointAngle()
+double PhantomXControl::getGripperRawJointAngle()
 {
-    std::lock_guard<std::mutex> lock(_joints_mutex);
+    std::lock_guard<std::mutex> lock(_joints_mutex); // TODO: makes no sense here?
     return _gripper_value;
 }
 
+int PhantomXControl::getGripperJointPercentage()
+{
+  double raw_angle = getGripperRawJointAngle();
+  double percent_open = std::round( (raw_angle - _gripper_lower_bound)/(_gripper_upper_bound-_gripper_lower_bound)/0.01 );
+  return (int) percent_open;
+}
 
 
 void PhantomXControl::createP2PTrajectoryWithIndividualVel(const std::vector<double>& start_conf,
@@ -801,9 +858,19 @@ void PhantomXControl::createP2PTrajectoryWithIndividualVel(const Eigen::Ref<cons
     // Let's determine the durations for each transition
     JointVector durations = diff.cwiseQuotient(new_speed).cwiseAbs();
     
-    // Limit durations
+    // Limit durations to a specific value
     durations = (durations.array()<20.0).select(durations, 20.0); // limit to 20 seconds (which is actually really long for velocity control)
-    
+    // we iterate through the array, since some action servers needs different durations for each transition
+//     double duration_max = 20;
+//     for (int i=0; i<(int)durations.rows(); ++i)
+//     {
+//         if (durations[i] > 20)
+//         {
+//             durations[i] = duration_max;
+//             duration_max += 0.1;
+//         }
+//     }
+
     double max_duration = durations.maxCoeff();
 
     // sort and keep track about indices
@@ -813,7 +880,7 @@ void PhantomXControl::createP2PTrajectoryWithIndividualVel(const Eigen::Ref<cons
     // now sort indices based on durations (from short to long)
     std::sort(indices.begin(), indices.end(),
               [&durations](std::size_t i, std::size_t j) {return durations.coeffRef(i) < durations.coeffRef(j);});
-    
+
 //     ROS_INFO_STREAM("indices:" << (Eigen::Map<const Eigen::Matrix<int,-1,1> >(indices.data(),durations.rows())).transpose());
     
     // init trajectory
@@ -874,6 +941,23 @@ void PhantomXControl::createP2PTrajectoryWithIndividualVel(const Eigen::Ref<cons
             }
         }    
     }
+    
+    // Delete duplicates
+    auto start_it = trajectory.points.begin();
+    start_it = std::next(start_it); // start with i=1;
+    while (start_it != trajectory.points.end())
+    {
+        if (start_it->time_from_start == std::prev(start_it)->time_from_start)
+        {
+            start_it = trajectory.points.erase(start_it); // get iterator to subsequent element
+        }
+        else
+        {
+            ++start_it; // increment manually
+        }
+    }
+      // std::unique(trajectory.points.begin(), trajectory.points.end(), 
+       //            [](const trajectory_msgs::JointTrajectoryPoint& pt1, const trajectory_msgs::JointTrajectoryPoint& pt2){return pt1.time_from_start == pt2.time_from_start;});
 }
 
 
@@ -932,27 +1016,27 @@ bool PhantomXControl::testKinematicModel()
   // Default position
   JointVector values;
   values.setZero();
-  retval = retval && testKinematicModel(values);
+  retval = testKinematicModel(values) && retval;
      
   // Pos 1
   values << -M_PI/2, 0, 0, 0;
-  retval = retval && testKinematicModel(values);
+  retval = testKinematicModel(values) && retval;
   
   // Pos 2
   values << 0, M_PI/3, 0, 0;
-  retval = retval && testKinematicModel(values);
+  retval = testKinematicModel(values) && retval;
   
   // Pos 3
   values << 0, 0, M_PI/2, 0;
-  retval = retval && testKinematicModel(values);
+  retval = testKinematicModel(values) && retval;
   
   // Pos 4
   values << 0, 0, 0, -M_PI/2;
-  retval = retval && testKinematicModel(values);
+  retval = testKinematicModel(values) && retval;
   
   // Pos 5
   values << M_PI/2, -M_PI/3, M_PI/5, -M_PI/2;
-  retval = retval && testKinematicModel(values);
+  retval = testKinematicModel(values) && retval;
   
   if (retval)
     ROS_INFO_STREAM("testKinematicModel successfully completed.");
@@ -970,6 +1054,7 @@ bool PhantomXControl::testKinematicModel(const Eigen::Ref<const JointVector>& jo
   
   // command robot
   setJoints(joint_values,ros::Duration(5));
+    
   // get current state
   Eigen::Affine3d real;
   getEndeffectorState(real);
@@ -998,6 +1083,71 @@ bool PhantomXControl::testKinematicModel(const Eigen::Ref<const JointVector>& jo
   return retval;  
 }
 
+
+
+void PhantomXControl::visualizeWorkSpace(sensor_msgs::PointCloud& sampled_points, double resolution) const
+{
+    if (_joint_lower_bounds.rows() != 4 || _joint_upper_bounds.rows() != 4)
+    {
+        ROS_ERROR("KinematicModel::visualizeTaskSpace() only supports 4 joints at the moment.");
+        return;
+    }
+    if (resolution<=0)
+    {
+        ROS_ERROR("KinematicModel::visualizeTaskSpace(): resolution must be positive");
+        return;
+    }
+    
+    JointVector lower = _joint_lower_bounds;
+    JointVector upper = _joint_upper_bounds;
+    
+    std::vector<int> number_steps;
+    for (int i=0; i<(int)lower.rows(); ++i)
+    {
+        number_steps.push_back( std::floor( (upper[i]-lower[i])/resolution ) );
+    }
+    
+    
+    sampled_points.header.stamp = ros::Time::now();
+    sampled_points.header.frame_id = _arm_base_link_frame;
+    sampled_points.points.clear();
+    sampled_points.channels.clear();
+    
+    
+    JointVector q;
+    for (int j1 = 0; j1 < number_steps[0]; ++j1)
+    {
+        q[0] = lower[0] + j1*resolution;
+        for (int j2 = 0; j2 < number_steps[1]; ++j2)
+        {
+            q[1] = lower[1] + j2*resolution;
+            for (int j3 = 0; j3 < number_steps[2]; ++j3)
+            {
+                q[2] = lower[2] + j3*resolution;
+                for (int j4 = 0; j4 < number_steps[3]; ++j4)
+                {
+                   q[3] = lower[3] + j4*resolution;
+                   
+                   Eigen::Affine3d f = _kinematics.computeForwardKinematics(q);
+                   sampled_points.points.emplace_back();
+                   sampled_points.points.back().x = f.translation()[0];
+                   sampled_points.points.back().y = f.translation()[1];
+                   sampled_points.points.back().z = f.translation()[2];
+                   
+                   sampled_points.channels.emplace_back();
+                   sampled_points.channels.back().name = "rgb";
+                   sampled_points.channels.back().values.push_back(1);
+                   sampled_points.channels.back().values.push_back(0);
+                   sampled_points.channels.back().values.push_back(0);
+                }
+            }
+            
+        }
+        
+    }
+        
+}
+  
   
 void PhantomXControl::printTrajectory(const trajectory_msgs::JointTrajectory& trajectory)
 {
@@ -1073,4 +1223,290 @@ void PhantomXControl::printTrajectory(const trajectory_msgs::JointTrajectory& tr
 }
   
   
+  
+void PhantomXControl::activateInteractiveJointControl()
+{
+    // create interactive markers server on the topic namespace joint_marker
+    _marker_server = std::unique_ptr<interactive_markers::InteractiveMarkerServer>(new interactive_markers::InteractiveMarkerServer("joint_marker", "", true)); // own spinner
+    
+    JointVector joint_angles;
+    getJointAngles(joint_angles);
+    
+    _marker_to_joint.clear();
+    
+    // create a control
+    // this control does not contain any markers,
+    // which will cause RViz to insert two arrows
+    visualization_msgs::InteractiveMarkerControl rotate_control;
+    rotate_control.name = "jointcontrol";
+    rotate_control.orientation_mode = visualization_msgs::InteractiveMarkerControl::INHERIT;
+    rotate_control.orientation = tf::createQuaternionMsgFromRollPitchYaw(0,0,M_PI/2);
+    rotate_control.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS;
+        
+    for (int i = 0; i<(int)joint_angles.rows(); ++i)
+    {
+        visualization_msgs::InteractiveMarker joint_marker;
+        joint_marker.header.frame_id = _map_joint_to_joint_frame[i];
+        joint_marker.header.stamp = ros::Time(0);
+        joint_marker.name = "joint" + std::to_string(i);
+        _marker_to_joint[joint_marker.name] = i; // TODO: loop over joint index map
+        joint_marker.scale = 0.05;
+        //joint_marker.description = "Interactive joint position control";
+        
+        // add the control to the interactive marker
+        joint_marker.controls.push_back(rotate_control);
+    
+        // add the interactive marker to our collection &
+        // tell the server to call processFeedback() when feedback arrives for it
+        _marker_server->insert(joint_marker, boost::bind(&PhantomXControl::jointMarkerFeedback, this, _1));
+    }
+    
+    // add gripper control
+    // this control does not contain any markers,
+    // which will cause RViz to insert two arrows
+    visualization_msgs::InteractiveMarkerControl gripper_control;
+    gripper_control.name = "grippercontrol";
+    //gripper_control.orientation = tf::createQuaternionMsgFromRollPitchYaw(0,0,M_PI/2);
+    gripper_control.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS;
+    
+    visualization_msgs::InteractiveMarker gripper_marker;
+    gripper_marker.header.frame_id = _map_joint_to_joint_frame[_map_joint_to_index[_gripper_joint_name]];
+    gripper_marker.header.stamp = ros::Time(0);
+    gripper_marker.name = "gripper";
+    gripper_marker.pose.position.x = -0.025;
+    gripper_marker.scale = 0.05;
+    
+    // pose of marker i:
+    auto gripper = _map_joint_to_index.find(_gripper_joint_name);
+    if (gripper != _map_joint_to_index.end())
+    {
+        _marker_to_joint[gripper_marker.name] = gripper->second;
+                    
+        // add the control to the interactive marker
+        gripper_marker.controls.push_back(gripper_control);
+
+        // add the interactive marker to our collection &
+        // tell the server to call processFeedback() when feedback arrives for it
+        _marker_server->insert(gripper_marker, boost::bind(&PhantomXControl::gripperMarkerFeedback, this, _1));
+    }
+        
+    // add task space control   
+    
+    visualization_msgs::Marker arrow_marker;
+    arrow_marker.type = visualization_msgs::Marker::ARROW;
+    arrow_marker.scale.x = 0.02;
+    arrow_marker.scale.y =  0.012;
+    arrow_marker.scale.z =  0.012;
+    arrow_marker.color.r = 1;
+    arrow_marker.color.g = 0;
+    arrow_marker.color.b = 0;
+    arrow_marker.color.a = 0.6;
+    
+    visualization_msgs::InteractiveMarker taskspace_marker;
+    taskspace_marker.header.frame_id = _arm_base_link_frame;
+    taskspace_marker.header.stamp = ros::Time(0);
+    taskspace_marker.name = "taskspace_marker";
+    taskspace_marker.description = "TCP control";
+    Eigen::Affine3d ee_pose;
+    getEndeffectorState(ee_pose);
+    tf::poseEigenToMsg(ee_pose,taskspace_marker.pose);
+    taskspace_marker.scale = 0.025;
+    
+    // add the control to the interactive marker
+    visualization_msgs::InteractiveMarkerControl tilt;
+    tilt.name = "tilt";
+    tilt.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_ROTATE;
+    tilt.orientation_mode = visualization_msgs::InteractiveMarkerControl::INHERIT;
+    tilt.orientation = tf::createQuaternionMsgFromRollPitchYaw(0,0,M_PI/2);
+    tilt.markers.push_back(arrow_marker);
+    taskspace_marker.controls.push_back(tilt);
+    
+    visualization_msgs::InteractiveMarkerControl move_xy;
+    move_xy.name = "move_xy";
+    move_xy.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_PLANE;
+    move_xy.orientation_mode = visualization_msgs::InteractiveMarkerControl::INHERIT;
+    taskspace_marker.controls.push_back(move_xy);
+    
+
+
+    // add the interactive marker to our collection &
+    // tell the server to call processFeedback() when feedback arrives for it
+    _marker_server->insert(taskspace_marker, boost::bind(&PhantomXControl::taskSpaceMarkerFeedback, this, _1));
+   
+       
+    
+    // Finalize
+    
+    // 'commit' changes and send to all clients
+    _marker_server->applyChanges();
+}
+
+void PhantomXControl::jointMarkerFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback )
+{
+    
+    if (feedback->event_type != visualization_msgs::InteractiveMarkerFeedback::MOUSE_UP)
+       return; // disable moving while dragging (draggin and moving together does not work currently. 
+               // the real robot moves towards the wrong direction, the simulated robot gets stucked...)
+    
+    // get joint number
+    auto joint = _marker_to_joint.find(feedback->marker_name);
+    if (joint == _marker_to_joint.end())
+    {
+        ROS_ERROR("jointMarkerFeedback(): Unknown joint mapping");
+        return;
+    }
+    
+    int joint_id = joint->second;
+
+    JointVector joint_angles;
+    getJointAngles(joint_angles);
+    ROS_ASSERT(joint_id < joint_angles.rows());
+    
+    Eigen::Affine3d pose_cur;
+    tf::poseMsgToEigen(feedback->pose, pose_cur);
+
+    joint_angles[joint_id] = -1 * getRotationAroundAxis(Eigen::Matrix3d::Identity(), pose_cur.linear(), Eigen::Vector3d::UnitZ(), Eigen::Vector3d::UnitX()); // we need the oposite direction
+
+    setJoints(joint_angles, 0.8*_joint_max_speeds[joint_id], false, false); // relative and non-blocking
+}
+
+void PhantomXControl::gripperMarkerFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback )
+{
+    // get joint number
+    //double current_angle = getGripperJointAngle();
+        
+    Eigen::Affine3d pose_cur;
+    tf::poseMsgToEigen(feedback->pose, pose_cur);
+
+    double desired_angle = -1 * getRotationAroundAxis(Eigen::Matrix3d::Identity(), pose_cur.linear(), Eigen::Vector3d::UnitZ(), Eigen::Vector3d::UnitX()); // we need the oposite direction
+
+    setGripperRawJointAngle(desired_angle, false);
+}
+
+void PhantomXControl::taskSpaceMarkerFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback )
+{
+    if (feedback->event_type != visualization_msgs::InteractiveMarkerFeedback::MOUSE_UP)
+       return; // disable moving while dragging (draggin and moving together does not work currently. 
+               // the real robot moves towards the wrong direction, the simulated robot gets stucked...)
+               
+           
+    // get current end effector frame in the base frame:                              
+    Eigen::Affine3d desired_ee;
+    tf::poseMsgToEigen(feedback->pose, desired_ee);
+    
+    if ( feedback->control_name.compare("move_xy") == 0 ) // if controller is move_xy
+    {
+        // adjust yaw angle of the marker
+        
+        // get distance vector to current pose (we are currently in the base frame)
+        // and extract yaw angle
+        double yaw = 0;
+        if (desired_ee.translation().head(2).norm()>1e-6)
+        {
+            yaw = std::atan2( desired_ee.translation().y(), desired_ee.translation().x() );
+        }
+        
+        Eigen::AngleAxisd aa(yaw, Eigen::Vector3d::UnitZ());
+        
+        // get tilt angle
+        double tilt = getRotationAroundAxis(Eigen::Matrix3d::Identity(), desired_ee.linear(), Eigen::Vector3d::UnitZ(), Eigen::Vector3d::UnitY());
+        Eigen::AngleAxisd tilt_aa(tilt, Eigen::Vector3d::UnitY());
+            
+        //ROS_INFO_STREAM("tilt:" << tilt << " yaw: " << yaw);   
+        // Change only rotation matrix (rotate in pace, but according to the fixed frame axis of the base frame)
+       desired_ee.linear() =  (aa * tilt_aa).toRotationMatrix();// * desired_ee.rotation();
+        
+        geometry_msgs::Pose desired_ee_msg;
+        tf::poseEigenToMsg(desired_ee, desired_ee_msg);
+        _marker_server->setPose(feedback->marker_name, desired_ee_msg);
+        
+    }
+    else if (feedback->control_name.compare("tilt") == 0 ) // if controller is tilt, correct move_xy to always remain in the xy plane
+    {
+        visualization_msgs::InteractiveMarker marker;
+        if (!_marker_server->get(feedback->marker_name, marker))
+            return;
+
+        auto mvxy = std::find_if(marker.controls.begin(), marker.controls.end(),
+                                 [](const visualization_msgs::InteractiveMarkerControl& ctrl) {return ctrl.name.compare("move_xy") == 0;} );
+        if (mvxy != marker.controls.end())
+        {
+	    tf::quaternionEigenToMsg(Eigen::Quaterniond(desired_ee.rotation().transpose()) * Eigen::AngleAxisd(M_PI/2, Eigen::Vector3d::UnitY()), mvxy->orientation);
+	    _marker_server->insert(marker); // replace marker               
+        }
+    }
+   _marker_server->applyChanges();
+    setEndeffectorPose(desired_ee, 0.2, false, false);
+}
+
+void PhantomXControl::publishInformationMarker()
+{
+    Eigen::Affine3d ee_state;
+    getEndeffectorState(ee_state);
+    
+    RpyVector rpy = convertRotMatToRpy(ee_state.linear());
+    
+    int gripper_opened = getGripperJointPercentage();
+  
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = _map_joint_to_joint_frame[_map_joint_to_index[_gripper_joint_name]];
+    marker.header.stamp = ros::Time();
+    marker.ns = "gripper_pose";
+    marker.id = 0;
+    marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.pose.position.x = 0.05;
+    marker.pose.position.y = 0;
+    marker.pose.position.z = 0;
+    marker.pose.orientation.w = 1;
+    marker.pose.orientation.x = 0;
+    marker.pose.orientation.y = 0;
+    marker.pose.orientation.z = 0;
+    marker.scale.z = 0.01;
+    marker.color.a = 1.0; // Don't forget to set the alpha!
+    marker.color.r = 1.0;
+    marker.color.g = 0.0;
+    marker.color.b = 0.0;
+    std::stringstream ss;
+    ss.precision(3);
+    ss << std::fixed << "TCP pose: [ x: " << ee_state.translation().x() << ", y: " << ee_state.translation().y() << " z: " << ee_state.translation().z() << " ]"
+      << "\nTCP rpy: [ " << " roll: " << rpy[0] << " pitch: " << rpy[1] << " yaw: " << rpy[2] << " ]"
+      << "\nGripper opened: " << gripper_opened << "\%";
+    marker.text = ss.str();
+
+  _marker_pub.publish( marker );
+  
+  // print joint values
+  JointVector joints = getJointAngles();
+  for (int i=0; i<(int)joints.rows(); ++i)
+  {
+        visualization_msgs::Marker joint_marker;
+	joint_marker.header.frame_id = _map_joint_to_joint_frame[i]; // TODO:  map with id instead of just 0..n
+	joint_marker.header.stamp = ros::Time();
+	joint_marker.ns = "joint_angles";
+	joint_marker.id = i;
+	joint_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+	joint_marker.action = visualization_msgs::Marker::ADD;
+	joint_marker.pose.position.x = -0.07;
+	joint_marker.pose.position.y = 0;
+	joint_marker.pose.position.z = 0;
+	joint_marker.pose.orientation.w = 1;
+	joint_marker.pose.orientation.x = 0;
+	joint_marker.pose.orientation.y = 0;
+	joint_marker.pose.orientation.z = 0;
+	joint_marker.scale.z = 0.01;
+	joint_marker.color.a = 1.0; // Don't forget to set the alpha!
+	joint_marker.color.r = 0.0;
+	joint_marker.color.g = 0.0;
+	joint_marker.color.b = 1.0;
+	std::stringstream ss_joint;
+	ss_joint.precision(2);
+	ss_joint << std::fixed << "q" << i << " = " << joints[i];
+	joint_marker.text = ss_joint.str();
+
+      _marker_pub.publish( joint_marker );
+  }
+  
+}
+
 } // end namespace pxpincher

@@ -80,9 +80,11 @@ protected:
     void calculateControlStep();
     void performAction();
     bool isMoving();
-    void driveToHomePosition(bool blocking = true);
+    void driveToHomePosition();
     void initRobot();
+    void emergencyStopIfRequired(const std::vector<ServoStatus>& stati);
     bool relaxServos(bool relaxed);
+    bool isInsideBounds(const std::vector<ServoStatus>& stati);
     
 private:
     
@@ -92,7 +94,6 @@ private:
     void simulationCallback(const sensor_msgs::JointStateConstPtr &state);
 
     ros::Publisher state_publisher_, diagnostic_publisher_;
-    ros::Subscriber sim_subscriber_;
     ros::ServiceServer relax_service_;
     ros::NodeHandle nhandle_;
 
@@ -120,10 +121,10 @@ private:
     
     std::vector<JointData> joint_data_;
 
-  
+    bool initial_loop_ = true;
 
     bool ctrl_enabled_ = true; //!< This state allows controlling the robot (it is set to false if motors are relaxed)
-    bool ctrl_reset_requested_ = false;
+    bool ctrl_reset_requested_ = true;
     bool sim_;
     int rate_;
 

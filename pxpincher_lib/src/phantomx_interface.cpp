@@ -819,7 +819,8 @@ void PhantomXControl::setGripperRawJointAngle(double joint_value, bool blocking)
 double PhantomXControl::getGripperRawJointAngle()
 {
     std::lock_guard<std::mutex> lock(_joints_mutex); // TODO: makes no sense here?
-    return _gripper_value;
+	double gripper_value = _gripper_value;
+    return gripper_value; // avoid race conditions
 }
 
 int PhantomXControl::getGripperJointPercentage()

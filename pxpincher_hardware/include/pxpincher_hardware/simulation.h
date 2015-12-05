@@ -58,7 +58,8 @@ class Simulation
 public:
       
     Simulation();
-    
+    ~Simulation();
+	
     void start(ros::Rate rate);
 
     void addJoint(UBYTE id, const std::string& name, int default_pos, int default_speed, int lower_bound, int upper_bound);
@@ -97,8 +98,6 @@ private:
     bool moving_ = false;
     
     ros::Timer sim_callback_; 
-    ros::CallbackQueue callback_queue_;
-    ros::AsyncSpinner spinner_;
     
     ros::Time last_step_;
     bool started_ = false;

@@ -43,24 +43,29 @@
 namespace pxpincher
 {
 
-Simulation::Simulation() : nhandle_("sim"), spinner_(1, &callback_queue_)  // TODO check if multithreading works on all computers, otherwise we must add use the callback queue of the pxpincher class
+Simulation::Simulation() : nhandle_("sim") 
 {
-    nhandle_.setCallbackQueue(&callback_queue_);
+}
+
+Simulation::~Simulation()
+{
+	sim_callback_.stop();
 }
 
 void Simulation::start(ros::Rate rate)
 {
-    spinner_.start();
     sim_callback_= nhandle_.createTimer(rate, &Simulation::simCallback, this);
 }
 
 void Simulation::addJoint(UBYTE id, const std::string& name, int default_pos, int default_speed, int lower_bound, int upper_bound)
 {
+	boost::mutex::scoped_lock lock(data_mutex_);
     joint_data_[id] = JointData(name, default_pos, default_speed, default_pos, lower_bound, upper_bound);
 }
 
 void Simulation::clearJoints()
 {
+	boost::mutex::scoped_lock lock(data_mutex_);
     joint_data_.clear();
 }
 
@@ -142,10 +147,13 @@ void Simulation::simCallback(const ros::TimerEvent& event)
 bool Simulation::isGoalReached()
 {
     std::vector<bool> reached;
-    for (const auto& data : joint_data_)
-    {
-	reached.push_back( std::abs(data.second.goal - data.second.pos) < 1e-5 ); // TODO: check threshold
-    }
+	{ // scope for mutex
+		boost::mutex::scoped_lock lock(data_mutex_);
+		for (const auto& data : joint_data_)
+		{
+			reached.push_back( std::abs(data.second.goal - data.second.pos) < 1e-5 ); // TODO: check threshold
+		}
+	}
     return std::find(reached.begin(), reached.end(), false) == reached.end();
 }
 

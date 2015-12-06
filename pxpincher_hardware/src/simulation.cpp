@@ -60,7 +60,7 @@ void Simulation::start(ros::Rate rate)
 void Simulation::addJoint(UBYTE id, const std::string& name, int default_pos, int default_speed, int lower_bound, int upper_bound)
 {
 	boost::mutex::scoped_lock lock(data_mutex_);
-    joint_data_[id] = JointData(name, default_pos, default_speed, default_pos, lower_bound, upper_bound);
+    joint_data_[id] = JointData(name, default_pos, 0, default_pos, default_speed, lower_bound, upper_bound, default_pos, default_speed);
 }
 
 void Simulation::clearJoints()
@@ -74,15 +74,16 @@ void Simulation::setGoalPosition(UBYTE id, int position)
     boost::mutex::scoped_lock lock(data_mutex_);
     try
     {
-	joint_data_.at(id).goal = position;
-	moving_ = true;
-	
-	if (!started_)
-	{
-	  last_step_ = ros::Time::now();
-	  started_ = true;
-	  return;
-	}
+		joint_data_.at(id).cmd_pos = position;
+		joint_data_.at(id).cmd_speed = joint_data_.at(id).default_speed;
+		moving_ = true;
+		
+		if (!started_)
+		{
+			last_step_ = ros::Time::now();
+			started_ = true;
+			return;
+		}
     }
     catch (const std::out_of_range& oor)
     {
@@ -99,7 +100,38 @@ void Simulation::setGoalPosition(const std::vector<UBYTE>& ids, const std::vecto
       setGoalPosition(id, positions[idx]);
       ++idx;
     }
-    
+}
+
+void Simulation::setGoalPositionAndSpeed(UBYTE id, int position, int speed)
+{
+	boost::mutex::scoped_lock lock(data_mutex_);
+    try
+    {
+		joint_data_.at(id).cmd_pos = position;
+		joint_data_.at(id).cmd_speed = speed;
+		moving_ = true;
+		
+		if (!started_)
+		{
+			last_step_ = ros::Time::now();
+			started_ = true;
+			return;
+		}
+    }
+    catch (const std::out_of_range& oor)
+    {
+      ROS_ERROR_STREAM("Simulation::setGoalPosition(): invalid id: " << (int) id);
+    }
+}
+void Simulation::setGoalPositionAndSpeed(const std::vector<UBYTE>& ids, const std::vector<int>& positions, const std::vector<int>& speeds)
+{
+     ROS_ASSERT(ids.size() == positions.size() && ids.size() == speeds.size());
+    int idx = 0;
+    for (UBYTE id : ids)
+    {
+      setGoalPositionAndSpeed(id, positions[idx], speeds[idx]);
+      ++idx;
+    }
 }
 
 void Simulation::readServoStatus(std::vector<ServoStatus>& stati)
@@ -109,19 +141,19 @@ void Simulation::readServoStatus(std::vector<ServoStatus>& stati)
     // Get the ids
     for(ServoStatus& elem : stati)
     { 
-	try
-	{
-	  const JointData& data = joint_data_.at(elem.id_);
-	  elem.load_ = 0; // no load model simulated
-	  elem.position_ = data.pos;
-	  elem.speed_ = data.speed;
-	  elem.temperature_ = 0;
-	  elem.voltage_ = 0;
-	}
-	catch (const std::out_of_range& oor)
-	{
-	  ROS_ERROR_STREAM("Simulation::readServoStatus(): invalid id: " << (int) elem.id_);
-	}
+		try
+		{
+			const JointData& data = joint_data_.at(elem.id_);
+			elem.load_ = 0; // no load model simulated
+			elem.position_ = data.pos;
+			elem.speed_ = data.speed;
+			elem.temperature_ = 0;
+			elem.voltage_ = 0;
+		}
+		catch (const std::out_of_range& oor)
+		{
+			ROS_ERROR_STREAM("Simulation::readServoStatus(): invalid id: " << (int) elem.id_);
+		}
     }
     
 }
@@ -151,7 +183,7 @@ bool Simulation::isGoalReached()
 		boost::mutex::scoped_lock lock(data_mutex_);
 		for (const auto& data : joint_data_)
 		{
-			reached.push_back( std::abs(data.second.goal - data.second.pos) < 1e-5 ); // TODO: check threshold
+			reached.push_back( data.second.cmd_pos == data.second.pos );
 		}
 	}
     return std::find(reached.begin(), reached.end(), false) == reached.end();
@@ -167,15 +199,17 @@ void Simulation::performSimulationStep(double duration)
     boost::mutex::scoped_lock lock(data_mutex_);
     for (std::pair<const UBYTE, JointData>& data : joint_data_)
     {
-      int speed_max = data.second.speed; 
+      double speed_max = (double) data.second.cmd_speed; 
       // limit speed close to goal
-      int dist = data.second.goal - data.second.pos;
-      int speed_req = std::trunc( double(std::abs(dist)) / duration );
-      int speed_des = std::min(speed_max, speed_req);
+      int dist = data.second.cmd_pos - data.second.pos;
+      double speed_req = double(std::abs(dist)) / duration;
+      double speed_des = std::round(std::min(speed_max, speed_req));
+	  
+	  data.second.speed = (int) speed_des; // use desired and commanded speed (model) for the status message
+            
+      double speed2ticks = conversionFactorSpeed / conversionFactorPos;
       
-      int speed2ticks = conversionFactorSpeed / conversionFactorPos;
-      
-      data.second.pos +=  sign(dist) * speed_des * speed2ticks * duration; // simple integrator model
+      data.second.pos += std::round( double(sign(dist)) * speed_des * speed2ticks * duration ); // simple integrator model
     }
 }
 

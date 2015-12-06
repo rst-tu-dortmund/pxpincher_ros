@@ -50,7 +50,8 @@ int main( int argc, char** argv )
  
   pxpincher::PhantomXControl robot;
   robot.initialize();
-  
+
+ 
   robot.setJoints({0.8, 0.6, 0.9, 1.6});
   
   ROS_INFO_STREAM(std::setprecision(2) << "Current joint configuration q=[" << robot.getJointAngles().transpose() << "]");

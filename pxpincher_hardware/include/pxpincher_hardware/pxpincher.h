@@ -99,6 +99,7 @@ private:
 
     hardware_interface::JointStateInterface jnt_state_interface_;
     hardware_interface::PositionJointInterface jnt_position_interface_;
+	hardware_interface::VelocityJointInterface jnt_velocity_interface_;
 
     ros::Time last_;
       
@@ -112,8 +113,9 @@ private:
 
     
     struct JointData
-    {
-        double cmd = 0;
+    {   
+        double cmd_pos = NAN; // this must be checked before sending! (see performAction()), // NAN defined for C++11
+        double cmd_vel = 0;
         double pos = 0;
         double vel = 0;
         double eff = 0;

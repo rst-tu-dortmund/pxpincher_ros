@@ -40,6 +40,7 @@
 #include <pxpincher_hardware/misc.h>
 #include <pxpincher_msgs/Relax.h>
 #include <algorithm>
+#include <cmath>
 
 namespace pxpincher
 {
@@ -71,12 +72,16 @@ PxPincher::PxPincher():
     {
          hardware_interface::JointStateHandle state_handle_joint( params_.names_[i] , &joint_data_[i].pos, &joint_data_[i].vel, &joint_data_[i].eff);
          jnt_state_interface_.registerHandle(state_handle_joint);
-         
-         hardware_interface::JointHandle pos_handle_joint(jnt_state_interface_.getHandle(params_.names_[i]),  &joint_data_[i].cmd); // TODO: maybe use handle from above
+
+         hardware_interface::JointHandle pos_handle_joint(jnt_state_interface_.getHandle(params_.names_[i]),  &joint_data_[i].cmd_pos); // TODO: maybe use handle from above
          jnt_position_interface_.registerHandle(pos_handle_joint);
+		        
+		 hardware_interface::JointHandle vel_handle_joint(jnt_state_interface_.getHandle(params_.names_[i]),  &joint_data_[i].cmd_vel); // TODO: maybe use handle from above
+         jnt_velocity_interface_.registerHandle(vel_handle_joint);
     }
     registerInterface(&jnt_state_interface_);
     registerInterface(&jnt_position_interface_);
+	registerInterface(&jnt_velocity_interface_);
 
     state_publisher_ = nhandle_.advertise<sensor_msgs::JointState>("/joint_states",1); // joint_states topic is always root
     diagnostic_publisher_ = nhandle_.advertise<pxpincher_msgs::pxpincher_diagnostic>("diagnostics",1);
@@ -187,14 +192,15 @@ void PxPincher::fillControlRegister(const std::vector<ServoStatus>& stati)
     }
     
     // the controller takes some time to initialize, therefore use the initial position as control variable
-    if (initial_loop_)
-    {
-        for (JointData& joint : joint_data_)
-        {
-            joint.cmd = joint.pos;
-        }
-        initial_loop_ = false;
-    }
+    // TEST this should now be included implictly in performAction()
+//     if (initial_loop_)
+//     {
+//         for (JointData& joint : joint_data_)
+//         {
+//             joint.cmd_pos = joint.pos;
+//         }
+//         initial_loop_ = false;
+//     }
 }
 
 void PxPincher::calculateControlStep()
@@ -211,21 +217,66 @@ void PxPincher::performAction()
     if (!ctrl_enabled_)
         return;
     
-    //protocol_.setGoalPosition(ids,positions,comm_);
-    std::vector<int> pos_ticks;
+    std::vector<int> pos_ticks, vel_ticks;
     int idx = 0;
     //std::stringstream ss;
     for(const JointData& joint : joint_data_)
     {
-        pos_ticks.push_back( rad2tick(joint.cmd) + params_.offsets_[idx] );
-        //ss << "joint: " << idx << " value: " << joint.cmd << " pos_ticks: " << pos_ticks.back() << std::endl;
+		if (!std::isnan(joint.cmd_pos))
+			pos_ticks.push_back( rad2tick(joint.cmd_pos) + params_.offsets_[idx] );
+		else
+			pos_ticks.push_back( -1 );
+		vel_ticks.push_back( rads2tick(joint.cmd_vel) );
+        //ss << "joint: " << idx << " value_pos: " << joint.cmd_pos << " value_vel: " << joint.cmd_vel << std::endl;
         ++idx;
     }
     //ROS_INFO_STREAM("\n" << ss.str());
+    
+    // verify values
+    // - in case of position control, only pos_ticks are non-zero
+    // - in case of velocity control, only vel_ticks are non-zero (and pos=-1, which is not in the range of the dynamixel)
+    // our policy:
+    // position control: set position and drive with maximum allowed velocity
+    // velocity control: set position to min/max bounds and drive with desired velocity
+    // exception: if velocity control is enabled, but the command is 0, 
+    //            the dynamixel servos drive with maximum speed.
+    //			  Therefore we check both pos and vel: if pos==-1 and vel == 0: send stop command
+    // assumption: we never want to drive to position 0 [ticks]
+    for (int i=0; i < (int) pos_ticks.size(); ++i)
+	{
+		//ROS_INFO_STREAM("pre: joint " << i << " pos: " << pos_ticks[i] << " vel: " << vel_ticks[i]);
+		if (vel_ticks[i] != 0 && pos_ticks[i] == -1) // velocity control
+		{
+			if (vel_ticks[i] < 0) // set lower bound
+			{
+				pos_ticks[i] = params_.cwlimits_[i];
+				vel_ticks[i] *= -1; // command only positive velocity
+			}
+			else // set upper bound
+				pos_ticks[i] = params_.ccwlimits_[i];
+			
+			// bound velocity
+			if (vel_ticks[i] > params_.speeds_[i])
+				vel_ticks[i] = params_.speeds_[i];
+		}
+		else if (vel_ticks[i] == 0 && pos_ticks[i] == -1)
+		{ 
+			pos_ticks[i] = rad2tick(joint_data_[i].pos) + params_.offsets_[idx]; // keep current position (from sensor reading)
+			vel_ticks[i] = 0;
+		}
+		else //position control
+		{
+			vel_ticks[i] = params_.speeds_[i]; // set max speeds
+		}	
+				
+		//ROS_INFO_STREAM("joint " << i << " pos: " << pos_ticks[i] << " vel: " << vel_ticks[i]);
+	}
+    
+    // TODO should we always utilize the combined method (speed and position) ?
     if (sim_)
-      sim_object_.setGoalPosition( params_.ids_, pos_ticks );
+      sim_object_.setGoalPositionAndSpeed( params_.ids_, pos_ticks, vel_ticks );
     else
-      protocol_.setGoalPosition( params_.ids_, pos_ticks, comm_ );
+      protocol_.setGoalPosition( params_.ids_, pos_ticks, comm_ ); // TODO: add combined method to the API // WARNING this does not work with velocity controllers // TODO catch vel = 0!!!
 }
 
 
@@ -296,9 +347,9 @@ void PxPincher::initRobot()
       sim_object_.clearJoints();
       for (int i=0; i<(int)params_.ids_.size(); ++i) // TODO: check sizes
       {
-	sim_object_.addJoint(params_.ids_[i], params_.names_[i], params_.offsets_[i], params_.speeds_[i], params_.cwlimits_[i], params_.ccwlimits_[i]);
+		sim_object_.addJoint(params_.ids_[i], params_.names_[i], params_.offsets_[i], params_.speeds_[i], params_.cwlimits_[i], params_.ccwlimits_[i]);
       }
-      sim_object_.start(ros::Rate(3*rate_)); // let simulator run with a faster rate (otherwise the timing (execution) might not be well)
+      sim_object_.start(ros::Rate(2*rate_)); // let simulator run with a faster rate (otherwise the timing (execution) might not be well)
     }
     else
     {

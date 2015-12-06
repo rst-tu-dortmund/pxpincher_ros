@@ -68,7 +68,10 @@ public:
     
     void setGoalPosition(UBYTE id, int position);
     void setGoalPosition(const std::vector<UBYTE>& ids, const std::vector<int>& positions);
-    
+	
+	void setGoalPositionAndSpeed(UBYTE id, int position, int speed);
+    void setGoalPositionAndSpeed(const std::vector<UBYTE>& ids, const std::vector<int>& positions, const std::vector<int>& speeds);
+	
     void readServoStatus(std::vector<ServoStatus>& stati);
     
     void simCallback(const ros::TimerEvent& event);
@@ -82,17 +85,20 @@ protected:
     
 private:
 
-    struct JointData
+    struct JointData 
     {
-      JointData() : name(""), pos(0), speed(0), goal(0), lower(std::numeric_limits<int>::min()), upper(std::numeric_limits<int>::max()) {};
-      JointData(const std::string& name, int pos, int speed, int goal, double lower, int upper) : name(name), pos(pos), speed(speed), 
-													      goal(goal), lower(lower), upper(upper) {};
+      JointData() : name(""), pos(0), speed(0), cmd_pos(0), cmd_speed(0), lower(std::numeric_limits<int>::min()), upper(std::numeric_limits<int>::max()), default_pos(0), default_speed(0) {};
+      JointData(const std::string& name, int pos, int speed, int cmd_pos, int cmd_speed, int lower, int upper, int default_pos, int default_speed) : name(name), pos(pos), speed(speed),
+													      cmd_pos(cmd_pos), cmd_speed(cmd_speed), lower(lower), upper(upper), default_pos(default_pos), default_speed(default_speed) {};
       std::string name;
       int pos;
-      int speed;
-      int goal;
+	  int speed;
+      int cmd_pos;
+	  int cmd_speed;
       int lower;
       int upper;
+	  int default_pos;
+	  int default_speed;
     };
     
     bool moving_ = false;

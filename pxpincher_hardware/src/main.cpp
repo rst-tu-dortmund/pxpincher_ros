@@ -48,7 +48,7 @@ int main(int argc, char **argv)
 
     pxpincher::PxPincher pincher;
 
-    ros::Duration(1).sleep();
+    ros::Duration(2).sleep();
     
     pincher.start();
 

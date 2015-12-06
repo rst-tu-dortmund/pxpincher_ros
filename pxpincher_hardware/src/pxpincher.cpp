@@ -414,14 +414,9 @@ bool PxPincher::relaxServos(bool relaxed)
     
     ctrl_enabled_ = !relaxed; // switching booleans is thread safe
 
+    std::vector<int> states(params_.ids_.size(),(int) !relaxed);
+    protocol_.setTorqueState(params_.ids_,states,comm_);
 
-    for (UBYTE id : params_.ids_)
-    {
-            UBYTE error = protocol_.setTorqueState(id, (int) !relaxed, comm_); // the protocol is thread safe
-            if ( PXProtocol::checkError(error, true) )
-                ret_val = false;
-            ros::Duration(0.01).sleep();
-    }
     return ret_val;
 }
 

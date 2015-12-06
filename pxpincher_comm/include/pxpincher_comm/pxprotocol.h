@@ -50,6 +50,9 @@
 #include "servotarget.h"
 #include "servostatus.h"
 
+#include <chrono>
+#include <thread>
+
 //#define PRINT_BYTES
 
 
@@ -422,6 +425,21 @@ public:
      * @return error/checksum byte
      */
     UBYTE setTorqueState(UBYTE id, UBYTE state, SerialComm &comm);
+
+
+    /**
+     * @brief Set torque state for a bunch of servos
+     *
+     * Two different states are possible:
+     * State 0: Keeps toque from generating by interrupting the power of motor
+     * State 1: Generates Torque by impressing the power to the motor.
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_11
+     * @param ids servo id vector
+     * @param states state vector with torque states according to servos specified in \c ids
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE setTorqueState(const std::vector<UBYTE>& ids, std::vector<int> states, SerialComm &comm);
 
     
     /**
@@ -905,6 +923,28 @@ public:
      * @return error/checksum byte
      */
     UBYTE setGoalPosition(const std::vector<UBYTE>& ids, const std::vector<int>& positions, SerialComm &comm);
+
+
+    /**
+     * @brief Set goal position and speed for a bunch of servos
+     *
+     * The goal position is encoded in the range [0, 1023] (corresponding to [0°, 300°]).
+     * The unit is 0.29 degree. The center point is at 512 (150°).
+     * The goal speed is encoded in the range [0, 2047].
+     * If the value is in [0, 1023], the motor rotates to the CCW direction.
+     * If the value is in [1024, 2047], the motor rotates to the CW direction.
+     * That is, the 10th bit becomes the direction bit to control the direction. 0 and 1024 are equal.
+     * The unit of this value varies depending on operating mode:
+     *  - Joint mode: Unit is about 0.111rpm
+     *  - Wheel mode: Unit is about 0.1% (wheel mode is not suited for robot arms).
+     * See http://support.robotis.com/en/product/dynamixel/ax_series/dxl_ax_actuator.htm#Actuator_Address_1E
+     * @param ids servo id vector
+     * @param positions new goal positions according to the servos stored in the servo \c ids vector
+     * @param speeds new goal speeds according to the servos stored in the servo \c ids vector
+     * @param comm reference to the related serial communication object
+     * @return error/checksum byte
+     */
+    UBYTE setGoalPositionAndSpeed(const std::vector<UBYTE>& ids, const std::vector<int>& positions,const std::vector<int>& speeds, SerialComm &comm);
 
     /**
      * @brief Read current goal speed of a single servo

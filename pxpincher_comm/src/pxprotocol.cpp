@@ -1728,6 +1728,15 @@ UBYTE PXProtocol::setGoalPosition(const std::vector<UBYTE>& ids, const std::vect
     }
 }
 
+UBYTE PXProtocol::setGoalPositionAndSpeed(const std::vector<UBYTE> &ids, const std::vector<int> &positions, const std::vector<int> &speeds, SerialComm &comm)
+{
+    setGoalSpeed(ids,speeds,comm);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    setGoalPosition(ids,positions,comm);
+
+    return 0x00;
+}
+
 UBYTE PXProtocol::readGoalSpeed(UBYTE id, int &speed, SerialComm &comm)
 {
     std::vector<UBYTE> ids = {id};

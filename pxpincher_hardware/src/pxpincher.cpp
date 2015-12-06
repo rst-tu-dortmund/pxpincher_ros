@@ -262,7 +262,7 @@ void PxPincher::performAction()
 		else if (vel_ticks[i] == 0 && pos_ticks[i] == -1)
 		{ 
 			pos_ticks[i] = rad2tick(joint_data_[i].pos) + params_.offsets_[idx]; // keep current position (from sensor reading)
-			vel_ticks[i] = 0;
+			vel_ticks[i] = 1; // always set a velocity != 0 (since this is defined as max speed in the dynamixel)
 		}
 		else //position control
 		{
@@ -276,7 +276,7 @@ void PxPincher::performAction()
     if (sim_)
       sim_object_.setGoalPositionAndSpeed( params_.ids_, pos_ticks, vel_ticks );
     else
-      protocol_.setGoalPosition( params_.ids_, pos_ticks, comm_ ); // TODO: add combined method to the API // WARNING this does not work with velocity controllers // TODO catch vel = 0!!!
+      protocol_.setGoalPositionAndSpeed( params_.ids_, pos_ticks, vel_ticks, comm_ );
 }
 
 

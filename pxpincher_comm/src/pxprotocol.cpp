@@ -1871,8 +1871,15 @@ UBYTE PXProtocol::setGoalPositionAndSpeedFastWrite(const std::vector<UBYTE> &ids
 
     if(nServos > 1){
         // Multi Servo Mode
-        appendData(data,positions,true);
-        appendData(data,speeds,true);
+
+        // Arrange data to be pos1 speed1 pos2 speed2 ... posN speedN
+        std::vector<int> fusion;
+        for(int i = 0; i < ids.size(); ++i){
+            fusion.push_back(positions.at(i));
+            fusion.push_back(speeds.at(i));
+        }
+
+        appendData(data,fusion,true);
 
         package = makeMultiWritePackage(ids,reg,data,nBytes);
 

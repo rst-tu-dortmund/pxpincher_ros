@@ -39,6 +39,7 @@
 #include <pxpincher_lib/phantomx_interface.h>
 #include <pxpincher_hardware/misc.h> // conversions between ticks and angles in radiant
 #include <pxpincher_msgs/Relax.h>
+#include <controller_manager_msgs/SwitchController.h>
 #include <tf_conversions/tf_eigen.h>
 #include <tf/transform_datatypes.h>
 #include <geometry_msgs/Quaternion.h>
@@ -141,7 +142,16 @@ void PhantomXControl::initialize()
   // setup services for relaxing the servos
   _joint_relax_service = n.serviceClient<pxpincher_msgs::Relax>( "/pxpincher/Relax" ); // TODO param
 
+  // setup service for switching arm control mode (trajectory following or speed forwarding)
+  _arm_control_mode_service = n.serviceClient<controller_manager_msgs::SwitchController>("/controller_manager/switch_controller");
+  if (!_arm_control_mode_service.waitForExistence(ros::Duration(5)))
+      ROS_WARN("'/controller_manager/switch_controller' not avaiable. Cannot switch between joint interfaces, which is required by e.g. setJointVel");
+ 
   
+  _arm_speed_forwarding_pub = n.advertise<std_msgs::Float64MultiArray>("/arm_speed_forwarder/command", 1);
+ 
+  switchArmControlMode(ArmControlMode::TRAJECTORY_FOLLOWING);
+
   // setup gripper
   _gripper_joint_name = "gripper_joint";
   double gripper_offset = 0;
@@ -485,9 +495,29 @@ void PhantomXControl::setJoints(const trajectory_msgs::JointTrajectoryPoint& joi
   
 void PhantomXControl::setJointVel(const Eigen::Ref<const JointVector>& velocities)
 {
+    if (_arm_speed_forwarding_pub.getNumSubscribers() == 0)
+    {
+        ROS_WARN("setJointVel(): no subscribers on topic '/arm_speed_forwarder/command'");
+        return;
+    }
+        
+  // cancel any previous goals
+  stopMoving(); // TODO: required?
+  
+  if (_arm_control_mode != ArmControlMode::SPEED_FORWARDING)
+      switchArmControlMode(ArmControlMode::SPEED_FORWARDING);
+
+  std_msgs::Float64MultiArray joint_vels;
+  joint_vels.data.resize(JointVector::RowsAtCompileTime);
+  Eigen::Map<JointVector> vel_bounded(joint_vels.data.data());
+  
   // Bound velocities
-  JointVector vel_bounded = pxpincher::bound(-_joint_max_speeds, velocities, _joint_max_speeds);  
-    
+  vel_bounded = pxpincher::bound(-_joint_max_speeds, velocities, _joint_max_speeds);    
+  
+  _arm_speed_forwarding_pub.publish(joint_vels);
+  
+  /*
+  
   // Select lower and upper bound values for each joint as goal w.r.t. the direction of the velocity
   // For zero velocities stay at the current position
   JointVector current;
@@ -495,6 +525,8 @@ void PhantomXControl::setJointVel(const Eigen::Ref<const JointVector>& velocitie
   JointVector goal = (vel_bounded.array()==0).select( current, (vel_bounded.array()<0).select(_joint_lower_bounds,_joint_upper_bounds) );
   _collision_check_enabled = false; // Disable collision check, be careful!!
   setJoints(goal, vel_bounded, false, false); // we do not want to block in case of commanding velocities
+  
+  */
 }
   
 void PhantomXControl::setJointVel(const std::vector<double>& velocities)
@@ -522,7 +554,10 @@ void PhantomXControl::setJointTrajectory(control_msgs::FollowJointTrajectoryGoal
   ROS_ASSERT_MSG(_arm_action, "PhantomXControl: class not initialized, call initialize().");
     
   // cancel any previous goals
-  stopMoving();
+  stopMoving(); // TODO: required?
+  
+  if (_arm_control_mode != ArmControlMode::TRAJECTORY_FOLLOWING)
+      switchArmControlMode(ArmControlMode::TRAJECTORY_FOLLOWING);
   
   // verify trajectory and adjust speeds if necessary
   bool feasible = verifyTrajectory(trajectory.trajectory); // returns false if angle limits are exceeded or something goes wrong
@@ -995,16 +1030,16 @@ bool PhantomXControl::relaxServos(bool relaxed)
     
     relax.request.relaxed = relaxed;
     
-        if (_joint_relax_service.call(relax))
-        {
-            ret_val = relax.response.success;
-            ROS_WARN_COND(!ret_val, "Not all servos could be relaxed");
-        }
-        else
-        {
-            ret_val = false;
-            ROS_WARN("Failed to relax servos");
-        }
+    if (_joint_relax_service.call(relax))
+    {
+        ret_val = relax.response.success;
+        ROS_WARN_COND(!ret_val, "Not all servos could be relaxed");
+    }
+    else
+    {
+        ret_val = false;
+        ROS_WARN("Failed to relax servos");
+    }
     
     return ret_val;    
 }
@@ -1508,6 +1543,44 @@ void PhantomXControl::publishInformationMarker()
       _marker_pub.publish( joint_marker );
   }
   
+}
+
+
+bool PhantomXControl::switchArmControlMode(ArmControlMode mode)
+{
+    if (!_arm_control_mode_service.exists())
+    {
+        ROS_ERROR("Cannot switch arm control mode, since service is not avaiable");
+        return false;
+    }
+    
+    controller_manager_msgs::SwitchController switch_msg;
+    if (mode == ArmControlMode::TRAJECTORY_FOLLOWING)
+    {
+        switch_msg.request.stop_controllers.push_back("/arm_speed_forwarder"); // TODO params
+        switch_msg.request.start_controllers.push_back("/arm_controller");
+    }
+    else if (mode == ArmControlMode::SPEED_FORWARDING)
+    {
+        switch_msg.request.stop_controllers.push_back("/arm_controller");
+        switch_msg.request.start_controllers.push_back("/arm_speed_forwarder");
+    }
+    else return false;
+    
+    switch_msg.request.strictness = 1;
+    
+    bool ret_val = true;
+    if (_arm_control_mode_service.call(switch_msg))
+        ret_val = switch_msg.response.ok;
+    else
+        ret_val = false;
+
+    ROS_ERROR_COND(!ret_val, "Failed to switch arm control mode");
+    
+    if (ret_val)
+        _arm_control_mode = mode;
+    
+    return ret_val;
 }
 
 } // end namespace pxpincher

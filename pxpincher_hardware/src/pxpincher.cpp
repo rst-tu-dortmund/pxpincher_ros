@@ -185,6 +185,20 @@ void PxPincher::loadDefaultControllers()
         ROS_WARN("No '/gripper_controller' found on ros parameter server. You must define it or load it manually using the controller manager.");
     
     
+    // we also load our speed forward controller, but we do not start it (it can be started by service calls)
+    if (nhandle_.hasParam("/arm_speed_forwarder"))
+    {
+        if (controller_manager_.loadController("/arm_speed_forwarder"))
+        {
+            ROS_INFO("Speed forwarding controller loaded");
+        }
+        else 
+            ROS_WARN("'/arm_speed_forwarder' could not be loaded by controller_manager. Speed forwarding not supported");
+    }
+    else
+        ROS_WARN("No '/arm_speed_forwarder' found on ros parameter server. Load it if you want to use the speed forwarding interface/controller");
+    
+    
     if (!controllers.empty())
     {
         auto switch_fun = [this, controllers]()
@@ -328,20 +342,20 @@ void PxPincher::performAction()
     {
         if (params_.hardware_modes_[idx] == HardwareMode::POSITION_INTERFACE && !std::isnan(joint.cmd_pos))
         {
-            ROS_INFO_STREAM(idx << ": pos_interface, name: " << params_.names_[idx]);
+            //ROS_INFO_STREAM(idx << ": pos_interface, name: " << params_.names_[idx]);
             pos_ticks.push_back( rad2tick(joint.cmd_pos) + params_.offsets_[idx] );
             vel_ticks.push_back( params_.speeds_[idx] );
         }
         else if (params_.hardware_modes_[idx] == HardwareMode::VELOCITY_INTERFACE && !std::isnan(joint.cmd_vel))
         {
-            ROS_INFO_STREAM(idx << ": vel_interface, name: " << params_.names_[idx]);
+            //ROS_INFO_STREAM(idx << ": vel_interface, name: " << params_.names_[idx]);
             // drive to bounds
             pos_ticks.push_back( joint.cmd_vel < 0 ? params_.cwlimits_[idx] : params_.ccwlimits_[idx] );
             vel_ticks.push_back( rads2tick( std::abs(joint.cmd_vel) ) );
         }
         else // STOP at current position
         {
-            ROS_INFO_STREAM(idx << ": stopped. is nan: " << std::isnan(joint.cmd_pos) << ", name: " << params_.names_[idx]);
+            //ROS_INFO_STREAM(idx << ": stopped. is nan: " << std::isnan(joint.cmd_pos) << ", name: " << params_.names_[idx]);
             pos_ticks.push_back( rad2tick(joint_data_[idx].pos) + params_.offsets_[idx] ); // keep current position (from sensor reading)
             vel_ticks.push_back( 0 );
         }

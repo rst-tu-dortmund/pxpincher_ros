@@ -14,6 +14,7 @@ pxpincher_msgs
 pxpincher_hardware
 actionlib
 control_msgs
+controller_manager_msgs
 tf
 tf_conversions
 eigen_conversions
@@ -112,6 +113,7 @@ catkin_package(
 	pxpincher_hardware
   	actionlib 
 	control_msgs
+	controller_manager_msgs
 	tf
 	tf_conversions
 	eigen_conversions

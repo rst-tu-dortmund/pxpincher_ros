@@ -608,6 +608,23 @@ public:
     actionlib::SimpleActionClient<control_msgs::GripperCommandAction> ac_gripper("/gripper_controller/gripper_action", true);
     ac_gripper.waitForServer(ros::Duration(0.1));
     ac_gripper.cancelAllGoals();
+    
+    // send also zero velocity command (in case of speed forwarding control via a topic)
+    ros::NodeHandle n;
+    ros::Publisher pub = n.advertise<std_msgs::Float64MultiArray>("/arm_speed_forwarder/command", 1, true);
+    std_msgs::Float64MultiArray data;
+    data.data.resize( JointVector::RowsAtCompileTime, 0.0 );
+      // check that there is at least a single subscriber connected
+    ros::Rate poll_rate(10);
+    bool sub_success = false;
+    for (int i=0; i<20; ++i)
+    {
+        if (pub.getNumSubscribers() > 0)
+            break;
+        poll_rate.sleep();
+    }
+    pub.publish(data);  
+    
     // Default ros sigint handler
     ros::shutdown();
   } 
@@ -681,6 +698,16 @@ protected:
    */
   void taskSpaceMarkerFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback );
   
+  
+  
+  enum class ArmControlMode {TRAJECTORY_FOLLOWING, SPEED_FORWARDING};
+  
+   /**
+   * @brief Switch arm control mode according to ArmControlMode
+   * @param ArmControlMode specify the desired mode
+   * @return \c true if successful, \c false otherwise
+   */
+  bool switchArmControlMode(ArmControlMode mode);
 
   
 private:
@@ -701,6 +728,10 @@ private:
   ros::Publisher _marker_pub;
   
   ros::ServiceClient _joint_relax_service;
+  ros::ServiceClient _arm_control_mode_service;
+  ArmControlMode _arm_control_mode = ArmControlMode::TRAJECTORY_FOLLOWING;
+  
+  ros::Publisher _arm_speed_forwarding_pub;
   
   Eigen::Affine3d _base_T_j1 = Eigen::Affine3d::Identity(); //!< Coordinate transformation from the base to the first joint
   Eigen::Affine3d _j1_T_base = Eigen::Affine3d::Identity(); //!< Coordinate transformation from the first joint to the base

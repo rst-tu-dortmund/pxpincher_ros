@@ -26,6 +26,27 @@ arm_controller:
       goal: 0.1   
 
 
+#Arm controller that forwards speed to each joint
+arm_speed_forwarder:
+  type: "velocity_controllers/JointGroupVelocityController"
+  state_publish_rate: 50
+  joints:
+    - arm_shoulder_pan_joint
+    - arm_shoulder_lift_joint
+    - arm_elbow_flex_joint
+    - arm_wrist_flex_joint
+  constraints:
+    goal_time: 0.2                
+    stopped_velocity_tolerance: 0.01
+    arm_shoulder_pan_joint:          
+      goal: 0.1                  
+    arm_shoulder_lift_joint:
+      goal: 0.1            
+    arm_elbow_flex_joint:
+      goal: 0.1   
+    arm_wrist_flex_joint: 
+      goal: 0.1   
+
 
 #Gripper controllers
 gripper_controller:

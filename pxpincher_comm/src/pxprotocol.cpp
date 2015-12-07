@@ -1869,15 +1869,15 @@ UBYTE PXProtocol::setGoalPositionAndSpeedFastWrite(const std::vector<UBYTE> &ids
     UBYTE reg = DYNAMIXEL_GOAL_POSITION_L;
     UBYTE nBytes = 0x04;
 
+    // Arrange data to be pos1 speed1 pos2 speed2 ... posN speedN
+    std::vector<int> fusion;
+    for(int i = 0; i < ids.size(); ++i){
+        fusion.push_back(positions.at(i));
+        fusion.push_back(speeds.at(i));
+    }
+
     if(nServos > 1){
         // Multi Servo Mode
-
-        // Arrange data to be pos1 speed1 pos2 speed2 ... posN speedN
-        std::vector<int> fusion;
-        for(int i = 0; i < ids.size(); ++i){
-            fusion.push_back(positions.at(i));
-            fusion.push_back(speeds.at(i));
-        }
 
         appendData(data,fusion,true);
 
@@ -1897,7 +1897,7 @@ UBYTE PXProtocol::setGoalPositionAndSpeedFastWrite(const std::vector<UBYTE> &ids
     }else{
         // Single Servo Mode
         data.push_back(reg);
-        appendData(data,positions,true);
+        appendData(data,fusion,true);
 
         package = makeSinglePackage(ids.at(0),DYNAMIXEL_WRITE_DATA,data);
 

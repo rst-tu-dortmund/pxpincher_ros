@@ -83,6 +83,9 @@ PxPincher::PxPincher():
     registerInterface(&jnt_position_interface_);
 	registerInterface(&jnt_velocity_interface_);
 
+    
+    loadDefaultControllers();
+    
     state_publisher_ = nhandle_.advertise<sensor_msgs::JointState>("/joint_states",1); // joint_states topic is always root
     diagnostic_publisher_ = nhandle_.advertise<pxpincher_msgs::pxpincher_diagnostic>("diagnostics",1);
     auto relax_fun = [this](pxpincher_msgs::Relax::Request& req, pxpincher_msgs::Relax::Response& resp) {resp.success = relaxServos(req.relaxed>0); return true;};
@@ -96,6 +99,107 @@ PxPincher::~PxPincher()
     // Hold torque for n seconds
     // Turn off torque
     comm_.close();
+}
+
+bool PxPincher::canSwitch(const std::list<hardware_interface::ControllerInfo> &start_list, const std::list<hardware_interface::ControllerInfo> &stop_list) const
+{
+    auto not_vel_and_not_pos = std::find_if(start_list.begin(), start_list.end(), [](const hardware_interface::ControllerInfo& info) 
+    {
+        return !(info.hardware_interface.compare("hardware_interface::PositionJointInterface")==0 || info.hardware_interface.compare("hardware_interface::VelocityJointInterface")==0); 
+    } );
+    return not_vel_and_not_pos == start_list.end(); // we only support position and velocity interfaces
+}
+
+void PxPincher::doSwitch(const std::list<hardware_interface::ControllerInfo> &start_list, const std::list<hardware_interface::ControllerInfo> &stop_list)
+{
+    for (const hardware_interface::ControllerInfo& info : stop_list)
+    {
+        for (const std::string& joint : info.resources)
+        {
+            try
+            {
+                params_.hardware_modes_[params_.names_ids_map_[joint]] = HardwareMode::STOPPED;
+            }
+            catch (const std::out_of_range& oor)
+            {
+                ROS_ERROR_STREAM("doSwitch() Controller Resource " << joint << " is unknown.");
+            }
+        }
+    } 
+    
+    for (const hardware_interface::ControllerInfo& info : start_list)
+    {
+        for (const std::string& joint : info.resources)
+        {
+            try
+            {
+                if (info.hardware_interface.compare("hardware_interface::PositionJointInterface")==0)
+                    params_.hardware_modes_[params_.names_ids_map_[joint]] = HardwareMode::POSITION_INTERFACE;
+                else if (info.hardware_interface.compare("hardware_interface::VelocityJointInterface")==0)
+                    params_.hardware_modes_[params_.names_ids_map_[joint]] = HardwareMode::VELOCITY_INTERFACE;
+                else
+                {
+                    ROS_ERROR_STREAM("Cannot switch controller for joint " << joint << ", desired hardware mode not supported");
+                    params_.hardware_modes_[params_.names_ids_map_[joint]] = HardwareMode::STOPPED;
+                }            
+            }
+            catch (const std::out_of_range& oor)
+            {
+                ROS_ERROR_STREAM("doSwitch() Controller Resource " << joint << " is unknown.");
+            }
+        }
+    }
+}
+
+
+void PxPincher::loadDefaultControllers()
+{
+    std::vector<std::string> controllers;
+    
+    // load arm_controller
+    if (nhandle_.hasParam("/arm_controller"))
+    {
+        if (controller_manager_.loadController("/arm_controller"))
+        {
+            ROS_INFO("Arm controller loaded");
+            controllers.emplace_back("/arm_controller");
+        }
+        else 
+            ROS_WARN("'/arm_controller' could not be loaded by controller_manager. You must load it manually.");
+    }
+    else
+        ROS_WARN("No '/arm_controller' found on ros parameter server. You must define it or load it manually using the controller manager.");
+    
+    // load gripper controller
+    if (nhandle_.hasParam("/gripper_controller"))
+    {
+        if (controller_manager_.loadController("/gripper_controller"))
+        {
+            ROS_INFO("Gripper controller loaded");
+            controllers.emplace_back("/gripper_controller");
+        }
+        else 
+            ROS_WARN("'/gripper_controller' could not be loaded by controller_manager. You must load it manually.");
+    }
+    else
+        ROS_WARN("No '/gripper_controller' found on ros parameter server. You must define it or load it manually using the controller manager.");
+    
+    
+    if (!controllers.empty())
+    {
+        auto switch_fun = [this, controllers]()
+        {
+            if (controller_manager_.switchController(controllers, {}, 2))
+            {
+                ROS_INFO("Arm controller and gripper controller started.");
+            }
+            else
+                ROS_WARN("Arm controller and gripper controller could not be started.");
+        };
+        std::thread t(switch_fun); // we must switch them in a separate thread, since we need to call controller_mananger_.update() to actually update
+        t.detach(); // this is not safe in case of destructing PxPincher early since the thread accesses a class member, we should create a std::thread t as class member and join in the destructor
+    }
+    
 }
 
 void PxPincher::start()

@@ -45,15 +45,20 @@
 #include <ros/ros.h>
 
 #include <pxpincher_comm/codes.h>
+#include <unordered_map>
 
 namespace pxpincher
 {
 
+enum class HardwareMode {POSITION_INTERFACE, VELOCITY_INTERFACE, STOPPED};
+    
 class PXParameter
 {
 public:
     PXParameter();
 
+    
+    
 
     void update();
 
@@ -65,6 +70,8 @@ public:
     std::vector<int> offsets_;
     std::vector<UBYTE> ids_;
     std::vector<std::string> names_;
+    std::unordered_map<std::string, int> names_ids_map_;
+    std::vector<HardwareMode> hardware_modes_;
 
 };
 

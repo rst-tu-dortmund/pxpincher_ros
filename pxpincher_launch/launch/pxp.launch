@@ -17,10 +17,7 @@
   <node name="pxpincher" pkg="pxpincher_hardware" type="pxpincher_node" output="screen">
  	<param name="simulation" value="$(arg sim)"/>
   	<rosparam file="$(find pxpincher_config)/config/pincher_arm.yaml" command="load"/>
+  	<rosparam file="$(find pxpincher_config)/config/controllers.yaml" ns="/" command="load"/>
   </node>
-
-  <!-- Load default controller -->
-  <rosparam file="$(find pxpincher_config)/config/controllers.yaml" command="load"/>
-  <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="arm_controller gripper_controller --shutdown-timeout 1" />
 
 </launch>

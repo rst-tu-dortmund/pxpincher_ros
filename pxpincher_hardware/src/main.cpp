@@ -47,8 +47,6 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "pxpincher_rst");
 
     pxpincher::PxPincher pincher;
-
-    ros::Duration(2).sleep();
     
     pincher.start();
 

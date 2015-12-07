@@ -99,7 +99,10 @@ void PXParameter::update()
             // angle offsets
             ROS_ASSERT(it->second["offset"].getType() == XmlRpc::XmlRpcValue::TypeInt);
             offsets_.push_back( (int) it->second["offset"] );
-           
+            
+            hardware_modes_.push_back( HardwareMode::STOPPED );    
+            
+            names_ids_map_.emplace(names_.back(), ids_.back());
         }
     }
     else

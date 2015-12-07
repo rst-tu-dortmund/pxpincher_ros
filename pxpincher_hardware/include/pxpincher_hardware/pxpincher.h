@@ -43,6 +43,7 @@
 #include <math.h>
 
 #include <hardware_interface/joint_command_interface.h>
+#include <hardware_interface/hardware_interface.h>
 #include <hardware_interface/joint_state_interface.h>
 #include <hardware_interface/robot_hw.h>
 #include <controller_manager/controller_manager.h>
@@ -71,10 +72,25 @@ public:
     ~PxPincher();
 
     void start();
+    
+    
+    /**
+    * Check (in non-realtime) if given controllers could be started and stopped from the current state of the RobotHW
+    * with regard to necessary hardware interface switches. Start and stop list are disjoint.
+    * This is just a check, the actual switch is done in doSwitch()
+    */
+    virtual bool canSwitch(const std::list<hardware_interface::ControllerInfo> &start_list, const std::list<hardware_interface::ControllerInfo> &stop_list) const override;
+
+    /**
+    * Perform (in non-realtime) all necessary hardware interface switches in order to start and stop the given controllers.
+    * Start and stop list are disjoint. The feasability was checked in canSwitch() beforehand.
+    */
+    virtual void doSwitch(const std::list<hardware_interface::ControllerInfo> &start_list, const std::list<hardware_interface::ControllerInfo> &stop_list) override;
 
 
 protected:
     
+    void loadDefaultControllers();
     void update();
     void fillControlRegister(const std::vector<ServoStatus>& stati);
     void calculateControlStep();
@@ -100,11 +116,10 @@ private:
     hardware_interface::JointStateInterface jnt_state_interface_;
     hardware_interface::PositionJointInterface jnt_position_interface_;
 	hardware_interface::VelocityJointInterface jnt_velocity_interface_;
-
     ros::Time last_;
       
     controller_manager::ControllerManager controller_manager_;
-
+        
     Simulation sim_object_;
     PXParameter params_;
 

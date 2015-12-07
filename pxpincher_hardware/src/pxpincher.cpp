@@ -118,7 +118,7 @@ void PxPincher::doSwitch(const std::list<hardware_interface::ControllerInfo> &st
         {
             try
             {
-                params_.hardware_modes_[params_.names_ids_map_[joint]] = HardwareMode::STOPPED;
+                params_.hardware_modes_[params_.names_idx_map_[joint]] = HardwareMode::STOPPED;
             }
             catch (const std::out_of_range& oor)
             {
@@ -134,13 +134,13 @@ void PxPincher::doSwitch(const std::list<hardware_interface::ControllerInfo> &st
             try
             {
                 if (info.hardware_interface.compare("hardware_interface::PositionJointInterface")==0)
-                    params_.hardware_modes_[params_.names_ids_map_[joint]] = HardwareMode::POSITION_INTERFACE;
+                    params_.hardware_modes_[params_.names_idx_map_[joint]] = HardwareMode::POSITION_INTERFACE;
                 else if (info.hardware_interface.compare("hardware_interface::VelocityJointInterface")==0)
-                    params_.hardware_modes_[params_.names_ids_map_[joint]] = HardwareMode::VELOCITY_INTERFACE;
+                    params_.hardware_modes_[params_.names_idx_map_[joint]] = HardwareMode::VELOCITY_INTERFACE;
                 else
                 {
                     ROS_ERROR_STREAM("Cannot switch controller for joint " << joint << ", desired hardware mode not supported");
-                    params_.hardware_modes_[params_.names_ids_map_[joint]] = HardwareMode::STOPPED;
+                    params_.hardware_modes_[params_.names_idx_map_[joint]] = HardwareMode::STOPPED;
                 }            
             }
             catch (const std::out_of_range& oor)
@@ -322,60 +322,37 @@ void PxPincher::performAction()
         return;
     
     std::vector<int> pos_ticks, vel_ticks;
+    
     int idx = 0;
-    //std::stringstream ss;
     for(const JointData& joint : joint_data_)
     {
-		if (!std::isnan(joint.cmd_pos))
-			pos_ticks.push_back( rad2tick(joint.cmd_pos) + params_.offsets_[idx] );
-		else
-			pos_ticks.push_back( -1 );
-		vel_ticks.push_back( rads2tick(joint.cmd_vel) );
-        //ss << "joint: " << idx << " value_pos: " << joint.cmd_pos << " value_vel: " << joint.cmd_vel << std::endl;
+        if (params_.hardware_modes_[idx] == HardwareMode::POSITION_INTERFACE && !std::isnan(joint.cmd_pos))
+        {
+            ROS_INFO_STREAM(idx << ": pos_interface, name: " << params_.names_[idx]);
+            pos_ticks.push_back( rad2tick(joint.cmd_pos) + params_.offsets_[idx] );
+            vel_ticks.push_back( params_.speeds_[idx] );
+        }
+        else if (params_.hardware_modes_[idx] == HardwareMode::VELOCITY_INTERFACE && !std::isnan(joint.cmd_vel))
+        {
+            ROS_INFO_STREAM(idx << ": vel_interface, name: " << params_.names_[idx]);
+            // drive to bounds
+            pos_ticks.push_back( joint.cmd_vel < 0 ? params_.cwlimits_[idx] : params_.ccwlimits_[idx] );
+            vel_ticks.push_back( rads2tick( std::abs(joint.cmd_vel) ) );
+        }
+        else // STOP at current position
+        {
+            ROS_INFO_STREAM(idx << ": stopped. is nan: " << std::isnan(joint.cmd_pos) << ", name: " << params_.names_[idx]);
+            pos_ticks.push_back( rad2tick(joint_data_[idx].pos) + params_.offsets_[idx] ); // keep current position (from sensor reading)
+            vel_ticks.push_back( 0 );
+        }
+
+        // workaround: the dynamixel controller drives with full speed if vel = 0 (therefore set to at least 1)
+        if (vel_ticks.back() == 0)
+            vel_ticks.back() = 1;
+        
         ++idx;
     }
-    //ROS_INFO_STREAM("\n" << ss.str());
-    
-    // verify values
-    // - in case of position control, only pos_ticks are non-zero
-    // - in case of velocity control, only vel_ticks are non-zero (and pos=-1, which is not in the range of the dynamixel)
-    // our policy:
-    // position control: set position and drive with maximum allowed velocity
-    // velocity control: set position to min/max bounds and drive with desired velocity
-    // exception: if velocity control is enabled, but the command is 0, 
-    //            the dynamixel servos drive with maximum speed.
-    //			  Therefore we check both pos and vel: if pos==-1 and vel == 0: send stop command
-    // assumption: we never want to drive to position 0 [ticks]
-    for (int i=0; i < (int) pos_ticks.size(); ++i)
-	{
-		//ROS_INFO_STREAM("pre: joint " << i << " pos: " << pos_ticks[i] << " vel: " << vel_ticks[i]);
-		if (vel_ticks[i] != 0 && pos_ticks[i] == -1) // velocity control
-		{
-			if (vel_ticks[i] < 0) // set lower bound
-			{
-				pos_ticks[i] = params_.cwlimits_[i];
-				vel_ticks[i] *= -1; // command only positive velocity
-			}
-			else // set upper bound
-				pos_ticks[i] = params_.ccwlimits_[i];
-			
-			// bound velocity
-			if (vel_ticks[i] > params_.speeds_[i])
-				vel_ticks[i] = params_.speeds_[i];
-		}
-		else if (vel_ticks[i] == 0 && pos_ticks[i] == -1)
-		{ 
-			pos_ticks[i] = rad2tick(joint_data_[i].pos) + params_.offsets_[idx]; // keep current position (from sensor reading)
-			vel_ticks[i] = 1; // always set a velocity != 0 (since this is defined as max speed in the dynamixel)
-		}
-		else //position control
-		{
-			vel_ticks[i] = params_.speeds_[i]; // set max speeds
-		}	
-				
-		//ROS_INFO_STREAM("joint " << i << " pos: " << pos_ticks[i] << " vel: " << vel_ticks[i]);
-	}
-    
+        
     // TODO should we always utilize the combined method (speed and position) ?
     if (sim_)
       sim_object_.setGoalPositionAndSpeed( params_.ids_, pos_ticks, vel_ticks );

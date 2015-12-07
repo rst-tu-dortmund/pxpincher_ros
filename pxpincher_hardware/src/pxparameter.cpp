@@ -102,7 +102,7 @@ void PXParameter::update()
             
             hardware_modes_.push_back( HardwareMode::STOPPED );    
             
-            names_ids_map_.emplace(names_.back(), ids_.back());
+            names_idx_map_.emplace(names_.back(), ids_.size()-1);
         }
     }
     else

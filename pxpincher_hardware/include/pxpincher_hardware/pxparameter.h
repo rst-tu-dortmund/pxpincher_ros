@@ -70,7 +70,7 @@ public:
     std::vector<int> offsets_;
     std::vector<UBYTE> ids_;
     std::vector<std::string> names_;
-    std::unordered_map<std::string, int> names_ids_map_;
+    std::unordered_map<std::string, int> names_idx_map_;
     std::vector<HardwareMode> hardware_modes_;
 
 };

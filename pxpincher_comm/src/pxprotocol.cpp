@@ -1884,11 +1884,13 @@ UBYTE PXProtocol::setGoalPositionAndSpeedFastWrite(const std::vector<UBYTE> &ids
         package = makeMultiWritePackage(ids,reg,data,nBytes);
 
         // Send package and recieve response
-        // comm.sendData(package);
+        comm.sendData(package);
 
+#ifdef PRINT_BYTES
         // Print out Bytes to the Console
         printBytes(package);
         printBytes(response);
+#endif
 
         return 0x00;
 

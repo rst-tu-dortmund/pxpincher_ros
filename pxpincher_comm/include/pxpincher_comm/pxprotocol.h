@@ -1018,8 +1018,6 @@ public:
      */
     UBYTE setGoalSpeed(const std::vector<UBYTE>& ids, const std::vector<int>& speeds, SerialComm &comm);
 
-    UBYTE setGoalPositionAndSpeedFastWrite(const std::vector<UBYTE>& ids,const std::vector<int>& positions, const std::vector<int>& speeds, SerialComm &comm);
-    
     ///@}
     
     

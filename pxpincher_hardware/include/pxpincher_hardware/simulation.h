@@ -87,12 +87,12 @@ private:
 
     struct JointData 
     {
-      JointData() : name(""), pos(0), speed(0), cmd_pos(0), cmd_speed(0), lower(std::numeric_limits<int>::min()), upper(std::numeric_limits<int>::max()), default_pos(0), default_speed(0) {};
-      JointData(const std::string& name, int pos, int speed, int cmd_pos, int cmd_speed, int lower, int upper, int default_pos, int default_speed) : name(name), pos(pos), speed(speed),
+      JointData() : name(""), pos_rad(0), speed_rad(0), cmd_pos(0), cmd_speed(0), lower(std::numeric_limits<int>::min()), upper(std::numeric_limits<int>::max()), default_pos(0), default_speed(0) {};
+      JointData(const std::string& name, double pos_rad, double speed_rad, int cmd_pos, int cmd_speed, int lower, int upper, int default_pos, int default_speed) : name(name), pos_rad(pos_rad), speed_rad(speed_rad),
 													      cmd_pos(cmd_pos), cmd_speed(cmd_speed), lower(lower), upper(upper), default_pos(default_pos), default_speed(default_speed) {};
       std::string name;
-      int pos;
-	  int speed;
+      double pos_rad;
+	  double speed_rad;
       int cmd_pos;
 	  int cmd_speed;
       int lower;

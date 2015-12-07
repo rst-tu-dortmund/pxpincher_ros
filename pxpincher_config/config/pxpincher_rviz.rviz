@@ -309,7 +309,7 @@ Visualization Manager:
     - Alpha: 1
       Buffer Length: 1
       Class: rviz/Path
-      Color: 25; 255; 0
+      Color: 255; 0; 0
       Enabled: true
       Line Style: Lines
       Line Width: 0.03
@@ -344,22 +344,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 0.674103
+      Distance: 0.127938
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.268255
-        Y: -0.048668
-        Z: 0.0874443
+        X: 0.200233
+        Y: -0.0083901
+        Z: -0.0192925
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.184798
+      Pitch: 0.399798
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.575943
+      Yaw: 0.275943
     Saved: ~
 Window Geometry:
   Displays:

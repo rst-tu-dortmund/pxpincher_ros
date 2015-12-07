@@ -272,7 +272,7 @@ void PxPincher::emergencyStopIfRequired(const std::vector<ServoStatus>& stati)
     int idx = 0;
     for (const ServoStatus& status : stati)
     {
-        if (status.speed_ > 1.5 * params_.speeds_[idx]) // 10% above speed limit
+        if (status.speed_ > 2 * params_.speeds_[idx]) // 100% above speed limit
         {
             ROS_ERROR_STREAM("Critical velocity above bounds detected (vel of joint" << (int) params_.ids_[idx] << ": " <<  status.speed_ << "). Emergency stop.");
             ROS_ERROR("Please move the robot to its working space manually and restart the node.");
@@ -310,15 +310,14 @@ void PxPincher::fillControlRegister(const std::vector<ServoStatus>& stati)
     }
     
     // the controller takes some time to initialize, therefore use the initial position as control variable
-    // TEST this should now be included implictly in performAction()
-//     if (initial_loop_)
-//     {
-//         for (JointData& joint : joint_data_)
-//         {
-//             joint.cmd_pos = joint.pos;
-//         }
-//         initial_loop_ = false;
-//     }
+    if (initial_loop_)
+    {
+        for (JointData& joint : joint_data_)
+        {
+            joint.cmd_pos = joint.pos;
+        }
+        initial_loop_ = false;
+    }
 }
 
 void PxPincher::calculateControlStep()
@@ -346,12 +345,13 @@ void PxPincher::performAction()
             pos_ticks.push_back( rad2tick(joint.cmd_pos) + params_.offsets_[idx] );
             vel_ticks.push_back( params_.speeds_[idx] );
         }
-        else if (params_.hardware_modes_[idx] == HardwareMode::VELOCITY_INTERFACE && !std::isnan(joint.cmd_vel))
+        else if (params_.hardware_modes_[idx] == HardwareMode::VELOCITY_INTERFACE && joint.cmd_vel!=0 && !std::isnan(joint.cmd_vel))
         {
             //ROS_INFO_STREAM(idx << ": vel_interface, name: " << params_.names_[idx]);
             // drive to bounds
             pos_ticks.push_back( joint.cmd_vel < 0 ? params_.cwlimits_[idx] : params_.ccwlimits_[idx] );
             vel_ticks.push_back( rads2tick( std::abs(joint.cmd_vel) ) );
+            ROS_INFO_STREAM(idx << " current vel: " << rads2tick( std::abs(joint.cmd_vel) ) );
         }
         else // STOP at current position
         {

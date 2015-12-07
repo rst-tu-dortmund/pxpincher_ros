@@ -1,11 +1,11 @@
 source: pincher_arm.yaml
 port: /dev/ttyUSB0
-rate: 10
+rate: 25
 baud: 115200
 joints: {
-    arm_shoulder_pan_joint: {id: 1, cwlimit: 35,  ccwlimit: 900, offset: 511, speed: 50},
-    arm_shoulder_lift_joint: {id: 2, cwlimit: 100, ccwlimit: 900, offset: 511, speed: 50},
-    arm_elbow_flex_joint: {id: 3, cwlimit: 100, ccwlimit: 900, offset: 511, speed: 50},
-    arm_wrist_flex_joint: {id: 4, cwlimit: 180, ccwlimit: 900, offset: 511, speed: 50},
-    gripper_joint: {id: 5, cwlimit: 30,  ccwlimit: 400, offset: 215, speed: 50}
+    arm_shoulder_pan_joint: {id: 1, cwlimit: 35,  ccwlimit: 900, offset: 511, speed: 40},
+    arm_shoulder_lift_joint: {id: 2, cwlimit: 100, ccwlimit: 900, offset: 511, speed: 40},
+    arm_elbow_flex_joint: {id: 3, cwlimit: 100, ccwlimit: 900, offset: 511, speed: 40},
+    arm_wrist_flex_joint: {id: 4, cwlimit: 180, ccwlimit: 900, offset: 511, speed: 40},
+    gripper_joint: {id: 5, cwlimit: 30,  ccwlimit: 400, offset: 215, speed: 40}
 }

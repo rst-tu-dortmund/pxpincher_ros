@@ -60,7 +60,7 @@ void Simulation::start(ros::Rate rate)
 void Simulation::addJoint(UBYTE id, const std::string& name, int default_pos, int default_speed, int lower_bound, int upper_bound)
 {
 	boost::mutex::scoped_lock lock(data_mutex_);
-    joint_data_[id] = JointData(name, default_pos, 0, default_pos, default_speed, lower_bound, upper_bound, default_pos, default_speed);
+    joint_data_[id] = JointData(name, 0, 0, default_pos, default_speed, lower_bound, upper_bound, default_pos, default_speed);
 }
 
 void Simulation::clearJoints()
@@ -145,8 +145,8 @@ void Simulation::readServoStatus(std::vector<ServoStatus>& stati)
 		{
 			const JointData& data = joint_data_.at(elem.id_);
 			elem.load_ = 0; // no load model simulated
-			elem.position_ = data.pos;
-			elem.speed_ = data.speed;
+			elem.position_ = rad2tick(data.pos_rad) + data.default_pos;
+			elem.speed_ = rads2tick(data.speed_rad);
 			elem.temperature_ = 0;
 			elem.voltage_ = 0;
 		}
@@ -183,7 +183,7 @@ bool Simulation::isGoalReached()
 		boost::mutex::scoped_lock lock(data_mutex_);
 		for (const auto& data : joint_data_)
 		{
-			reached.push_back( data.second.cmd_pos == data.second.pos );
+			reached.push_back( std::abs(tick2rad(data.second.cmd_pos - data.second.default_pos) - data.second.pos_rad) < 0.001 );
 		}
 	}
     return std::find(reached.begin(), reached.end(), false) == reached.end();
@@ -197,19 +197,18 @@ bool Simulation::isMoving()
 void Simulation::performSimulationStep(double duration)
 {
     boost::mutex::scoped_lock lock(data_mutex_);
+    int idx = 0;
     for (std::pair<const UBYTE, JointData>& data : joint_data_)
     {
-      double speed_max = (double) data.second.cmd_speed; 
+      double speed_max = tick2rads(data.second.cmd_speed); 
       // limit speed close to goal
-      int dist = data.second.cmd_pos - data.second.pos;
-      double speed_req = double(std::abs(dist)) / duration;
-      double speed_des = std::round(std::min(speed_max, speed_req));
-	  
-	  data.second.speed = (int) speed_des; // use desired and commanded speed (model) for the status message
+      double dist = tick2rad(data.second.cmd_pos-data.second.default_pos) - data.second.pos_rad;
+      double speed_req = std::abs(dist) / duration;
+      double speed_des = std::min(speed_max, speed_req);
+	  //ROS_INFO_STREAM(idx << " max: " << speed_max << " req: " << speed_req << " des: " << speed_des);
+	  data.second.speed_rad = speed_des; // use desired and commanded speed (model) for the status message
             
-      double speed2ticks = conversionFactorSpeed / conversionFactorPos;
-      
-      data.second.pos += std::round( double(sign(dist)) * speed_des * speed2ticks * duration ); // simple integrator model
+      data.second.pos_rad += double(sign(dist)) * speed_des * duration; // simple integrator model
     }
 }
 

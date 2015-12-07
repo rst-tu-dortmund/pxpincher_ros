@@ -712,10 +712,13 @@ bool PhantomXControl::verifyTrajectory(trajectory_msgs::JointTrajectory& traject
   
 void PhantomXControl::stopMoving()
 {
-    _arm_action->cancelAllGoals();
-    ros::Duration(0.001).sleep(); // we wait for a small time, since cancelling goal is scheduled in a separate thread.
-				  // But this small duration does not guarantee, that a goal immediately set after calling stop stopMoving
-				  // is actually excecuted.
+    _arm_action->cancelGoalsAtAndBeforeTime(ros::Time::now());
+    
+    // also send stop topic
+    std_msgs::Float64MultiArray data;
+    data.data.resize( JointVector::RowsAtCompileTime, 0.0 );
+    for (int i=0; i<10; ++i)
+        _arm_speed_forwarding_pub.publish(data);  
 }
   
   

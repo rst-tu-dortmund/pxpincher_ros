@@ -1861,6 +1861,58 @@ UBYTE PXProtocol::setGoalSpeed(const std::vector<UBYTE>& ids, const std::vector<
     }
 }
 
+UBYTE PXProtocol::setGoalPositionAndSpeedFastWrite(const std::vector<UBYTE> &ids, const std::vector<int> &positions, const std::vector<int> &speeds, SerialComm &comm)
+{
+    std::vector<UBYTE> package, data, response;
+
+    UBYTE nServos = ids.size();
+    UBYTE reg = DYNAMIXEL_GOAL_POSITION_L;
+    UBYTE nBytes = 0x04;
+
+    if(nServos > 1){
+        // Multi Servo Mode
+        appendData(data,positions,true);
+        appendData(data,speeds,true);
+
+        package = makeMultiWritePackage(ids,reg,data,nBytes);
+
+        // Send package and recieve response
+        // comm.sendData(package);
+
+        // Print out Bytes to the Console
+        printBytes(package);
+        printBytes(response);
+
+        return 0x00;
+
+    }else{
+        // Single Servo Mode
+        data.push_back(reg);
+        appendData(data,positions,true);
+
+        package = makeSinglePackage(ids.at(0),DYNAMIXEL_WRITE_DATA,data);
+
+        // Send package and recieve response
+        comm.sendData(package, &response, DYNAMIXEL_NO_DATA_RESPONSE);
+
+        // Check Checksum
+        if(!checkChecksum(response)){
+            /// @todo TODO Throw Exception
+            ROS_INFO("Checksum mismatch");
+        }
+
+#ifdef PRINT_BYTES
+    // Print out Bytes to the Console
+    printBytes(package);
+    printBytes(response);
+#endif
+
+        // Return Error Byte
+        checkError(response[4]);
+        return response[4];
+    }
+}
+
 UBYTE PXProtocol::readTorqueLimit(UBYTE id, int &limit, SerialComm &comm)
 {
     std::vector<UBYTE> ids = {id};

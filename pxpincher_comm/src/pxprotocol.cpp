@@ -1730,9 +1730,32 @@ UBYTE PXProtocol::setGoalPosition(const std::vector<UBYTE>& ids, const std::vect
 
 UBYTE PXProtocol::setGoalPositionAndSpeed(const std::vector<UBYTE> &ids, const std::vector<int> &positions, const std::vector<int> &speeds, SerialComm &comm)
 {
-    setGoalSpeed(ids,speeds,comm);
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    setGoalPosition(ids,positions,comm);
+    std::vector<UBYTE> package, data;
+
+    UBYTE reg = DYNAMIXEL_GOAL_POSITION_L;
+    UBYTE nBytes = 0x04;
+
+    // Arrange data to be pos1 speed1 pos2 speed2 ... posN speedN
+    std::vector<int> fusion;
+    for(int i = 0; i < ids.size(); ++i){
+        fusion.push_back(positions.at(i));
+        fusion.push_back(speeds.at(i));
+    }
+
+    // append the actual information
+    appendData(data,fusion,true);
+
+    // make a package that performs a write to several servo ids
+    package = makeMultiWritePackage(ids,reg,data,nBytes);
+
+    // Send package and recieve response
+    comm.sendData(package);
+
+#ifdef PRINT_BYTES
+    // Print out Bytes to the Console
+    printBytes(package);
+    printBytes(response);
+#endif
 
     return 0x00;
 }

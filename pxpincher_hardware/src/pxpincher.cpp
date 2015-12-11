@@ -223,6 +223,8 @@ void PxPincher::start()
     ros::AsyncSpinner spinner(1);
     spinner.start();
     
+	ROS_INFO("PxPincher hardware node started.");
+	
     last_ = ros::Time::now();
     
     while(ros::ok())

@@ -502,7 +502,7 @@ void PhantomXControl::setJointVel(const Eigen::Ref<const JointVector>& velocitie
     }
         
   // cancel any previous goals
-  stopMoving(); // TODO: required?
+  //stopMoving(); // TODO: required?
   
   if (_arm_control_mode != ArmControlMode::SPEED_FORWARDING)
       switchArmControlMode(ArmControlMode::SPEED_FORWARDING);
@@ -554,7 +554,7 @@ void PhantomXControl::setJointTrajectory(control_msgs::FollowJointTrajectoryGoal
   ROS_ASSERT_MSG(_arm_action, "PhantomXControl: class not initialized, call initialize().");
     
   // cancel any previous goals
-  stopMoving(); // TODO: required?
+  //stopMoving(); // TODO: required?
   
   if (_arm_control_mode != ArmControlMode::TRAJECTORY_FOLLOWING)
       switchArmControlMode(ArmControlMode::TRAJECTORY_FOLLOWING);

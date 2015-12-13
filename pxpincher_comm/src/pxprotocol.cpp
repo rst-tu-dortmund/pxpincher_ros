@@ -2844,44 +2844,21 @@ UBYTE PXProtocol::setComplianceMargin(UBYTE id, UBYTE cw, UBYTE ccw, SerialComm 
 
 UBYTE PXProtocol::setComplianceSlope(UBYTE id, UBYTE cw, UBYTE ccw, SerialComm &comm)
 {
-    if (!checkParameterRange(cw,0,255) || !checkParameterRange(ccw,0,255)){
-        //return 0xFF;
-    }
+    std::vector<UBYTE> ids = {id};
+    std::vector<int> cws = {cw};
+    std::vector<int> ccws = {ccw};
 
-    std::vector<UBYTE> package, data, response;
+    // Wrap to multi servo command
+    UBYTE error = setComplianceSlope(ids,cws,ccws,comm);
 
-    UBYTE reg = DYNAMIXEL_CW_COMP_SLOPE;
-
-    data.push_back(reg);
-    data.push_back(cw);
-    data.push_back(ccw);
-
-    package = makeSinglePackage(id,DYNAMIXEL_WRITE_DATA,data);
-
-    // Send package and recieve response
-    comm.sendData(package, &response, DYNAMIXEL_NO_DATA_RESPONSE);
-
-#ifdef PRINT_BYTES
-    // Print out Bytes to the Console
-    printBytes(package);
-    printBytes(response);
-#endif
-
-    //Check Checksum
-    if(!checkChecksum(response)){
-        /// @todo TODO Throw Exception
-        ROS_INFO("Checksum mismatch");
-    }
-
-    // Return Error Byte
-    checkError(response[4]);
-    return response[4];
+    return error;
 }
 
 UBYTE PXProtocol::setComplianceSlope(std::vector<UBYTE> ids, std::vector<int> cws, std::vector<int> ccws, SerialComm &comm)
 {
-    std::vector<UBYTE> package, data;
+    std::vector<UBYTE> package, data, response;
 
+    UBYTE nServos = ids.size();
     UBYTE reg = DYNAMIXEL_CW_COMP_SLOPE;
     UBYTE nBytes = 0x02;
 
@@ -2892,14 +2869,14 @@ UBYTE PXProtocol::setComplianceSlope(std::vector<UBYTE> ids, std::vector<int> cw
         fusion.push_back(ccws.at(i));
     }
 
-    // append the actual information
-    appendData(data,fusion,false);
+    if(nServos > 1){
+        // Multi Servo Mode
+        appendData(data,fusion,false);
 
-    // make a package that performs a write to several servo ids
-    package = makeMultiWritePackage(ids,reg,data,nBytes);
+        package = makeMultiWritePackage(ids,reg,data,nBytes);
 
-    // Send package and recieve response
-    comm.sendData(package);
+        // Send package and recieve response
+        comm.sendData(package);
 
 #ifdef PRINT_BYTES
     // Print out Bytes to the Console
@@ -2907,7 +2884,34 @@ UBYTE PXProtocol::setComplianceSlope(std::vector<UBYTE> ids, std::vector<int> cw
     printBytes(response);
 #endif
 
-    return 0x00;
+        return 0x00;
+
+    }else{
+        // Single Servo Mode
+        data.push_back(reg);
+        appendData(data,fusion,false);
+
+        package = makeSinglePackage(ids.at(0),DYNAMIXEL_WRITE_DATA,data);
+
+        // Send package and recieve response
+        comm.sendData(package, &response, DYNAMIXEL_NO_DATA_RESPONSE);
+
+        // Check Checksum
+        if(!checkChecksum(response)){
+            /// @todo TODO Throw Exception
+            ROS_INFO("Checksum mismatch");
+        }
+
+#ifdef PRINT_BYTES
+    // Print out Bytes to the Console
+    printBytes(package);
+    printBytes(response);
+#endif
+
+        // Return Error Byte
+        checkError(response[4]);
+        return response[4];
+    }
 }
 
 UBYTE PXProtocol::readGoalPosition(UBYTE id, int &position, SerialComm &comm)

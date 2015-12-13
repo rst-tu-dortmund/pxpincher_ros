@@ -1760,6 +1760,18 @@ UBYTE PXProtocol::setGoalPositionAndSpeed(const std::vector<UBYTE> &ids, const s
     return 0x00;
 }
 
+UBYTE PXProtocol::setGoalPositionAndSpeed(UBYTE id, int position, int speed, SerialComm &comm)
+{
+    std::vector<UBYTE> ids = {id};
+    std::vector<int> positions = {position};
+    std::vector<int> speeds = {speed};
+
+    // Wrap to multi servo command
+    UBYTE error = setGoalPositionAndSpeed(ids,positions,speeds,comm);
+
+    return error;
+}
+
 UBYTE PXProtocol::readGoalSpeed(UBYTE id, int &speed, SerialComm &comm)
 {
     std::vector<UBYTE> ids = {id};

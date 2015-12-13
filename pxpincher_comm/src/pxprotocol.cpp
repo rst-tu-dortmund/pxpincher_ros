@@ -2878,6 +2878,38 @@ UBYTE PXProtocol::setComplianceSlope(UBYTE id, UBYTE cw, UBYTE ccw, SerialComm &
     return response[4];
 }
 
+UBYTE PXProtocol::setComplianceSlope(std::vector<UBYTE> ids, std::vector<int> cws, std::vector<int> ccws, SerialComm &comm)
+{
+    std::vector<UBYTE> package, data;
+
+    UBYTE reg = DYNAMIXEL_CW_COMP_SLOPE;
+    UBYTE nBytes = 0x02;
+
+    // Arrange data to be cw1 ccw1 cw2 ccw2 ... cwN ccwN
+    std::vector<int> fusion;
+    for(int i = 0; i < ids.size(); ++i){
+        fusion.push_back(cws.at(i));
+        fusion.push_back(ccws.at(i));
+    }
+
+    // append the actual information
+    appendData(data,fusion,false);
+
+    // make a package that performs a write to several servo ids
+    package = makeMultiWritePackage(ids,reg,data,nBytes);
+
+    // Send package and recieve response
+    comm.sendData(package);
+
+#ifdef PRINT_BYTES
+    // Print out Bytes to the Console
+    printBytes(package);
+    printBytes(response);
+#endif
+
+    return 0x00;
+}
+
 UBYTE PXProtocol::readGoalPosition(UBYTE id, int &position, SerialComm &comm)
 {
     std::vector<UBYTE> ids = {id};

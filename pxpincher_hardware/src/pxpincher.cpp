@@ -55,11 +55,11 @@ PxPincher::PxPincher():
 {
     if (!sim_ && !comm_.open(params_.port_,params_.baud_))
     {
-	ROS_ERROR_STREAM("Could not open serial connection on port: " << params_.port_ << " with baudrate: " << params_.baud_); 
-	ROS_ERROR_STREAM("Exiting node, since simulation mode is not activated.");
-	ros::shutdown();
+        ROS_ERROR_STREAM("Could not open serial connection on port: " << params_.port_ << " with baudrate: " << params_.baud_);
+        ROS_ERROR_STREAM("Exiting node, since simulation mode is not activated.");
+        ros::shutdown();
     }
-  
+
     std::size_t no_joints = params_.names_.size();
     
     joint_data_.resize(no_joints);
@@ -70,18 +70,18 @@ PxPincher::PxPincher():
     // create ros_control handles
     for (int i = 0; i < no_joints; ++i)
     {
-         hardware_interface::JointStateHandle state_handle_joint( params_.names_[i] , &joint_data_[i].pos, &joint_data_[i].vel, &joint_data_[i].eff);
-         jnt_state_interface_.registerHandle(state_handle_joint);
+        hardware_interface::JointStateHandle state_handle_joint( params_.names_[i] , &joint_data_[i].pos, &joint_data_[i].vel, &joint_data_[i].eff);
+        jnt_state_interface_.registerHandle(state_handle_joint);
 
-         hardware_interface::JointHandle pos_handle_joint(jnt_state_interface_.getHandle(params_.names_[i]),  &joint_data_[i].cmd_pos); // TODO: maybe use handle from above
-         jnt_position_interface_.registerHandle(pos_handle_joint);
-		        
-		 hardware_interface::JointHandle vel_handle_joint(jnt_state_interface_.getHandle(params_.names_[i]),  &joint_data_[i].cmd_vel); // TODO: maybe use handle from above
-         jnt_velocity_interface_.registerHandle(vel_handle_joint);
+        hardware_interface::JointHandle pos_handle_joint(jnt_state_interface_.getHandle(params_.names_[i]),  &joint_data_[i].cmd_pos); // TODO: maybe use handle from above
+        jnt_position_interface_.registerHandle(pos_handle_joint);
+
+        hardware_interface::JointHandle vel_handle_joint(jnt_state_interface_.getHandle(params_.names_[i]),  &joint_data_[i].cmd_vel); // TODO: maybe use handle from above
+        jnt_velocity_interface_.registerHandle(vel_handle_joint);
     }
     registerInterface(&jnt_state_interface_);
     registerInterface(&jnt_position_interface_);
-	registerInterface(&jnt_velocity_interface_);
+    registerInterface(&jnt_velocity_interface_);
 
     
     loadDefaultControllers();
@@ -94,18 +94,17 @@ PxPincher::PxPincher():
 
 PxPincher::~PxPincher()
 {
-    // TODO Shut Down Robot by using emergency shut down function
-    // Stop all movement
-    // Hold torque for n seconds
-    // Turn off torque
+    ROS_ERROR("Hardware node died. The servos are relaxed now, please catch the falling robot.");
+    relaxServos(true);
+    ros::shutdown();
     comm_.close();
 }
 
 bool PxPincher::canSwitch(const std::list<hardware_interface::ControllerInfo> &start_list, const std::list<hardware_interface::ControllerInfo> &stop_list) const
 {
-    auto not_vel_and_not_pos = std::find_if(start_list.begin(), start_list.end(), [](const hardware_interface::ControllerInfo& info) 
+    auto not_vel_and_not_pos = std::find_if(start_list.begin(), start_list.end(), [](const hardware_interface::ControllerInfo& info)
     {
-        return !(info.hardware_interface.compare("hardware_interface::PositionJointInterface")==0 || info.hardware_interface.compare("hardware_interface::VelocityJointInterface")==0); 
+        return !(info.hardware_interface.compare("hardware_interface::PositionJointInterface")==0 || info.hardware_interface.compare("hardware_interface::VelocityJointInterface")==0);
     } );
     return not_vel_and_not_pos == start_list.end(); // we only support position and velocity interfaces
 }
@@ -125,7 +124,7 @@ void PxPincher::doSwitch(const std::list<hardware_interface::ControllerInfo> &st
                 ROS_ERROR_STREAM("doSwitch() Controller Resource " << joint << " is unknown.");
             }
         }
-    } 
+    }
     
     for (const hardware_interface::ControllerInfo& info : start_list)
     {
@@ -141,7 +140,7 @@ void PxPincher::doSwitch(const std::list<hardware_interface::ControllerInfo> &st
                 {
                     ROS_ERROR_STREAM("Cannot switch controller for joint " << joint << ", desired hardware mode not supported");
                     params_.hardware_modes_[params_.names_idx_map_[joint]] = HardwareMode::STOPPED;
-                }            
+                }
             }
             catch (const std::out_of_range& oor)
             {
@@ -164,7 +163,7 @@ void PxPincher::loadDefaultControllers()
             ROS_INFO("Arm controller loaded");
             controllers.emplace_back("/arm_controller");
         }
-        else 
+        else
             ROS_WARN("'/arm_controller' could not be loaded by controller_manager. You must load it manually.");
     }
     else
@@ -178,7 +177,7 @@ void PxPincher::loadDefaultControllers()
             ROS_INFO("Gripper controller loaded");
             controllers.emplace_back("/gripper_controller");
         }
-        else 
+        else
             ROS_WARN("'/gripper_controller' could not be loaded by controller_manager. You must load it manually.");
     }
     else
@@ -192,7 +191,7 @@ void PxPincher::loadDefaultControllers()
         {
             ROS_INFO("Speed forwarding controller loaded");
         }
-        else 
+        else
             ROS_WARN("'/arm_speed_forwarder' could not be loaded by controller_manager. Speed forwarding not supported");
     }
     else
@@ -223,8 +222,8 @@ void PxPincher::start()
     ros::AsyncSpinner spinner(1);
     spinner.start();
     
-	ROS_INFO("PxPincher hardware node started.");
-	
+    ROS_INFO("PxPincher hardware node started.");
+
     last_ = ros::Time::now();
     
     while(ros::ok())
@@ -241,16 +240,16 @@ void PxPincher::update()
     std::vector<ServoStatus> stati;
     for (int id : params_.ids_)
     {
-	stati.emplace_back(id);
+        stati.emplace_back(id);
     }
     if (sim_)
-      sim_object_.readServoStatus(stati);
+        sim_object_.readServoStatus(stati);
     else
-      protocol_.readServoStatus(stati,comm_);
+        protocol_.readServoStatus(stati,comm_);
 
     // Verify servo status (saftey check)
     emergencyStopIfRequired(stati);
-        
+
     // Fill control variables
     fillControlRegister(stati);
     
@@ -270,7 +269,7 @@ void PxPincher::emergencyStopIfRequired(const std::vector<ServoStatus>& stati)
 {
     if (!ctrl_enabled_)
         return;
-        
+
     int idx = 0;
     for (const ServoStatus& status : stati)
     {
@@ -285,7 +284,7 @@ void PxPincher::emergencyStopIfRequired(const std::vector<ServoStatus>& stati)
         ++idx;
     }
     
-     if (!isInsideBounds(stati))
+    if (!isInsideBounds(stati))
     {
         ROS_ERROR("The robot is currently outside its working space. The servos are relaxed now, please catch the falling robot.");
         ROS_ERROR("Please move the robot to its working space manually and restart the node or use the services to unrelax servos.");
@@ -368,12 +367,12 @@ void PxPincher::performAction()
         
         ++idx;
     }
-        
+
     // TODO should we always utilize the combined method (speed and position) ?
     if (sim_)
-      sim_object_.setGoalPositionAndSpeed( params_.ids_, pos_ticks, vel_ticks );
+        sim_object_.setGoalPositionAndSpeed( params_.ids_, pos_ticks, vel_ticks );
     else
-      protocol_.setGoalPositionAndSpeed( params_.ids_, pos_ticks, vel_ticks, comm_ );
+        protocol_.setGoalPositionAndSpeed( params_.ids_, pos_ticks, vel_ticks, comm_ );
 }
 
 
@@ -394,7 +393,7 @@ sensor_msgs::JointState PxPincher::getJointState()
     sensor_msgs::JointState jointStates;
 
     jointStates.header.stamp = ros::Time::now();
-          
+
     int idx = 0;
     for (const JointData& joint : joint_data_)
     {
@@ -426,14 +425,13 @@ pxpincher_msgs::pxpincher_diagnostic PxPincher::getDiagnostics(const std::vector
     return diag;
 }
 
-
 bool PxPincher::isMoving()
 {
     if (sim_)
-      return sim_object_.isMoving();
+        return sim_object_.isMoving();
     
     std::vector<int> moving_vec;
-    protocol_.readMoving(params_.ids_, moving_vec, comm_ );    
+    protocol_.readMoving(params_.ids_, moving_vec, comm_ );
     return std::count_if(moving_vec.begin(), moving_vec.end(), [](int val){return val>0;}) > 0;
 }
 
@@ -441,49 +439,49 @@ void PxPincher::initRobot()
 { 
     if (sim_)
     {
-      sim_object_.clearJoints();
-      for (int i=0; i<(int)params_.ids_.size(); ++i) // TODO: check sizes
-      {
-		sim_object_.addJoint(params_.ids_[i], params_.names_[i], params_.offsets_[i], params_.speeds_[i], params_.cwlimits_[i], params_.ccwlimits_[i]);
-      }
-      sim_object_.start(ros::Rate(2*rate_)); // let simulator run with a faster rate (otherwise the timing (execution) might not be well)
+        sim_object_.clearJoints();
+        for (int i=0; i<(int)params_.ids_.size(); ++i) // TODO: check sizes
+        {
+            sim_object_.addJoint(params_.ids_[i], params_.names_[i], params_.offsets_[i], params_.speeds_[i], params_.cwlimits_[i], params_.ccwlimits_[i]);
+        }
+        sim_object_.start(ros::Rate(2*rate_)); // let simulator run with a faster rate (otherwise the timing (execution) might not be well)
     }
     else
     {
-      std::vector<UBYTE> ids = params_.ids_;
-      std::vector<int> cw_limits = params_.cwlimits_;
-      std::vector<int> ccw_limits = params_.ccwlimits_;
-      std::vector<int> speeds = params_.speeds_;
+        std::vector<UBYTE> ids = params_.ids_;
+        std::vector<int> cw_limits = params_.cwlimits_;
+        std::vector<int> ccw_limits = params_.ccwlimits_;
+        std::vector<int> speeds = params_.speeds_;
 
-      protocol_.setCCWAngleLimit(ids,ccw_limits,comm_);
-      ros::Duration(0.01).sleep();
+        protocol_.setCCWAngleLimit(ids,ccw_limits,comm_);
+        ros::Duration(0.01).sleep();
 
-      protocol_.setCWAngleLimit(ids,cw_limits,comm_);
-      ros::Duration(0.01).sleep();
+        protocol_.setCWAngleLimit(ids,cw_limits,comm_);
+        ros::Duration(0.01).sleep();
 
-      protocol_.setGoalSpeed(ids,speeds,comm_);
-      ros::Duration(0.01).sleep();
+        protocol_.setGoalSpeed(ids,speeds,comm_);
+        ros::Duration(0.01).sleep();
 
-      // Set comp slope to 128 for all servos
-      std::vector<int> cws(params_.ids_.size(),128);
-      std::vector<int> ccws(params_.ids_.size(),128);
+        // Set comp slope to 128 for all servos
+        std::vector<int> cws(params_.ids_.size(),128);
+        std::vector<int> ccws(params_.ids_.size(),128);
 
-      protocol_.setComplianceSlope(params_.ids_,cws,ccws,comm_);
-      ros::Duration(0.01).sleep();
+        protocol_.setComplianceSlope(params_.ids_,cws,ccws,comm_);
+        ros::Duration(0.01).sleep();
     }
 
     // Drive to Home-Position
-//     ROS_INFO("Driving to default position...");
-//     driveToHomePosition(); // blocking call
-//     ROS_INFO("Default position reached. Waiting for trajectory actions or messages ...");
+    //     ROS_INFO("Driving to default position...");
+    //     driveToHomePosition(); // blocking call
+    //     ROS_INFO("Default position reached. Waiting for trajectory actions or messages ...");
 }
 
 void PxPincher::driveToHomePosition()
 {
     if (sim_)
-      sim_object_.setGoalPosition(params_.ids_, params_.offsets_);
+        sim_object_.setGoalPosition(params_.ids_, params_.offsets_);
     else
-      protocol_.setGoalPosition(params_.ids_, params_.offsets_ ,comm_);
+        protocol_.setGoalPosition(params_.ids_, params_.offsets_ ,comm_);
     
 
     while (isMoving() && ros::ok())
@@ -514,7 +512,7 @@ bool PxPincher::relaxServos(bool relaxed)
     bool ret_val = true;
     
     if (!ctrl_enabled_ && !relaxed)
-        ctrl_reset_requested_ = true; // reset controllers since torque is going to be enabled and the robot may has moved 
+        ctrl_reset_requested_ = true; // reset controllers since torque is going to be enabled and the robot may has moved
     
     ctrl_enabled_ = !relaxed; // switching booleans is thread safe
 

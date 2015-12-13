@@ -274,7 +274,7 @@ void PxPincher::emergencyStopIfRequired(const std::vector<ServoStatus>& stati)
     int idx = 0;
     for (const ServoStatus& status : stati)
     {
-        if (status.speed_ > 2 * params_.speeds_[idx]) // 100% above speed limit
+        if (status.speed_ > 2.5 * params_.speeds_[idx]) // 100% above speed limit
         {
             ROS_ERROR_STREAM("Critical velocity above bounds detected (vel of joint" << (int) params_.ids_[idx] << ": " <<  status.speed_ << "). Emergency stop.");
             ROS_ERROR("Please move the robot to its working space manually and restart the node.");
@@ -462,6 +462,13 @@ void PxPincher::initRobot()
       ros::Duration(0.01).sleep();
 
       protocol_.setGoalSpeed(ids,speeds,comm_);
+      ros::Duration(0.01).sleep();
+
+      // Set comp slope to 128 for all servos
+      std::vector<int> cws(params_.ids_.size(),128);
+      std::vector<int> ccws(params_.ids_.size(),128);
+
+      protocol_.setComplianceSlope(params_.ids_,cws,ccws,comm_);
       ros::Duration(0.01).sleep();
     }
 

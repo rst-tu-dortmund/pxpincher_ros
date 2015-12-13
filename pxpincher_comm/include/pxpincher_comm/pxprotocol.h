@@ -863,7 +863,11 @@ public:
     UBYTE readCCWComplianceSlope(const std::vector<UBYTE>& ids, std::vector<int> &slopes, SerialComm &comm);
     UBYTE setCCWComplianceSlope(UBYTE id, UBYTE slope, SerialComm &comm);
     UBYTE setComplianceMargin(UBYTE id, UBYTE cw, UBYTE ccw, SerialComm &comm);
+
     UBYTE setComplianceSlope(UBYTE id, UBYTE cw, UBYTE ccw, SerialComm &comm);
+    UBYTE setComplianceSlope(std::vector<UBYTE> ids, std::vector<int> cws, std::vector<int> ccws, SerialComm &comm);
+
+
 
     //@}
     

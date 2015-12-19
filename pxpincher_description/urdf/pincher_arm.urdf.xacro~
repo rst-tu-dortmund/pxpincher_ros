@@ -5,15 +5,7 @@
     <!-- We can configure joints velocity limit and lower/upper limits
           to allow access to different operational areas, e.g. left handed vs. right handed robot -->
 
-
-
-
-
-
-
-
-
-<!-- Edit Starts  -->
+<!-- Edit Starts 27-11-2015 -->
  <xacro:property name="joints_vlimit" value="1.571"/>
     <xacro:property name="pan_llimit" value="-1.17"/>
     <xacro:property name="pan_ulimit" value="1.43"/>
@@ -41,10 +33,10 @@
       <origin xyz="0.06 0 0.01"/>
     </turtlebot_arm>
 
+<!-- Edit Ends 27-11-2015 -->
 
 
-
-
+<!-- Edit starts 22 nov 2015-->
   
 <!-- Phantomx Arm Controller link-->
 
@@ -66,7 +58,7 @@
 </link>
 
 
-<!-- Edit ends -->
+
 
 
 

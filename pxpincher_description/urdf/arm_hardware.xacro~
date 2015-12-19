@@ -403,4 +403,26 @@
     </gazebo>
   </xacro:macro>
 
+<!-- Edit starts 22 nov 2015-->
+  
+<!-- Phantomx Arm Controller link-->
+
+<link name="plate_top_link" />
+<joint name="arm_controller_joint" type="fixed">
+      <origin xyz="-0.09 -0.06 -0.105" rpy="0 0 0"/>
+      <parent link="plate_top_link"/>
+      <child link="arm_controller_link"/>
+      <axis xyz="0 0 1"/>
+ </joint>
+<link name="arm_controller_link">
+ <visual>
+<origin xyz="0.3 0 0.11" rpy="0 0 7.85"/>
+<geometry>
+ <mesh filename="package://pxpincher_description/meshes/arm_controller_link.stl" scale="0.007 0.007 0.007"/>
+ </geometry>
+ <material name="Gray"/>
+</visual>
+</link>
+
+
 </robot>

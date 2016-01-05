@@ -72,7 +72,7 @@
       <mimic joint="gripper_joint" multiplier="-${FACTOR_GRIPPER_TRANSL}"  offset = "-${OFFSET_GRIPPER_TRANSL}"/>
     </joint> 
 
-<!-- Edit Strats 30-11-2015 -->
+
 
  <gazebo reference="gripper_active_link">
      <gravity>false</gravity>
@@ -82,6 +82,6 @@
      <gravity>false</gravity>
  </gazebo>
 
-<!-- Edit Ends 30-11-2015 -->
+
 
 </robot>

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# Original code https://github.com/corot/turtlebot_arm.git
+
 import rospy
 from sensor_msgs.msg import JointState
 
@@ -14,5 +16,5 @@ msg.velocity = [0.0 for name in msg.name]
 while not rospy.is_shutdown():
     msg.header.stamp = rospy.Time.now()
     p.publish(msg)
-    rospy.sleep(0.05)
+    rospy.sleep(0.1)
 

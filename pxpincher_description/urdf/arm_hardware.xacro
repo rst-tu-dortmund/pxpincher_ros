@@ -402,4 +402,5 @@
       <gravity>true</gravity>
     </gazebo>
   </xacro:macro>
+
 </robot>

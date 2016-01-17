@@ -52,6 +52,9 @@ int main( int argc, char** argv )
   robot.initialize();
 
   robot.setJoints({0.8, 0.6, 0.9, 1.6});
+  robot.setGripperJoint(0);
+  //robot.setGripperJoint(100);
+  robot.setGripperJoint(20);
   
   ROS_INFO_STREAM(std::setprecision(2) << "Current joint configuration q=[" << robot.getJointAngles().transpose() << "]");
  

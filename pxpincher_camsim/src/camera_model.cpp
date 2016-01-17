@@ -105,8 +105,8 @@ void CameraModel::drawCircleObject(cv::Mat& image, const VisualObject& object, c
   int u_right, v_right;
   getIntrinsicTransformation(extr_transform * right, u_right, v_right);
     
-  int height = 2*std::abs(v_top-v);
-  int width = 2*std::abs(u_right-u);
+  int height = std::abs(v_top-v); // just half of the size is required by opencv
+  int width = std::abs(u_right-u); // just half of the size is required by opencv
 
   // draw
   //cv::circle( image, cv::Point(u, v), 5, cv::Scalar( object.color().b, object.color().g, object.color().r ), -1, 8 );  

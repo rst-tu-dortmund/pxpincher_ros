@@ -2,7 +2,7 @@
  *
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2015,
+ *  Copyright (c) 2016,
  *  TU Dortmund - Institute of Control Theory and Systems Engineering.
  *  All rights reserved.
  *
@@ -36,21 +36,63 @@
  * Author: Christoph Rösmann
  *********************************************************************/
 
+#ifndef PXPINCHER_VISUAL_OBJECT_H_
+#define PXPINCHER_VISUAL_OBJECT_H_
 
-#include <pxpincher_camsim/cam_simulator.h>
+#include <ros/ros.h>
+#include <tf/transform_datatypes.h>
 
-
-// =============== Main function =================
-int main( int argc, char** argv )
+namespace pxpincher
 {
-  ros::init(argc, argv, "pxpincher_camsim");
-  ros::NodeHandle n("~");
-   
-  pxpincher::CamSimulator sim;
   
-  sim.initialize();
   
-  sim.start();
+class VisualObject
+{
   
-  return 0;
-}
+public:
+  
+  enum class Shape {CIRCLE};
+  
+  struct Color
+  {
+    int r = 0;
+    int g = 0;
+    int b = 0;
+  };
+  
+  VisualObject() {};
+  VisualObject(const std::string& name, const tf::Vector3& position, const tf::Quaternion& orientation, Shape shape, const Color& color) 
+     : name_(name), position_(position), orientation_(orientation), shape_(shape), color_(color) {};
+     
+  ~VisualObject() {};
+  
+  std::string& name() {return name_;}
+  const std::string& name() const {return name_;}
+  
+  tf::Vector3& position() {return position_;}
+  const tf::Vector3& position() const {return position_;}
+  
+  tf::Quaternion& orientation() {return orientation_;}
+  const tf::Quaternion& orientation() const {return orientation_;}
+  
+  Shape& shape() {return shape_;}
+  const Shape& shape() const {return shape_;}
+  
+  Color& color() {return color_;}
+  const Color& color() const {return color_;}
+  
+private:
+  
+  std::string name_;
+  tf::Vector3 position_;
+  tf::Quaternion orientation_;
+  Shape shape_ = Shape::CIRCLE;
+  Color color_;
+  
+}; 
+  
+  
+  
+} // end namespace
+
+#endif /* PXPINCHER_VISUAL_OBJECT_H_ */

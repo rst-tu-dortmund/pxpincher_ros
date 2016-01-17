@@ -40,6 +40,40 @@
 #define PXPINCHER_CAM_SIMULATOR_H_
 
 #include <ros/ros.h>
+#include <pxpincher_camsim/visual_object.h>
 
+#include <tf/transform_datatypes.h>
+
+namespace pxpincher
+{
+  
+  
+  
+class CamSimulator
+{
+public:
+  CamSimulator();
+  ~CamSimulator() {};
+  
+  void initialize();
+  
+  void start();
+  
+protected:
+  
+  bool getObjectsFromParamServer();
+  
+  
+private:
+  
+  ros::NodeHandle nhandle_;
+  
+  std::vector<VisualObject> objects_;
+  
+}; 
+  
+  
+  
+} // end namespace
 
 #endif /* PXPINCHER_CAM_SIMULATOR_H_ */

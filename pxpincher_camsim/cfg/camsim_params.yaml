@@ -1,0 +1,9 @@
+#pose: [x, y, z, roll, pitch, yaw]
+#shapes: {circle}
+#color: [R,G,B] (each 0..255)
+
+objects:
+ - object1: {pose: [0, -1, 3.14, 0, 0, 0], shape: "circle", color: [100,100,100]}
+ - object2: {pose: [1, -1, 3.14, 0, 0, 0], shape: "circle", color: [100,100,100]}
+
+

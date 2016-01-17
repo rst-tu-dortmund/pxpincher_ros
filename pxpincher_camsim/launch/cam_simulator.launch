@@ -1,0 +1,8 @@
+<launch>
+
+  <!-- Start cam simulator -->
+  <node name="cam_simulator" pkg="pxpincher_camsim" type="cam_simulator" output="screen">
+  	<rosparam file="$(find pxpincher_camsim)/cfg/camsim_params.yaml" command="load"/>
+  </node>
+
+</launch>

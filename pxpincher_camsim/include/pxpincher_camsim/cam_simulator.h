@@ -41,6 +41,7 @@
 
 #include <ros/ros.h>
 #include <pxpincher_camsim/visual_object.h>
+#include <pxpincher_camsim/camera_model.h>
 
 #include <tf/transform_datatypes.h>
 
@@ -63,12 +64,24 @@ protected:
   
   bool getObjectsFromParamServer();
   
+  void visualize3D();
+  
   
 private:
   
   ros::NodeHandle nhandle_;
   
+  ros::Publisher vis_pub_;
+  
+  std::string map_frame_;
+  double rate_;
+  
   std::vector<VisualObject> objects_;
+  
+  CameraModel cam_;
+  
+  bool initialized_;
+  
   
 }; 
   

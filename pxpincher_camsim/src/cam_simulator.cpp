@@ -39,6 +39,8 @@
 
 #include <pxpincher_camsim/cam_simulator.h>
 
+#include <visualization_msgs/Marker.h>
+
 #include <XmlRpcValue.h>
 #include <XmlRpcException.h>
 
@@ -46,7 +48,7 @@ namespace pxpincher
 {
 
   
-CamSimulator::CamSimulator() : nhandle_("~")
+CamSimulator::CamSimulator() : nhandle_("~"), initialized_(false)
 {
  
 }
@@ -55,20 +57,74 @@ CamSimulator::CamSimulator() : nhandle_("~")
 void CamSimulator::initialize()
 {
     getObjectsFromParamServer();
+    
+    map_frame_ = "/map";
+    nhandle_.param("map_frame", map_frame_, map_frame_);
+    
+    rate_ = 10;
+    nhandle_.param("rate", rate_, rate_);
+    
+    nhandle_.param("cam_frame", cam_.params().camera_frame, cam_.params().camera_frame);
+    nhandle_.param("focal_length", cam_.params().focal_length, cam_.params().focal_length);
+    nhandle_.param("image_width", cam_.params().cols, cam_.params().cols);
+    nhandle_.param("image_height", cam_.params().rows, cam_.params().rows);
+    nhandle_.param("image_center_x", cam_.params().center_x, cam_.params().center_x);
+    nhandle_.param("image_center_y", cam_.params().center_y, cam_.params().center_y);
+    
+    vis_pub_ = nhandle_.advertise<visualization_msgs::Marker>("object_markers",0);
+    
+    initialized_ = true;
     ROS_INFO("CamSimulator initialized.");
 }
 
 
 void CamSimulator::start()
 {
+  if (!initialized_)
+  {
+    ROS_ERROR("CamSimulator not initialized. Please call initialize() first.");
+    return;
+  }
+  
   ROS_INFO("CamSimulator started.");
-  ros::Rate r(5);
+  ros::Rate r(rate_);
   while (ros::ok())
   {
+    cam_.renderImage(objects_, map_frame_);
+    visualize3D();
     r.sleep();
   }
 }
 
+
+void CamSimulator::visualize3D()
+{
+  for (int i=0; i<(int)objects_.size(); ++i)
+  {
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = map_frame_;
+    marker.header.stamp = ros::Time();
+    marker.ns = "Circular objects";
+    marker.id = i;
+    marker.type = visualization_msgs::Marker::CYLINDER;
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.lifetime = ros::Duration(2);
+    marker.pose.position.x = objects_[i].position().x();
+    marker.pose.position.y = objects_[i].position().y();
+    marker.pose.position.z = objects_[i].position().z();
+    tf::quaternionTFToMsg(objects_[i].orientation(), marker.pose.orientation);
+    marker.scale.x = objects_[i].size();
+    marker.scale.y = objects_[i].size();
+    marker.scale.z = 0.01;
+    marker.color.a = 1.0;
+    marker.color.r = float(objects_[i].color().r)/ 255.0;
+    marker.color.g = float(objects_[i].color().g)/ 255.0;
+    marker.color.b = float(objects_[i].color().b)/ 255.0;
+    vis_pub_.publish( marker );
+  }
+}
+  
+  
   
 bool CamSimulator::getObjectsFromParamServer()
 {
@@ -88,6 +144,16 @@ bool CamSimulator::getObjectsFromParamServer()
   bool retval = true;
   
   objects_.clear();
+  
+  
+  // XmlRpc does not support an implicit conversion between int and double. 
+  // Therefore we define a small function for cases in which conversion is desired!
+  auto convDouble = [] (XmlRpc::XmlRpcValue& val) -> double
+  {
+    if (val.getType() == XmlRpc::XmlRpcValue::TypeInt) // XmlRpc cannot cast int to double
+      return int(val);
+    return val; // if not double, an exception is thrown;
+  };
   
   // iterate objects
   for (int i = 0; i < param_yaml.size(); ++i)
@@ -122,12 +188,6 @@ bool CamSimulator::getObjectsFromParamServer()
                 {
                     try
                     {
-                      auto convDouble = [] (XmlRpc::XmlRpcValue& val) -> double
-                      {
-                        if (val.getType() == XmlRpc::XmlRpcValue::TypeInt) // XmlRpc cannot cast int to double
-                          return int(val);
-                        return val; // if not double, an exception is thrown;
-                      };
                       object.position().setX( convDouble(it_elem->second[0]) );
                       object.position().setY( convDouble(it_elem->second[1]) );
                       object.position().setZ( convDouble(it_elem->second[2]) );
@@ -171,6 +231,21 @@ bool CamSimulator::getObjectsFromParamServer()
               continue;
             }
             
+            // check parameter size
+            if (it_elem->first == "size")
+            {
+              try
+              {
+                object.size() = convDouble(it_elem->second);
+              }
+              catch (const XmlRpc::XmlRpcException& ex)
+              {
+                ROS_ERROR_STREAM("Cannot read size of object '" << object.name() << "': " << ex.getMessage());
+                retval = false;
+              }
+              continue;
+            }
+            
             // check parameter color
             if (it_elem->first == "color")
             {
@@ -185,7 +260,7 @@ bool CamSimulator::getObjectsFromParamServer()
                     }
                     catch (const XmlRpc::XmlRpcException& ex)
                     {
-                      ROS_ERROR_STREAM("Cannot add color to object '" << object.name() << "': " << ex.getMessage());
+                      ROS_ERROR_STREAM("Cannot read color of object '" << object.name() << "': " << ex.getMessage());
                       retval = false;
                     }
                 }

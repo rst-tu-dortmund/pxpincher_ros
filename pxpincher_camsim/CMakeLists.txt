@@ -7,10 +7,14 @@ project(pxpincher_camsim)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   tf
+  cv_bridge
+  visualization_msgs
 )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
+
+find_package(OpenCV REQUIRED)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -92,10 +96,10 @@ endif()
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+  INCLUDE_DIRS include
 #  LIBRARIES pxpincher_camsim
-#  CATKIN_DEPENDS pxpincher_lib roscpp
-#  DEPENDS system_lib
+  CATKIN_DEPENDS roscpp tf visualization_msgs cv_bridge
+  DEPENDS libopencv-dev
 )
 
 ###########
@@ -107,6 +111,7 @@ catkin_package(
 # include_directories(include)
 include_directories(
   include
+  ${OpenCV_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -116,7 +121,7 @@ include_directories(
 # )
 
 ## Declare a cpp executable
-add_executable(cam_simulator src/main.cpp src/cam_simulator.cpp)
+add_executable(cam_simulator src/main.cpp src/cam_simulator.cpp src/camera_model.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -124,6 +129,7 @@ add_executable(cam_simulator src/main.cpp src/cam_simulator.cpp)
 
 ## Specify libraries to link a library or executable target against
  target_link_libraries(cam_simulator
+   ${OpenCV_LIBRARIES}
    ${catkin_LIBRARIES}
  )
 

@@ -36,21 +36,60 @@
  * Author: Christoph Rösmann
  *********************************************************************/
 
+#ifndef PXPINCHER_CAMERA_MODEL_H_
+#define PXPINCHER_CAMERA_MODEL_H_
 
-#include <pxpincher_camsim/cam_simulator.h>
+#include <ros/ros.h>
+#include <pxpincher_camsim/visual_object.h>
+#include <tf/transform_listener.h>
+#include <opencv2/opencv.hpp>
 
-
-// =============== Main function =================
-int main( int argc, char** argv )
+namespace pxpincher
 {
-  ros::init(argc, argv, "pxpincher_camsim");
-  ros::NodeHandle n("~");
-   
-  pxpincher::CamSimulator sim;
   
-  sim.initialize();
+struct CameraParameters
+{
+  std::string camera_frame = "camera_link";
   
-  sim.start();
+  std::string window_name = "Image";
+  int rows = 500;
+  int cols = 500;
+  int center_x = 250;
+  int center_y = 250;
+  double focal_length = 1;
+};
   
-  return 0;
-}
+class CameraModel
+{
+  
+public:
+  CameraModel();
+  ~CameraModel() {}
+
+  void renderImage(const std::vector<VisualObject>& objects, const std::string& map_frame);
+  
+  CameraParameters& params() {return params_;}
+  const CameraParameters& params() const {return params_;}
+  
+protected:
+  
+  bool getExtrinsicTransformation(const std::string& map_frame, tf::StampedTransform& transform);
+  void getIntrinsicTransformation(const tf::Pose& pose_camframe, int& u, int& v);
+  
+  /**
+   * @todo We assume a camera that is not rotated around the x or y axis for now!
+   */
+  void drawCircleObject(cv::Mat& image, const VisualObject& object, const tf::StampedTransform& extr_transform);
+  
+private:
+  
+  CameraParameters params_;
+  tf::TransformListener listener_;
+  
+}; 
+  
+  
+  
+} // end namespace
+
+#endif /* PXPINCHER_VISUAL_OBJECT_H_ */

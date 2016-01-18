@@ -54,9 +54,11 @@ struct CameraParameters
   std::string window_name = "Image";
   int rows = 500;
   int cols = 500;
-  int center_x = 250;
-  int center_y = 250;
+  int center_u = 250;
+  int center_v = 250;
   double focal_length = 1;
+  double opening_angle_x = M_PI/3;
+  double opening_angle_y = M_PI/3;
 };
   
 class CameraModel
@@ -66,7 +68,7 @@ public:
   CameraModel();
   ~CameraModel() {}
 
-  void renderImage(const std::vector<VisualObject>& objects, const std::string& map_frame);
+  void renderImage(const std::vector<VisualObject>& objects, const std::string& map_frame, bool preview);
   
   CameraParameters& params() {return params_;}
   const CameraParameters& params() const {return params_;}

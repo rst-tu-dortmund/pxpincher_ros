@@ -50,7 +50,7 @@ CameraModel::CameraModel()
 }
 
 
-void CameraModel::renderImage(const std::vector<VisualObject>& objects, const std::string& map_frame)
+void CameraModel::renderImage(const std::vector<VisualObject>& objects, const std::string& map_frame, bool preview)
 {
   
   
@@ -72,8 +72,11 @@ void CameraModel::renderImage(const std::vector<VisualObject>& objects, const st
     
   }
     
-  cv::imshow( params_.window_name.c_str(), image );
-  cv::waitKey(1);
+  if (preview)
+  {
+    cv::imshow( params_.window_name.c_str(), image );
+    cv::waitKey(1);
+  }
 }
 
 
@@ -88,6 +91,21 @@ void CameraModel::drawCircleObject(cv::Mat& image, const VisualObject& object, c
   if (pose_cam.getOrigin().getZ() <=0) // object is behind camera
     return;
   
+  // check opening angle
+  // u:
+  if ( std::abs( std::acos( pose_cam.getOrigin().z() / std::sqrt( std::pow(pose_cam.getOrigin().x(),2) + 
+                                                                    std::pow(pose_cam.getOrigin().y(),2) + 
+                                                                    std::pow(pose_cam.getOrigin().z(),2) ) ) ) > params_.opening_angle_x)
+    return;
+  
+  // v
+  if ( std::abs( std::acos( pose_cam.getOrigin().y() / std::sqrt( std::pow(pose_cam.getOrigin().x(),2) + 
+                                                                    std::pow(pose_cam.getOrigin().y(),2) + 
+                                                                    std::pow(pose_cam.getOrigin().z(),2) ) ) - M_PI/2) > params_.opening_angle_y)
+    return;
+  
+  
+  
   // perform intrinsic transformation
   int u, v;
   getIntrinsicTransformation(pose_cam, u, v);
@@ -96,14 +114,14 @@ void CameraModel::drawCircleObject(cv::Mat& image, const VisualObject& object, c
   
   // get horizontal and vertical size of the circle (might be an ellipse after transforming)
   tf::Pose top = pose_map;
-  top.getOrigin().setZ( top.getOrigin().z() + object.size()/2 );
+  top.getOrigin().setZ( top.getOrigin().z() + object.height()/2 );
   int u_top, v_top;
   getIntrinsicTransformation(extr_transform * top, u_top, v_top);
   
-  tf::Pose right = pose_map;
-  right.getOrigin().setY( right.getOrigin().y() + object.size()/2 );
+  tf::Pose left = pose_map;
+  left.getOrigin().setY( left.getOrigin().y() + object.width()/2 );
   int u_right, v_right;
-  getIntrinsicTransformation(extr_transform * right, u_right, v_right);
+  getIntrinsicTransformation(extr_transform * left, u_right, v_right);
     
   int height = std::abs(v_top-v); // just half of the size is required by opencv
   int width = std::abs(u_right-u); // just half of the size is required by opencv
@@ -127,8 +145,8 @@ void CameraModel::getIntrinsicTransformation(const tf::Pose& pose_camframe, int&
   }
   double u_d = -params().focal_length / pose_camframe.getOrigin().z() * pose_camframe.getOrigin().x();
   double v_d = -params().focal_length / pose_camframe.getOrigin().z() * pose_camframe.getOrigin().y();
-  u = (int) u_d + params().center_x;
-  v = (int) v_d + params().center_y;
+  u = (int) u_d + params().center_u;
+  v = (int) v_d + params().center_v;
 }
 
 bool CameraModel::getExtrinsicTransformation(const std::string& map_frame, tf::StampedTransform& transform)

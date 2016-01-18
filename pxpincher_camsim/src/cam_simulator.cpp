@@ -64,12 +64,17 @@ void CamSimulator::initialize()
     rate_ = 10;
     nhandle_.param("rate", rate_, rate_);
     
+    live_preview_ = true;
+    nhandle_.param("live_preview", live_preview_, live_preview_);
+    
     nhandle_.param("cam_frame", cam_.params().camera_frame, cam_.params().camera_frame);
     nhandle_.param("focal_length", cam_.params().focal_length, cam_.params().focal_length);
     nhandle_.param("image_width", cam_.params().cols, cam_.params().cols);
     nhandle_.param("image_height", cam_.params().rows, cam_.params().rows);
-    nhandle_.param("image_center_x", cam_.params().center_x, cam_.params().center_x);
-    nhandle_.param("image_center_y", cam_.params().center_y, cam_.params().center_y);
+    nhandle_.param("image_center_u", cam_.params().center_u, cam_.params().center_u);
+    nhandle_.param("image_center_v", cam_.params().center_v, cam_.params().center_v);
+    nhandle_.param("opening_angle_x", cam_.params().opening_angle_x, cam_.params().opening_angle_x);
+    nhandle_.param("opening_angle_y", cam_.params().opening_angle_y, cam_.params().opening_angle_y);
     
     vis_pub_ = nhandle_.advertise<visualization_msgs::Marker>("object_markers",0);
     
@@ -90,7 +95,7 @@ void CamSimulator::start()
   ros::Rate r(rate_);
   while (ros::ok())
   {
-    cam_.renderImage(objects_, map_frame_);
+    cam_.renderImage(objects_, map_frame_, live_preview_);
     visualize3D();
     r.sleep();
   }
@@ -113,8 +118,8 @@ void CamSimulator::visualize3D()
     marker.pose.position.y = objects_[i].position().y();
     marker.pose.position.z = objects_[i].position().z();
     tf::quaternionTFToMsg(objects_[i].orientation(), marker.pose.orientation);
-    marker.scale.x = objects_[i].size();
-    marker.scale.y = objects_[i].size();
+    marker.scale.x = objects_[i].width();
+    marker.scale.y = objects_[i].height();
     marker.scale.z = 0.01;
     marker.color.a = 1.0;
     marker.color.r = float(objects_[i].color().r)/ 255.0;
@@ -231,16 +236,31 @@ bool CamSimulator::getObjectsFromParamServer()
               continue;
             }
             
-            // check parameter size
-            if (it_elem->first == "size")
+            // check parameter width
+            if (it_elem->first == "width")
             {
               try
               {
-                object.size() = convDouble(it_elem->second);
+                object.width() = convDouble(it_elem->second);
               }
               catch (const XmlRpc::XmlRpcException& ex)
               {
-                ROS_ERROR_STREAM("Cannot read size of object '" << object.name() << "': " << ex.getMessage());
+                ROS_ERROR_STREAM("Cannot read width of object '" << object.name() << "': " << ex.getMessage());
+                retval = false;
+              }
+              continue;
+            }
+            
+            // check parameter height
+            if (it_elem->first == "height")
+            {
+              try
+              {
+                object.height() = convDouble(it_elem->second);
+              }
+              catch (const XmlRpc::XmlRpcException& ex)
+              {
+                ROS_ERROR_STREAM("Cannot read height of object '" << object.name() << "': " << ex.getMessage());
                 retval = false;
               }
               continue;

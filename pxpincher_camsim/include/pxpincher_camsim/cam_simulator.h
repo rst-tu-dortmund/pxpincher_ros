@@ -76,6 +76,8 @@ private:
   std::string map_frame_;
   double rate_;
   
+  bool live_preview_;
+  
   std::vector<VisualObject> objects_;
   
   CameraModel cam_;

@@ -81,8 +81,11 @@ public:
   Color& color() {return color_;}
   const Color& color() const {return color_;}
   
-  double& size() {return size_;}
-  const double& size() const {return size_;}
+  double& width() {return width_;}
+  const double& width() const {return width_;}
+  
+  double& height() {return height_;}
+  const double& height() const {return height_;}
   
   void getPose(tf::Pose& pose) const
   {
@@ -97,7 +100,8 @@ private:
   tf::Quaternion orientation_;
   Shape shape_ = Shape::CIRCLE;
   Color color_;
-  double size_ = 1.0;
+  double width_ = 1.0;
+  double height_ = 1.0;
   
 }; 
   

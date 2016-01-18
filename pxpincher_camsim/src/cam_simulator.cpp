@@ -109,22 +109,39 @@ void CamSimulator::visualize3D()
     visualization_msgs::Marker marker;
     marker.header.frame_id = map_frame_;
     marker.header.stamp = ros::Time();
-    marker.ns = "Circular objects";
+    marker.ns = "Objects";
     marker.id = i;
-    marker.type = visualization_msgs::Marker::CYLINDER;
+    
     marker.action = visualization_msgs::Marker::ADD;
     marker.lifetime = ros::Duration(2);
     marker.pose.position.x = objects_[i].position().x();
     marker.pose.position.y = objects_[i].position().y();
     marker.pose.position.z = objects_[i].position().z();
     tf::quaternionTFToMsg(objects_[i].orientation(), marker.pose.orientation);
-    marker.scale.x = objects_[i].width();
-    marker.scale.y = objects_[i].height();
-    marker.scale.z = 0.01;
     marker.color.a = 1.0;
     marker.color.r = float(objects_[i].color().r)/ 255.0;
     marker.color.g = float(objects_[i].color().g)/ 255.0;
     marker.color.b = float(objects_[i].color().b)/ 255.0;
+    
+    if (objects_[i].shape() == VisualObject::Shape::CIRCLE)
+    {
+      marker.type = visualization_msgs::Marker::CYLINDER;
+      
+      marker.scale.x = objects_[i].width();
+      marker.scale.y = objects_[i].height();
+      marker.scale.z = 0.01;
+    }
+    else if (objects_[i].shape() == VisualObject::Shape::RECTANGLE)
+    {
+      marker.type = visualization_msgs::Marker::CUBE;
+      
+      marker.scale.x = objects_[i].width();
+      marker.scale.y = objects_[i].height();
+      marker.scale.z = 0.01;
+    }
+    else
+      continue;
+    
     vis_pub_.publish( marker );
   }
 }
@@ -223,9 +240,13 @@ bool CamSimulator::getObjectsFromParamServer()
                 {
                   object.shape() = VisualObject::Shape::CIRCLE;
                 }
+                else if (it_elem->second == "rectangle")
+                {
+                  object.shape() = VisualObject::Shape::RECTANGLE;
+                }
                 else
                 {
-                  ROS_ERROR_STREAM("Shape '" << it_elem->second << "' is not supported. Supported shapes are: 'circle'. ");
+                  ROS_ERROR_STREAM("Shape '" << it_elem->second << "' is not supported. Supported shapes are: 'circle', 'rectangle'. ");
                 }
               }
               catch (const XmlRpc::XmlRpcException& ex)

@@ -80,8 +80,17 @@ protected:
   
   /**
    * @todo We assume a camera that is not rotated around the x or y axis for now!
+   * @todo the viewing angle is currently calculated according to the center (change to boundary)
    */
   void drawCircleObject(cv::Mat& image, const VisualObject& object, const tf::StampedTransform& extr_transform);
+  
+  /**
+   * @todo We assume a camera that is not rotated around the x or y axis for now!
+   */
+  void drawRectangleObject(cv::Mat& image, const VisualObject& object, const tf::StampedTransform& extr_transform);
+  
+  double getOpeningAngleX(const tf::Pose& pose_camframe) const;
+  double getOpeningAngleY(const tf::Pose& pose_camframe) const;
   
 private:
   

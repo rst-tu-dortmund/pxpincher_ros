@@ -51,7 +51,7 @@ class VisualObject
   
 public:
   
-  enum class Shape {CIRCLE};
+  enum class Shape {CIRCLE, RECTANGLE};
   
   struct Color
   {

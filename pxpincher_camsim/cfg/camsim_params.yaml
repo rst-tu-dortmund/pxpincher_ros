@@ -3,7 +3,7 @@
 #color: [R,G,B] (each 0..255)
 
 objects:
- #- paper: {}
+ - paper: {pose: [0.505, 0.0, 0.1, 0, 1.57, 0], shape: "rectangle", width: 0.25, height: 0.25, color: [255,255,255]}
  - object1: {pose: [0.5, -0.05, 0.15, 0, 1.57, 0], shape: "circle", width: 0.05, height: 0.05, color: [204,255,51]}
  - object2: {pose: [0.5, 0.05, 0.15, 0, 1.57, 0], shape: "circle", width: 0.05, height: 0.05, color: [255,0,0]}
  - object2: {pose: [0.5, -0.05, 0.05, 0, 1.57, 0], shape: "circle", width: 0.05, height: 0.05, color: [0,255,0]}

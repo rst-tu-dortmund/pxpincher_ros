@@ -68,6 +68,12 @@ void CameraModel::renderImage(const std::vector<VisualObject>& objects, const st
        drawCircleObject(image, object, extr_transform);
        continue;
      }
+     
+     if (object.shape() == VisualObject::Shape::RECTANGLE)
+     {
+       drawRectangleObject(image, object, extr_transform);
+       continue;
+     }
     
     
   }
@@ -88,23 +94,14 @@ void CameraModel::drawCircleObject(cv::Mat& image, const VisualObject& object, c
   tf::Pose pose_cam;
   pose_cam = extr_transform * pose_map;
   
-  if (pose_cam.getOrigin().getZ() <=0) // object is behind camera
+  if (pose_cam.getOrigin().getZ() <=0.01) // object is behind camera
     return;
-  
+
   // check opening angle
-  // u:
-  if ( std::abs( std::acos( pose_cam.getOrigin().z() / std::sqrt( std::pow(pose_cam.getOrigin().x(),2) + 
-                                                                    std::pow(pose_cam.getOrigin().y(),2) + 
-                                                                    std::pow(pose_cam.getOrigin().z(),2) ) ) ) > params_.opening_angle_x)
+  if ( getOpeningAngleX(pose_cam) > params_.opening_angle_x || getOpeningAngleY(pose_cam) > params_.opening_angle_y)
     return;
-  
-  // v
-  if ( std::abs( std::acos( pose_cam.getOrigin().y() / std::sqrt( std::pow(pose_cam.getOrigin().x(),2) + 
-                                                                    std::pow(pose_cam.getOrigin().y(),2) + 
-                                                                    std::pow(pose_cam.getOrigin().z(),2) ) ) - M_PI/2) > params_.opening_angle_y)
-    return;
-  
-  
+
+   
   
   // perform intrinsic transformation
   int u, v;
@@ -129,8 +126,76 @@ void CameraModel::drawCircleObject(cv::Mat& image, const VisualObject& object, c
   // draw
   //cv::circle( image, cv::Point(u, v), 5, cv::Scalar( object.color().b, object.color().g, object.color().r ), -1, 8 );  
   cv::ellipse( image, cv::Point(u, v), cv::Size( width, height ), 0, 0, 360,  cv::Scalar( object.color().b, object.color().g, object.color().r ),  -1, 8 );
+}
+
+
+void CameraModel::drawRectangleObject(cv::Mat& image, const VisualObject& object, const tf::StampedTransform& extr_transform)
+{ 
+  // perform extrinsic transformation
+  tf::Pose pose_map;
+  object.getPose(pose_map);
+  tf::Pose pose_cam;
+  pose_cam = extr_transform * pose_map;
   
+  if (pose_cam.getOrigin().getZ() <=0.01) // object is behind camera
+    return;
+    
+  // check opening angle
+  if ( getOpeningAngleX(pose_cam) > params_.opening_angle_x || getOpeningAngleY(pose_cam) > params_.opening_angle_y)
+    return;
   
+  //TODO:  We assume a camera that is not rotated around the x or y axis for now!
+  
+  std::array<cv::Point,4> edges;
+
+  tf::Pose top_right = pose_map;
+  top_right.getOrigin().setY( top_right.getOrigin().y() + object.width()/2 );
+  top_right.getOrigin().setZ( top_right.getOrigin().z() + object.height()/2 );
+  tf::Pose cam_top_right = extr_transform * top_right;
+  getIntrinsicTransformation(cam_top_right, edges[0].x, edges[0].y);
+    
+  tf::Pose top_left = pose_map;
+  top_left.getOrigin().setY( top_left.getOrigin().y() - object.width()/2 );
+  top_left.getOrigin().setZ( top_left.getOrigin().z() + object.height()/2 );
+  tf::Pose cam_top_left = extr_transform * top_left;
+  getIntrinsicTransformation(cam_top_left, edges[1].x, edges[1].y);
+  
+  tf::Pose bottom_left = pose_map;
+  bottom_left.getOrigin().setY( bottom_left.getOrigin().y() - object.width()/2 );
+  bottom_left.getOrigin().setZ( bottom_left.getOrigin().z() - object.height()/2 );
+  tf::Pose cam_bottom_left = extr_transform * bottom_left;
+  getIntrinsicTransformation(cam_bottom_left,  edges[2].x, edges[2].y);
+  
+  tf::Pose bottom_right = pose_map;
+  bottom_right.getOrigin().setY( bottom_right.getOrigin().y() + object.width()/2 );
+  bottom_right.getOrigin().setZ( bottom_right.getOrigin().z() - object.height()/2 );
+  tf::Pose cam_bottom_right = extr_transform * bottom_right;
+  getIntrinsicTransformation(cam_bottom_right, edges[3].x, edges[3].y);
+
+    
+  std::vector<double> angles_x;
+  angles_x.push_back( getOpeningAngleX(cam_top_right) );
+  angles_x.push_back( getOpeningAngleX(cam_top_left) );
+  angles_x.push_back( getOpeningAngleX(cam_bottom_left) );
+  angles_x.push_back( getOpeningAngleX(cam_bottom_right) );
+
+//   // check opening angle x
+//   if ( *std::min_element(angles_x.begin(),angles_x.end() ) > params_.opening_angle_x)
+//     return;
+//   
+//   std::vector<double> angles_y;
+//   angles_y.push_back( getOpeningAngleY(cam_top_right) );
+//   angles_y.push_back( getOpeningAngleY(cam_top_left) );
+//   angles_y.push_back( getOpeningAngleY(cam_bottom_left) );
+//   angles_y.push_back( getOpeningAngleY(cam_bottom_right) );
+//   
+//   // check opening angle y
+//   if ( *std::min_element(angles_y.begin(),angles_y.end() ) > params_.opening_angle_y)
+//     return;
+
+  
+  // draw
+  cv::fillConvexPoly(image, edges.data(), (int)edges.size(), cv::Scalar( object.color().b, object.color().g, object.color().r ), 8, 0);
 }
 
 
@@ -165,6 +230,18 @@ bool CameraModel::getExtrinsicTransformation(const std::string& map_frame, tf::S
     return true;
 }
 
+double CameraModel::getOpeningAngleX(const tf::Pose& pose_camframe) const
+{
+    return std::abs( std::acos( pose_camframe.getOrigin().z() / std::sqrt( std::pow(pose_camframe.getOrigin().x(),2) + 
+                                                                           std::pow(pose_camframe.getOrigin().y(),2) + 
+                                                                           std::pow(pose_camframe.getOrigin().z(),2) ) ) );
+}
+double CameraModel::getOpeningAngleY(const tf::Pose& pose_camframe) const
+{
+     return std::abs( std::acos( pose_camframe.getOrigin().y() / std::sqrt( std::pow(pose_camframe.getOrigin().x(),2) + 
+                                                                            std::pow(pose_camframe.getOrigin().y(),2) + 
+                                                                            std::pow(pose_camframe.getOrigin().z(),2) ) ) - M_PI/2); 
+}
 
 
 } // end namespace

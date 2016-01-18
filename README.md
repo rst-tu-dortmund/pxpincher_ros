@@ -3,9 +3,14 @@ pxpincher_ros Package
 
 This metapackage is intended for controlling and simulating the PhantomX Pincher robot at the RST.
 
-Build status of the master branch:
+Build status of the *master* branch (ROS Indigo & Jade):
 
 [![Build Status](https://travis-ci.org/rst-tu-dortmund/pxpincher_ros.svg?branch=master)](https://travis-ci.org/rst-tu-dortmund/pxpincher_ros)
+
+Build status of the *devel* branch (ROS Indigo & Jade):
+
+[![Build Status](https://travis-ci.org/rst-tu-dortmund/pxpincher_ros.svg?branch=devel)](https://travis-ci.org/rst-tu-dortmund/pxpincher_ros)
+
 
 Installation
 ------------

@@ -4,15 +4,15 @@
 
 objects:
  - paper: {pose: [0.505, 0.0, 0.1, 0, 1.57, 0], shape: "rectangle", width: 0.25, height: 0.25, color: [255,255,255]}
- - object1: {pose: [0.5, -0.05, 0.15, 0, 1.57, 0], shape: "circle", width: 0.05, height: 0.05, color: [204,255,51]}
+ - object1: {pose: [0.5, -0.05, 0.15, 0, 1.57, 0], shape: "circle", width: 0.05, height: 0.05, color: [255,165,0]}  # yellow: 204,255,51]
  - object2: {pose: [0.5, 0.05, 0.15, 0, 1.57, 0], shape: "circle", width: 0.05, height: 0.05, color: [255,0,0]}
- - object2: {pose: [0.5, -0.05, 0.05, 0, 1.57, 0], shape: "circle", width: 0.05, height: 0.05, color: [0,255,0]}
- - object2: {pose: [0.5, 0.05, 0.05, 0, 1.57, 0], shape: "circle", width: 0.05, height: 0.05, color: [0,0,255]}
+ - object2: {pose: [0.5, -0.05, 0.05, 0, 1.57, 0], shape: "circle", width: 0.05, height: 0.05, color: [0,0,255]}
+ - object2: {pose: [0.5, 0.05, 0.05, 0, 1.57, 0], shape: "circle", width: 0.05, height: 0.05, color: [0,255,0]}
 
 rate: 10
 map_frame: "arm_base_link"
 cam_frame: "camera_link"
-cam_topic: "camera"
+cam_topic: "/camera"
 live_preview: false
 focal_length: 200.0
 image_width: 640

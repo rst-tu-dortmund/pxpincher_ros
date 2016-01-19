@@ -129,19 +129,24 @@ void CameraModel::drawCircleObject(cv::Mat& image, const VisualObject& object, c
   
   //TODO:  We assume a camera that is not rotated around the x or y axis for now!
   
-  // get horizontal and vertical size of the circle (might be an ellipse after transforming)
+  // get horizontal and vertical size of the circle (might be an ellipse after transforming) 
   tf::Pose top = pose_map;
-  top.getOrigin().setZ( top.getOrigin().z() + object.height()/2 );
+  tf::Vector3 unit_y(0,1,0);
+  tf::Vector3 rotated_y = tf::quatRotate(object.orientation(), unit_y);
+  top.getOrigin() += rotated_y * object.height()/2.0;
   int u_top, v_top;
   getIntrinsicTransformation(extr_transform * top, u_top, v_top);
   
   tf::Pose left = pose_map;
-  left.getOrigin().setY( left.getOrigin().y() + object.width()/2 );
+  tf::Vector3 unit_x(1,0,0);
+  tf::Vector3 rotated_x = tf::quatRotate(object.orientation(), unit_x);
+  left.getOrigin() += rotated_x * object.width()/2.0;
   int u_right, v_right;
   getIntrinsicTransformation(extr_transform * left, u_right, v_right);
     
-  int height = std::abs(v_top-v); // just half of the size is required by opencv
-  int width = std::abs(u_right-u); // just half of the size is required by opencv
+//   ROS_INFO_STREAM("u: (" << u << "," << v << ")" << " top: (" << u_top << "," << v_top << ") right: (" << u_right << "," << v_right << ")" );
+  int height = std::abs(u_top-u); // just half of the size is required by opencv
+  int width = std::abs(v_right-v); // just half of the size is required by opencv
 
   // draw
   //cv::circle( image, cv::Point(u, v), 5, cv::Scalar( object.color().b, object.color().g, object.color().r ), -1, 8 );  
@@ -167,28 +172,34 @@ void CameraModel::drawRectangleObject(cv::Mat& image, const VisualObject& object
   //TODO:  We assume a camera that is not rotated around the x or y axis for now!
   
   std::array<cv::Point,4> edges;
-
+  double w = object.width()/2;
+  double h = object.height()/2;
+  
   tf::Pose top_right = pose_map;
-  top_right.getOrigin().setY( top_right.getOrigin().y() + object.width()/2 );
-  top_right.getOrigin().setZ( top_right.getOrigin().z() + object.height()/2 );
+  tf::Vector3 dir1(w,h,0);
+  tf::Vector3 rotated1 = tf::quatRotate(object.orientation(), dir1);
+  top_right.getOrigin() += rotated1;
   tf::Pose cam_top_right = extr_transform * top_right;
   getIntrinsicTransformation(cam_top_right, edges[0].x, edges[0].y);
     
   tf::Pose top_left = pose_map;
-  top_left.getOrigin().setY( top_left.getOrigin().y() - object.width()/2 );
-  top_left.getOrigin().setZ( top_left.getOrigin().z() + object.height()/2 );
+  tf::Vector3 dir2(-w,h,0);
+  tf::Vector3 rotated2 = tf::quatRotate(object.orientation(), dir2);
+  top_left.getOrigin() += rotated2;
   tf::Pose cam_top_left = extr_transform * top_left;
   getIntrinsicTransformation(cam_top_left, edges[1].x, edges[1].y);
   
   tf::Pose bottom_left = pose_map;
-  bottom_left.getOrigin().setY( bottom_left.getOrigin().y() - object.width()/2 );
-  bottom_left.getOrigin().setZ( bottom_left.getOrigin().z() - object.height()/2 );
+  tf::Vector3 dir3(-w,-h,0);
+  tf::Vector3 rotated3 = tf::quatRotate(object.orientation(), dir3);
+  bottom_left.getOrigin() += rotated3;
   tf::Pose cam_bottom_left = extr_transform * bottom_left;
   getIntrinsicTransformation(cam_bottom_left,  edges[2].x, edges[2].y);
   
   tf::Pose bottom_right = pose_map;
-  bottom_right.getOrigin().setY( bottom_right.getOrigin().y() + object.width()/2 );
-  bottom_right.getOrigin().setZ( bottom_right.getOrigin().z() - object.height()/2 );
+  tf::Vector3 dir4(w,-h,0);
+  tf::Vector3 rotated4 = tf::quatRotate(object.orientation(), dir4);
+  bottom_right.getOrigin() += rotated4;
   tf::Pose cam_bottom_right = extr_transform * bottom_right;
   getIntrinsicTransformation(cam_bottom_right, edges[3].x, edges[3].y);
 

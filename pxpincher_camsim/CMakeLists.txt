@@ -6,7 +6,10 @@ project(pxpincher_camsim)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  image_transport
   tf
+  sensor_msgs
+  std_msgs
   cv_bridge
   visualization_msgs
 )
@@ -98,7 +101,7 @@ endif()
 catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES pxpincher_camsim
-  CATKIN_DEPENDS roscpp tf visualization_msgs cv_bridge
+  CATKIN_DEPENDS roscpp image_transport tf visualization_msgs sensor_msgs std_msgs cv_bridge
   DEPENDS libopencv-dev
 )
 

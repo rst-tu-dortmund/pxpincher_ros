@@ -39,27 +39,37 @@
 #include <pxpincher_camsim/camera_model.h>
 
 #include <opencv2/opencv.hpp>
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/highgui/highgui.hpp"
+
 #include <limits>
 
 
 namespace pxpincher
 {
 
-CameraModel::CameraModel()
+CameraModel::CameraModel() : rng_( 0xFFFFFFFF )
 {
 }
 
 
-void CameraModel::renderImage(const std::vector<VisualObject>& objects, const std::string& map_frame, bool preview)
+void CameraModel::renderImage(cv::Mat& image, const std::vector<VisualObject>& objects, const std::string& map_frame, bool preview)
 {
   
   
-  cv::Mat image = cv::Mat::zeros(params_.rows, params_.cols, CV_8UC3);
+  image = cv::Mat::zeros(params_.rows, params_.cols, CV_8UC3);
   
   // get extrinsic transform
   tf::StampedTransform extr_transform;
   if ( !getExtrinsicTransformation(map_frame, extr_transform) )
     return;
+  
+  if (!params_.rnd_objects_overlapping) 
+  {
+    drawRandomCircles(image);
+    drawRandomLines(image);
+  }
+  
   
   for (const VisualObject& object : objects)
   {
@@ -77,7 +87,17 @@ void CameraModel::renderImage(const std::vector<VisualObject>& objects, const st
     
     
   }
-    
+  
+  if (params_.rnd_objects_overlapping) 
+  {
+    drawRandomCircles(image);
+    drawRandomLines(image);
+  }
+      
+  if (params_.blur_kernel_size) 
+    blurImage(image);  
+  
+  
   if (preview)
   {
     cv::imshow( params_.window_name.c_str(), image );
@@ -241,6 +261,49 @@ double CameraModel::getOpeningAngleY(const tf::Pose& pose_camframe) const
      return std::abs( std::acos( pose_camframe.getOrigin().y() / std::sqrt( std::pow(pose_camframe.getOrigin().x(),2) + 
                                                                             std::pow(pose_camframe.getOrigin().y(),2) + 
                                                                             std::pow(pose_camframe.getOrigin().z(),2) ) ) - M_PI/2); 
+}
+
+
+void CameraModel::blurImage(cv::Mat& image)
+{
+  for ( int i = 1; i < params_.blur_kernel_size; i = i + 2 )
+  {
+    //cv::blur( image, image, cv::Size( i, i ), cv::Point(-1,-1) );
+    cv::GaussianBlur( image, image, cv::Size( i, i ), 0, 0 );
+  }
+}
+
+
+void CameraModel::drawRandomCircles(cv::Mat& image)
+{
+  cv::Point center;
+
+  for( int i = 0; i < params_.no_random_circles; i++ )
+  {
+    center.x = rng_.uniform( 0, params_.cols );
+    center.y = rng_.uniform( 0, params_.rows );
+    
+    int radius = rng_.uniform(1, params_.max_radius_rnd_circles);
+
+    cv::circle( image, center, radius, randomColor(), -1, 8 );
+  }
+}
+
+void CameraModel::drawRandomLines(cv::Mat& image)
+{
+  cv::Point pt1, pt2;
+
+  for( int i = 0; i < params_.no_random_lines; i++ )
+  {
+   pt1.x = rng_.uniform( 0, params_.cols );
+   pt1.y = rng_.uniform( 0, params_.rows );
+   pt2.x = rng_.uniform( 0, params_.cols );
+   pt2.y = rng_.uniform( 0, params_.rows );
+
+   int thickness = rng_.uniform(1, params_.max_thickness_rnd_lines);
+   
+   cv::line( image, pt1, pt2, randomColor(), thickness, 8 );
+  }
 }
 
 

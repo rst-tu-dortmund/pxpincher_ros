@@ -59,6 +59,13 @@ struct CameraParameters
   double focal_length = 1;
   double opening_angle_x = M_PI/3;
   double opening_angle_y = M_PI/3;
+  int blur_kernel_size = 0;
+  
+  int no_random_circles = 0;
+  int max_radius_rnd_circles = 20;
+  int no_random_lines = 0;
+  int max_thickness_rnd_lines = 10;
+  bool rnd_objects_overlapping = false;
 };
   
 class CameraModel
@@ -68,7 +75,7 @@ public:
   CameraModel();
   ~CameraModel() {}
 
-  void renderImage(const std::vector<VisualObject>& objects, const std::string& map_frame, bool preview);
+  void renderImage(cv::Mat& image, const std::vector<VisualObject>& objects, const std::string& map_frame, bool preview);
   
   CameraParameters& params() {return params_;}
   const CameraParameters& params() const {return params_;}
@@ -92,10 +99,24 @@ protected:
   double getOpeningAngleX(const tf::Pose& pose_camframe) const;
   double getOpeningAngleY(const tf::Pose& pose_camframe) const;
   
+  
+  void blurImage(cv::Mat& image);
+  
+  void drawRandomCircles(cv::Mat& image);
+  void drawRandomLines(cv::Mat& image);
+  
+  cv::Scalar randomColor()
+  {
+    int icolor = (unsigned) rng_;
+    return cv::Scalar( icolor&255, (icolor>>8)&255, (icolor>>16)&255 );
+  }
+  
 private:
   
   CameraParameters params_;
   tf::TransformListener listener_;
+  
+  cv::RNG rng_; // opencv random number generator
   
 }; 
   

@@ -41,6 +41,9 @@
 
 #include <visualization_msgs/Marker.h>
 
+#include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/image_encodings.h>
+
 #include <XmlRpcValue.h>
 #include <XmlRpcException.h>
 
@@ -48,7 +51,7 @@ namespace pxpincher
 {
 
   
-CamSimulator::CamSimulator() : nhandle_("~"), initialized_(false)
+CamSimulator::CamSimulator() : nhandle_("~"), it_(nhandle_), initialized_(false)
 {
  
 }
@@ -67,7 +70,11 @@ void CamSimulator::initialize()
     live_preview_ = true;
     nhandle_.param("live_preview", live_preview_, live_preview_);
     
+    cam_topic_ = "camera";
+    nhandle_.param("cam_topic", cam_topic_, cam_topic_);
+    
     nhandle_.param("cam_frame", cam_.params().camera_frame, cam_.params().camera_frame);
+    
     nhandle_.param("focal_length", cam_.params().focal_length, cam_.params().focal_length);
     nhandle_.param("image_width", cam_.params().cols, cam_.params().cols);
     nhandle_.param("image_height", cam_.params().rows, cam_.params().rows);
@@ -75,8 +82,16 @@ void CamSimulator::initialize()
     nhandle_.param("image_center_v", cam_.params().center_v, cam_.params().center_v);
     nhandle_.param("opening_angle_x", cam_.params().opening_angle_x, cam_.params().opening_angle_x);
     nhandle_.param("opening_angle_y", cam_.params().opening_angle_y, cam_.params().opening_angle_y);
+    nhandle_.param("blur_kernel_size", cam_.params().blur_kernel_size, cam_.params().blur_kernel_size);
+    nhandle_.param("no_random_circles", cam_.params().no_random_circles, cam_.params().no_random_circles);
+    nhandle_.param("max_radius_rnd_circles", cam_.params().max_radius_rnd_circles, cam_.params().max_radius_rnd_circles);
+    nhandle_.param("no_random_lines", cam_.params().no_random_lines, cam_.params().no_random_lines);
+    nhandle_.param("max_thickness_rnd_lines", cam_.params().max_thickness_rnd_lines, cam_.params().max_thickness_rnd_lines);
+    nhandle_.param("rnd_objects_overlapping", cam_.params().rnd_objects_overlapping, cam_.params().rnd_objects_overlapping);
+    
     
     vis_pub_ = nhandle_.advertise<visualization_msgs::Marker>("object_markers",0);
+    image_pub_ = it_.advertise(cam_topic_, 1);
     
     initialized_ = true;
     ROS_INFO("CamSimulator initialized.");
@@ -90,12 +105,24 @@ void CamSimulator::start()
     ROS_ERROR("CamSimulator not initialized. Please call initialize() first.");
     return;
   }
-  
   ROS_INFO("CamSimulator started.");
+  ROS_INFO_STREAM("Publishing video stream to topic '" << cam_topic_ << "'...");
+  
+  cv_bridge::CvImagePtr cv_ptr = boost::make_shared<cv_bridge::CvImage>();
+  cv_ptr->header.frame_id = cam_.params().camera_frame;
+  cv_ptr->encoding = sensor_msgs::image_encodings::BGR8;
+  
   ros::Rate r(rate_);
   while (ros::ok())
   {
-    cam_.renderImage(objects_, map_frame_, live_preview_);
+    // render image
+    cam_.renderImage(cv_ptr->image, objects_, map_frame_, live_preview_);
+    
+    // output video stream
+    cv_ptr->header.stamp = ros::Time::now();
+    image_pub_.publish(cv_ptr->toImageMsg());
+    
+    // visualize in rviz
     visualize3D();
     r.sleep();
   }

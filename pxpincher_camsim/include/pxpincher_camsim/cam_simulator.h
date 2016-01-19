@@ -42,6 +42,7 @@
 #include <ros/ros.h>
 #include <pxpincher_camsim/visual_object.h>
 #include <pxpincher_camsim/camera_model.h>
+#include <image_transport/image_transport.h>
 
 #include <tf/transform_datatypes.h>
 
@@ -72,8 +73,11 @@ private:
   ros::NodeHandle nhandle_;
   
   ros::Publisher vis_pub_;
+  image_transport::ImageTransport it_;
+  image_transport::Publisher image_pub_;
   
   std::string map_frame_;
+  std::string cam_topic_;
   double rate_;
   
   bool live_preview_;

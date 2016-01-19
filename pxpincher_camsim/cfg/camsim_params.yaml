@@ -12,7 +12,8 @@ objects:
 rate: 10
 map_frame: "arm_base_link"
 cam_frame: "camera_link"
-live_preview: true
+cam_topic: "camera"
+live_preview: false
 focal_length: 200.0
 image_width: 640
 image_height: 480
@@ -20,4 +21,12 @@ image_center_u: 320
 image_center_v: 240
 opening_angle_x: 1.1 #rad
 opening_angle_y: 1.1 #rad
+
+# create artificial objects and noise
+blur_kernel_size: 0
+no_random_circles: 0
+max_radius_rnd_circles: 100
+no_random_lines: 0
+max_thickness_rnd_lines: 10
+rnd_objects_overlapping: false
 

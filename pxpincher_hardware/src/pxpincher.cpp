@@ -352,7 +352,7 @@ void PxPincher::performAction()
             // drive to bounds
             pos_ticks.push_back( joint.cmd_vel < 0 ? params_.cwlimits_[idx] : params_.ccwlimits_[idx] );
             vel_ticks.push_back( rads2tick( std::abs(joint.cmd_vel) ) );
-            ROS_INFO_STREAM(idx << " current vel: " << rads2tick( std::abs(joint.cmd_vel) ) );
+//             ROS_INFO_STREAM(idx << " current vel: " << rads2tick( std::abs(joint.cmd_vel) ) );
         }
         else // STOP at current position
         {

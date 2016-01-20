@@ -273,7 +273,7 @@ void PxPincher::emergencyStopIfRequired(const std::vector<ServoStatus>& stati)
     int idx = 0;
     for (const ServoStatus& status : stati)
     {
-        if (status.speed_ > 2.5 * params_.speeds_[idx]) // 250% above speed limit
+        if (status.speed_ > 2.0 * params_.speeds_[idx]) // 200% above speed limit
         {
             ROS_ERROR_STREAM("Critical velocity above bounds detected (vel of joint" << (int) params_.ids_[idx] << ": " <<  status.speed_ << "). Emergency stop.");
             ROS_ERROR("Please move the robot to its working space manually and restart the node.");
@@ -345,16 +345,25 @@ void PxPincher::performAction()
             pos_ticks.push_back( rad2tick(joint.cmd_pos) + params_.offsets_[idx] );
             vel_ticks.push_back( params_.speeds_[idx] );
         }
-        else if (params_.hardware_modes_[idx] == HardwareMode::VELOCITY_INTERFACE && !std::isnan(joint.cmd_vel)) // && joint.cmd_vel!=0, see comments below
+        else if (params_.hardware_modes_[idx] == HardwareMode::VELOCITY_INTERFACE && joint.cmd_vel!=0 && !std::isnan(joint.cmd_vel))
         {
             // drive to bounds
             pos_ticks.push_back( joint.cmd_vel < 0 ? params_.cwlimits_[idx] : params_.ccwlimits_[idx] );
             vel_ticks.push_back( rads2tick( std::abs(joint.cmd_vel) ) );
         }
-//         else // STOP at current position
+        else // STOP at current position
+        {
 //              // TODO This does not work as intended, since the robot relaxes itself if all servos are set to keep current position.
-//              // WORKAROUND: we remove joint.cmd_vel!=0 from the case above and let the servos drive with speed=1 (workaround below) to the bounds.
+//              // WORKAROUND: let the servos drive with speed=2 (workaround below) to the bounds.
 //              // The robot does not move actually due to friction.
+//             pos_ticks.push_back( joint.cmd_vel < 0 ? params_.cwlimits_[idx] : params_.ccwlimits_[idx] );
+            int new_pos = rad2tick(joint_data_[idx].pos) + params_.offsets_[idx] + 5;
+            if (new_pos >= params_.ccwlimits_[idx])
+              new_pos -= 10;
+            pos_ticks.push_back( new_pos ); // keep current position (from sensor reading) (workaround +5)
+            vel_ticks.push_back( 0 );
+        }
+//         else // STOP at current position
 //         {
 //             //ROS_INFO_STREAM(idx << ": stopped. is nan: " << std::isnan(joint.cmd_pos) << ", name: " << params_.names_[idx]);
 //             pos_ticks.push_back( rad2tick(joint_data_[idx].pos) + params_.offsets_[idx] ); // keep current position (from sensor reading)
@@ -362,8 +371,8 @@ void PxPincher::performAction()
 //         }
 
         // workaround: the dynamixel controller drives with full speed if vel = 0 (therefore set to at least 1)
-        if (vel_ticks.back() == 0)
-            vel_ticks.back() = 1;
+        if (vel_ticks.back() <= 1)
+           vel_ticks.back() = 2;
        
         ++idx;
     }

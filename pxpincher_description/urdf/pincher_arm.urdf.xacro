@@ -40,7 +40,7 @@
 <!-- Phantomx Arm mount/Controllerboard link-->
 <joint name="arm_mount_joint" type="fixed">
    <!--origin xyz="-0.09 -0.06 -0.105" rpy="0 0 0"/-->
-   <origin xyz="0.025 0.0 -0.06" rpy="0 0 0"/>
+   <origin xyz="0.04 0.0 -0.065" rpy="0 0 0"/>
    <parent link="arm_base_link"/>
    <child link="arm_mount_link"/>
    <axis xyz="0 0 1"/>
@@ -48,9 +48,9 @@
 <link name="arm_mount_link">
  <visual>
    <!--origin xyz="0.18 -0.01 0.05" rpy="0 0 7.85"/-->
-   <origin xyz="0.0825 -0.09 0.0" rpy="0 0 1.57"/>
+   <origin xyz="0.091 -0.1 0.0" rpy="0 0 1.57"/>
    <geometry>
-     <mesh filename="package://pxpincher_description/meshes/arm_mount.stl" scale="0.009 0.009 0.009"/>
+     <mesh filename="package://pxpincher_description/meshes/arm_mount.stl" scale="0.01 0.01 0.01"/>
     </geometry>
    <material name="Gray"/>
   </visual>

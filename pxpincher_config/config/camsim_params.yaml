@@ -1,0 +1,45 @@
+#pose: [x, y, z, roll, pitch, yaw]
+#shapes: {circle}
+#color: [R,G,B] (each 0..255)
+#width: size x
+#height: size y
+# z is always flat/small
+
+# objects in front of the robot, but face up
+#objects:
+ #- paper: {pose: [0.505, 0.0, 0.1, 0, 1.57, 0], shape: "rectangle", width: 0.15, height: 0.15, color: [255,255,255]}
+ #- object1: {pose: [0.5, -0.0175, 0.1175, 0, 1.57, 0], shape: "circle", width: 0.015, height: 0.015, color: [255,165,0]}  # yellow: 204,255,51]
+ #- object2: {pose: [0.5, 0.0175, 0.1175, 0, 1.57, 0], shape: "circle", width: 0.015, height: 0.015, color: [255,0,0]}
+ #- object2: {pose: [0.5, -0.0175, 0.0825, 0, 1.57, 0], shape: "circle", width: 0.015, height: 0.015, color: [0,0,255]}
+ #- object2: {pose: [0.5, 0.0175, 0.0825, 0, 1.57, 0], shape: "circle", width: 0.015, height: 0.015, color: [0,255,0]}
+ 
+# objects in front of the robot, lying on the ground 
+objects:
+ - paper: {pose: [0.25, 0.0, -0.002, 0, 0, 0], shape: "rectangle", width: 0.15, height: 0.15, color: [255,255,255]}
+ - object1: {pose: [0.2675, -0.0175, 0.0, 0, 0, 0], shape: "circle", width: 0.015, height: 0.015, color: [255,165,0]}  # yellow: 204,255,51]
+ - object2: {pose: [0.2675, 0.0175, 0, 0, 0, 0], shape: "circle", width: 0.015, height: 0.015, color: [255,0,0]}
+ - object2: {pose: [0.2325, -0.0175, 0, 0, 0, 0], shape: "circle", width: 0.015, height: 0.015, color: [0,0,255]}
+ - object2: {pose: [0.2325, 0.0175, 0, 0, 0, 0], shape: "circle", width: 0.015, height: 0.015, color: [0,255,0]}
+
+ 
+rate: 10
+map_frame: "arm_mount_link"
+cam_frame: "camera_link"
+cam_topic: "/px_cam/image_raw"
+live_preview: false
+focal_length: 781.0
+image_width: 640
+image_height: 480
+image_center_u: 320
+image_center_v: 240
+opening_angle_x: 1.1 #rad
+opening_angle_y: 1.1 #rad
+
+# create artificial objects and noise
+blur_kernel_size: 0
+no_random_circles: 0
+max_radius_rnd_circles: 100
+no_random_lines: 0
+max_thickness_rnd_lines: 10
+rnd_objects_overlapping: false
+

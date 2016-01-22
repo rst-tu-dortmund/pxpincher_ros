@@ -189,6 +189,19 @@ namespace pxpincher
   }
   
   /**
+   * @brief Bound vector x to the interval [l, u] (component-wise)
+   * @param l lower bound for all components
+   * @param x vector to be bounded
+   * @param u upper bound for all components
+   * @return bounded value
+   */
+  inline Eigen::VectorXd bound(double l, const Eigen::Ref<const Eigen::VectorXd>& x, double u) 
+  {
+      return (x.array() < l).select( l, (x.array()>u).select(u, x) );
+  }
+  
+  
+  /**
    * @brief Apply upper bound such that x<=u
    * @param x value to be bounded
    * @param u upper bound

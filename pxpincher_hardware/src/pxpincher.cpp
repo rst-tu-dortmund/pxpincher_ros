@@ -357,9 +357,17 @@ void PxPincher::performAction()
 //              // WORKAROUND: let the servos drive with speed=2 (workaround below) to the bounds.
 //              // The robot does not move actually due to friction.
 //             pos_ticks.push_back( joint.cmd_vel < 0 ? params_.cwlimits_[idx] : params_.ccwlimits_[idx] );
-            int new_pos = rad2tick(joint_data_[idx].pos) + params_.offsets_[idx] + 5;
-            if (new_pos >= params_.ccwlimits_[idx])
-              new_pos -= 10;
+            int new_pos;
+            if (sim_)
+            {
+              new_pos = rad2tick(joint_data_[idx].pos) + params_.offsets_[idx]; // keep current position (from sensor reading)
+            }
+            else
+            {
+              new_pos = rad2tick(joint_data_[idx].pos) + params_.offsets_[idx] + 5; // workaround only in real-mode
+              if (new_pos >= params_.ccwlimits_[idx])
+                new_pos -= 10;
+            }
             pos_ticks.push_back( new_pos ); // keep current position (from sensor reading) (workaround +5)
             vel_ticks.push_back( 0 );
         }
@@ -372,7 +380,7 @@ void PxPincher::performAction()
 
         // workaround: the dynamixel controller drives with full speed if vel = 0 (therefore set to at least 1)
         if (vel_ticks.back() <= 1)
-           vel_ticks.back() = 2;
+           vel_ticks.back() = 1;
        
         ++idx;
     }

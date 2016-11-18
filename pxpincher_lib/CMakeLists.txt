@@ -157,6 +157,8 @@ target_link_libraries(pxpincher_lib
    ${catkin_LIBRARIES}
 )
 
+add_dependencies(pxpincher_lib pxpincher_msgs_generate_messages_cpp)
+
 ## Declare a cpp executable
 add_executable(pxpincher_test src/main.cpp)
 target_link_libraries(pxpincher_test pxpincher_lib ${catkin_LIBRARIES})
@@ -167,6 +169,7 @@ target_link_libraries(teach pxpincher_lib ${catkin_LIBRARIES})
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(phantomx_rst_node phantomx_rst_generate_messages_cpp)
+
 
 ## Specify libraries to link a library or executable target against
 

@@ -8,7 +8,11 @@ build-kinetic:
     - apt-get -qq install git-core python-catkin-tools curl
     - rosdep update
     - rosdep install -y --from-paths . --ignore-src --rosdistro kinetic --as-root=apt:false
+    - cd ../..
   script: 
+    - cd ~
+    - ls
+    - echo "$HOME"
     - source /ros_entrypoint.sh
     - catkin build -i -s --no-status
   only:

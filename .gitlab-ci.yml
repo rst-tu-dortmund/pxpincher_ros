@@ -9,7 +9,8 @@ build-kinetic:
     - rosdep update
     - rosdep install -y --from-paths . --ignore-src --rosdistro kinetic --as-root=apt:false
   script: 
-    - echo "script"
+    - source /ros_entrypoint.sh
+    - catkin build -i -s --no-status
   only:
     - master
   tags:

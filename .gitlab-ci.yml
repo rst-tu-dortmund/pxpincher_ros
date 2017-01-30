@@ -1,9 +1,9 @@
-build-kinetic:
-  stage: build
-  image: osrf/ros:kinetic-desktop-full
+build-indigo:
   variables:
-    ROSDISTRO: "kinetic"
+    ROSDISTRO: "indigo"
     CATKIN_WS: "/root/catkin_ws"
+  stage: build
+  image: osrf/ros:$ROSDISTRO-desktop-full
   before_script: 
     - apt-get -qq update
     - apt-get -qq install git-core python-catkin-tools curl

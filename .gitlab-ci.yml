@@ -10,9 +10,7 @@ build-kinetic:
     - rosdep install -y --from-paths . --ignore-src --rosdistro kinetic --as-root=apt:false
     - cd ../..
   script: 
-    - cd ~
-    - ls
-    - echo "$HOME"
+    - cd catkin_ws
     - source /ros_entrypoint.sh
     - catkin build -i -s --no-status
   only:

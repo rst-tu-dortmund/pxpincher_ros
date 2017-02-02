@@ -18,6 +18,7 @@ build-kinetic:
     - catkin build -i -s --no-status
   only:
     - master
+    - develop
   tags:
     - ubuntu
     - docker

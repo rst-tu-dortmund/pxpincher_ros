@@ -19,6 +19,7 @@ build-kinetic:
   only:
     - master
     - develop
+    - /^feature.*$/
   tags:
     - ubuntu
     - docker

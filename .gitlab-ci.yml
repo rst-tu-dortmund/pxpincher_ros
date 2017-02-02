@@ -1,6 +1,6 @@
-build-indigo:
+build-kinetic:
   variables:
-    ROSDISTRO: "indigo"
+    ROSDISTRO: "kinetic"
     CATKIN_WS: "/root/catkin_ws"
   stage: build
   image: osrf/ros:$ROSDISTRO-desktop-full

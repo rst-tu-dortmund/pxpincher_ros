@@ -1,3 +1,7 @@
+stages:
+  - build
+  - test
+
 build-kinetic:
   variables:
     ROSDISTRO: "kinetic"
@@ -23,3 +27,28 @@ build-kinetic:
   tags:
     - ubuntu
     - docker
+
+
+cppstyle-lint:
+  stage: test
+  image: git.rst.e-technik.tu-dortmund.de:5005/common/docker-containers:ubuntu-coding
+  before_script: 
+    - apt-get -qq update
+    - apt-get -qq install git python
+  script: 
+    - git config --global user.name "$GITLAB_USER_ID"
+    - git config --global user.email $GITLAB_USER_EMAIL
+    - git clone https://github.com/google/styleguide.git
+    - cp styleguide/cpplint/cpplint.py .
+    - ./cpplint.py --filter=-whitespace/braces,-whitespace/end_of_line,-readability/casting,-whitespace/comma,-legal/copyright,-build/include_order,-whitespace/indent,-build/c++11,-whitespace/blank_line
+                    --linelength=150 --extensions=hpp,cpp,h --counting=detailed 
+                    $( find . -name *.h -or -name *.cpp -or -name *.hpp)
+  only:
+    - master
+    - develop
+    - /^feature.*$/
+  allow_failure: true
+  tags:
+    - ubuntu
+    - docker
+

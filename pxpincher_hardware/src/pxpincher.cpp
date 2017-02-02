@@ -100,11 +100,12 @@ PxPincher::~PxPincher()
     comm_.close();
 }
 
-bool PxPincher::canSwitch(const std::list<hardware_interface::ControllerInfo> &start_list, const std::list<hardware_interface::ControllerInfo> &stop_list) const
+bool PxPincher::prepareSwitch(const std::list<hardware_interface::ControllerInfo> &start_list, const std::list<hardware_interface::ControllerInfo> &stop_list)
 {
     auto not_vel_and_not_pos = std::find_if(start_list.begin(), start_list.end(), [](const hardware_interface::ControllerInfo& info)
     {
-        return !(info.hardware_interface.compare("hardware_interface::PositionJointInterface")==0 || info.hardware_interface.compare("hardware_interface::VelocityJointInterface")==0);
+        return !(info.claimed_resources.at(0).hardware_interface.compare("hardware_interface::PositionJointInterface")==0 
+              || info.claimed_resources.at(0).hardware_interface.compare("hardware_interface::VelocityJointInterface")==0);  // TODO: only compare index 0?
     } );
     return not_vel_and_not_pos == start_list.end(); // we only support position and velocity interfaces
 }
@@ -113,7 +114,7 @@ void PxPincher::doSwitch(const std::list<hardware_interface::ControllerInfo> &st
 {
     for (const hardware_interface::ControllerInfo& info : stop_list)
     {
-        for (const std::string& joint : info.resources)
+        for (const std::string& joint : info.claimed_resources.at(0).resources) // TODO: only compare index 0?
         {
             try
             {
@@ -128,13 +129,13 @@ void PxPincher::doSwitch(const std::list<hardware_interface::ControllerInfo> &st
     
     for (const hardware_interface::ControllerInfo& info : start_list)
     {
-        for (const std::string& joint : info.resources)
+        for (const std::string& joint : info.claimed_resources.at(0).resources)
         {
             try
             {
-                if (info.hardware_interface.compare("hardware_interface::PositionJointInterface")==0)
+                if (info.claimed_resources.at(0).hardware_interface.compare("hardware_interface::PositionJointInterface")==0)
                     params_.hardware_modes_[params_.names_idx_map_[joint]] = HardwareMode::POSITION_INTERFACE;
-                else if (info.hardware_interface.compare("hardware_interface::VelocityJointInterface")==0)
+                else if (info.claimed_resources.at(0).hardware_interface.compare("hardware_interface::VelocityJointInterface")==0)
                     params_.hardware_modes_[params_.names_idx_map_[joint]] = HardwareMode::VELOCITY_INTERFACE;
                 else
                 {

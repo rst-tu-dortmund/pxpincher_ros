@@ -36,7 +36,7 @@ Check if everything compiles:
 If you have unmet dependencies, try to install them using *rosdep*:
 
      cd ~/catkin_ws
-     rosdep install --from-paths src --ignore-src --rosdistro indigo -y
+     rosdep install --from-paths src --ignore-src --rosdistro kinetic -y
 
 Getting Started
 ---------------

@@ -16,16 +16,16 @@ Build status of the *develop* branch (ROS Kinetic):
 Installation
 ------------
 
-First, make sure that ROS is installed properly (we are currently on ROS indigo).
+First, make sure that ROS is installed properly (we are currently on ROS kinetic).
 This package utilizes [ros_control](http://wiki.ros.org/ros_control) for controlling the robot:
     
-    sudo apt-get install ros-indigo-ros-control ros-indigo-ros-controllers
+    sudo apt-get install ros-kinetic-ros-control ros-kinetic-ros-controllers
 
 
 Now it is time to checkout this package:
 
     cd ~/catkin_ws/src
-    git clone https://github.com/rst-tu-dortmund/pxpincher_ros.git
+    git clone https://git.rst.e-technik.tu-dortmund.de/robotics-rigid-arms/pxpincher.git
 
 
 Check if everything compiles:

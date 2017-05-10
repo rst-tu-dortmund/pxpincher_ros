@@ -54,7 +54,7 @@ env:
     - ROSINSTALL_FILE=$CI_SOURCE_PATH/dependencies.rosinstall
     - CATKIN_OPTIONS=$CI_SOURCE_PATH/catkin.options
     - ROS_PARALLEL_JOBS='-j8 -l6'
-  matrix:
+#  matrix:
     - ROS_DISTRO=kinetic
 
 

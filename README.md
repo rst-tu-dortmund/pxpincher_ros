@@ -5,8 +5,7 @@ This metapackage is intended for controlling and simulating the PhantomX Pincher
 
 Build status of the *kinetic-devel* branch:
 
-[![build status](https://git.rst.e-technik.tu-dortmund.de/robotics-rigid-arms/pxpincher/badges/kinetic-devel/build.svg)](https://git.rst.e-technik.tu-dortmund.de/robotics-rigid-arms/pxpincher/commits/kinetic-devel)
-
+[![Build Status](https://travis-ci.org/rst-tu-dortmund/pxpincher_ros.svg?branch=kinetic-devel)](https://travis-ci.org/rst-tu-dortmund/pxpincher_ros)
 
 Installation
 ------------

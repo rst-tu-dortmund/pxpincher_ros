@@ -3,14 +3,9 @@ pxpincher_ros Package
 
 This metapackage is intended for controlling and simulating the PhantomX Pincher robot at the RST.
 
-Build status of the *master* branch (ROS Kinetic):
+Build status of the *kinetic-devel* branch:
 
-[![build status](https://git.rst.e-technik.tu-dortmund.de/robotics-rigid-arms/pxpincher/badges/master/build.svg)](https://git.rst.e-technik.tu-dortmund.de/robotics-rigid-arms/pxpincher/commits/master)
-
-
-Build status of the *develop* branch (ROS Kinetic):
-
-[![build status](https://git.rst.e-technik.tu-dortmund.de/robotics-rigid-arms/pxpincher/badges/develop/build.svg)](https://git.rst.e-technik.tu-dortmund.de/robotics-rigid-arms/pxpincher/commits/develop)
+[![build status](https://git.rst.e-technik.tu-dortmund.de/robotics-rigid-arms/pxpincher/badges/kinetic-devel/build.svg)](https://git.rst.e-technik.tu-dortmund.de/robotics-rigid-arms/pxpincher/commits/kinetic-devel)
 
 
 Installation

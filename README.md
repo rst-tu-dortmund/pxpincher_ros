@@ -3,28 +3,29 @@ pxpincher_ros Package
 
 This metapackage is intended for controlling and simulating the PhantomX Pincher robot at the RST.
 
-Build status of the *master* branch (ROS Indigo):
+Build status of the *master* branch (ROS Kinetic):
 
-[![Build Status](https://travis-ci.org/rst-tu-dortmund/pxpincher_ros.svg?branch=master)](https://travis-ci.org/rst-tu-dortmund/pxpincher_ros)
+[![build status](https://git.rst.e-technik.tu-dortmund.de/robotics-rigid-arms/pxpincher/badges/master/build.svg)](https://git.rst.e-technik.tu-dortmund.de/robotics-rigid-arms/pxpincher/commits/master)
 
-Build status of the *devel* branch (ROS Indigo):
 
-[![Build Status](https://travis-ci.org/rst-tu-dortmund/pxpincher_ros.svg?branch=devel)](https://travis-ci.org/rst-tu-dortmund/pxpincher_ros)
+Build status of the *develop* branch (ROS Kinetic):
+
+[![build status](https://git.rst.e-technik.tu-dortmund.de/robotics-rigid-arms/pxpincher/badges/develop/build.svg)](https://git.rst.e-technik.tu-dortmund.de/robotics-rigid-arms/pxpincher/commits/develop)
 
 
 Installation
 ------------
 
-First, make sure that ROS is installed properly (we are currently on ROS indigo).
+First, make sure that ROS is installed properly (we are currently on ROS kinetic).
 This package utilizes [ros_control](http://wiki.ros.org/ros_control) for controlling the robot:
     
-    sudo apt-get install ros-indigo-ros-control ros-indigo-ros-controllers
+    sudo apt-get install ros-kinetic-ros-control ros-kinetic-ros-controllers
 
 
 Now it is time to checkout this package:
 
     cd ~/catkin_ws/src
-    git clone https://github.com/rst-tu-dortmund/pxpincher_ros.git
+    git clone https://git.rst.e-technik.tu-dortmund.de/robotics-rigid-arms/pxpincher.git
 
 
 Check if everything compiles:
@@ -35,7 +36,7 @@ Check if everything compiles:
 If you have unmet dependencies, try to install them using *rosdep*:
 
      cd ~/catkin_ws
-     rosdep install --from-paths src --ignore-src --rosdistro indigo -y
+     rosdep install --from-paths src --ignore-src --rosdistro kinetic -y
 
 Getting Started
 ---------------

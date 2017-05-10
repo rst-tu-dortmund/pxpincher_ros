@@ -1,0 +1,54 @@
+stages:
+  - build
+  - test
+
+build-kinetic:
+  variables:
+    ROSDISTRO: "kinetic"
+    CATKIN_WS: "/root/catkin_ws"
+  stage: build
+  image: osrf/ros:$ROSDISTRO-desktop-full
+  before_script: 
+    - apt-get -qq update
+    - apt-get -qq install git-core python-catkin-tools curl
+    - mkdir -p $CATKIN_WS/src
+    - cp -a . $CATKIN_WS/src/
+    - cd $CATKIN_WS
+    - rosdep update
+    - rosdep install -y --from-paths src --ignore-src --rosdistro $ROSDISTRO --as-root=apt:false
+  script: 
+    - source /ros_entrypoint.sh
+    - cd $CATKIN_WS
+    - catkin build -i -s --no-status
+  only:
+    - master
+    - develop
+    - /^feature.*$/
+  tags:
+    - ubuntu
+    - docker
+
+
+cppstyle-lint:
+  stage: test
+  image: git.rst.e-technik.tu-dortmund.de:5005/common/docker-containers:ubuntu-coding
+  before_script: 
+    - apt-get -qq update
+    - apt-get -qq install git python
+  script: 
+    - git config --global user.name "$GITLAB_USER_ID"
+    - git config --global user.email $GITLAB_USER_EMAIL
+    - git clone https://github.com/google/styleguide.git
+    - cp styleguide/cpplint/cpplint.py .
+    - ./cpplint.py --filter=-whitespace/braces,-whitespace/end_of_line,-readability/casting,-whitespace/comma,-legal/copyright,-build/include_order,-whitespace/indent,-build/c++11,-whitespace/blank_line
+                    --linelength=150 --extensions=hpp,cpp,h --counting=detailed 
+                    $( find . -name *.h -or -name *.cpp -or -name *.hpp)
+  only:
+    - master
+    - develop
+    - /^feature.*$/
+  allow_failure: true
+  tags:
+    - ubuntu
+    - docker
+

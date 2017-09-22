@@ -14,8 +14,8 @@ This package utilizes [ros_control](http://wiki.ros.org/ros_control) for control
 
 Now it is time to checkout this package:
 
-    cd ~/catkin_ws/src
-    git clone https://git.rst.e-technik.tu-dortmund.de/robotics-rigid-arms/pxpincher.git
+    cd ~/catkin_ws/src    
+    git clone https://github.com/rst-tu-dortmund/pxpincher_ros
 
 
 Check if everything compiles:
